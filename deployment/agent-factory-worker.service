@@ -1,0 +1,15 @@
+[Unit]
+Description=Algorithm factory trusted job worker
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/agent-factory
+EnvironmentFile=%h/agent-factory/.env
+ExecStart=%h/agent-factory/.venv/bin/python -m agent_factory.job_worker
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=300
+
+[Install]
+WantedBy=default.target

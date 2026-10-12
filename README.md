@@ -1,0 +1,222 @@
+# 面向软件研发技术记忆检索的算法能力工厂
+
+使用 Agent 把自然语言算法需求转换为可运行、经过验证的记忆检索插件。行业场景为软件研发与运维知识管理：从研发人员的故障记录、工具使用经验和项目决策中检索相关记忆。
+
+工厂输入是“生成一个中文技术记忆检索算法”，产物为 Python 代码、依赖说明、验证报告与版本历史。生成的插件输入查询和记忆列表，输出相关记忆的 ID 与得分，可用于后续个人记忆系统。
+
+**当前可运行模式**：离线 mock/规则模板演示，以及 Jetson Ollama 原生 API 接入。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。Jetson 部署使用你提供的 `qwen3.5:2b` 配置，真实设备运行尚待实测。
+
+## 1. 快速开始
+
+需要 Python 3.11 或 3.12，建议 3.12。本机项目已创建 `.venv`；已有环境可直接激活并从演示命令开始。
+
+```bash
+cd ~/Downloads/agent-factory
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.lock.txt
+python -m pip install --no-deps -e .
+
+# 抽取算法能力知识，保存 SQLite 与 JSON 结果
+agent-factory ingest
+
+# 完整演示：首版 BM25 故意返回空结果，可信验证器发现失败后修复
+agent-factory --verbose run --request-file examples/request.txt --inject-fault
+
+# 调用工厂已经产出的插件
+agent-factory query 'MySQL 连接池耗尽怎么排查' --top-k 3
+
+# 导出能力、代码版本、验证历史与经验
+agent-factory export
+
+# 自动测试
+scripts/run_tests.sh -q
+```
+
+也可使用 `python -m agent_factory` 代替 `agent-factory`。退出状态：通过为 0，验证失败或运行错误为 1。
+全局参数 `--workspace /path/to/project` 和 `--verbose` 必须位于子命令之前。
+新机器优先使用准确版本的 `requirements.lock.txt`；`requirements.txt` 与 pyproject 为兼容范围。
+该锁文件是在 macOS ARM64 / Python 3.12 上生成的，其他平台应验证对应二进制 wheel 是否可安装。
+
+## 2. 系统架构与技术选择
+
+| 技术 | 用途与理由 |
+| --- | --- |
+| Python | 将算法、评估与编排放在同一语言，降低原型复杂度 |
+| LangGraph | 显式状态图、条件分支和有限修复循环，工作流容易审计 |
+| Ollama + httpx | 对接已有 Jetson 模型服务；原生 chat 支持 JSON schema，无须额外模型部署框架 |
+| Pydantic | 校验需求、能力抽取、候选方案、代码产物、诊断和插件输出 |
+| SQLite | 无额外数据库服务，保存不可覆盖的能力与验证版本 |
+| NetworkX | 图遍历、能力到历史经验的关系检索、JSON/GraphML 导出 |
+| scikit-learn | 可复现 TF-IDF 基线与能力知识检索 |
+| Python 标准库 BM25 | 第二候选无外部模型依赖，适合小语料关键词检索 |
+| Docker | 隔离真实模型生成代码，禁网、只读、非 root 与资源限制 |
+| pytest | 检验接口、失败分支、修复预算、数据边界和插件复用 |
+| FastAPI + SQLite 任务队列 | 提供鉴权业务接口，长时间生成任务异步处理；可信 worker 串行执行 |
+
+```text
+算法材料 → 能力抽取及证据校验 → SQLite 能力图谱
+                                        ↓
+能力需求 → 理解 → 知识检索 → 规划 → 生成代码 → 可信验证
+                                      ↑            ↓
+                                      └── 诊断与修复
+                                                   ↓
+                     候选选择 → 冻结 → 最终测试 → 报告/经验回写
+                                                   ↓
+                                     可复用的 retrieve 插件
+```
+
+模块边界和角色交接详见 [架构说明](docs/architecture.md)。
+本版是角色分工明确、串行协作的工作流；没有实现多个自治 Agent 并发协商。
+
+## 3. 能力知识图谱与抽取结果
+
+节点：Source、Capability、Implementation、Environment、ValidationRun、Lesson、FactoryRun。
+关系连接来源证据、能力、代码修订、依赖环境、验证结果及失败经验。
+抽取的 evidence 必须存在于原文；材料与抽取输出使用哈希版本，节点不可覆盖。
+
+- [完整 schema](docs/schema.md)
+- [原始算法材料](knowledge/sources/)
+- [实际抽取 JSON](knowledge/extracted_capabilities.json)
+- [演示图谱 JSON](examples/demo/knowledge/graph.json)
+- `agent-factory export` 输出离线 `state/export/graph.html`，浏览器悬停节点可查看属性；同时输出 GraphML。
+
+**能力知识图谱保存算法知识；未来个人记忆图谱保存个人事实和关系，两者分别设计。**
+
+## 4. 工作流与生成算法
+
+Extractor 从材料抽取结构化能力；Understander 理解开发需求；Planner 引用检索到的能力规划最多两个候选；Coder 生成 Python；Reviewer 诊断可信错误；Repairer 返回修复后的完整代码。
+
+统一插件接口：
+
+```python
+def retrieve(query: str, memories: list[dict], top_k: int = 5) -> list[dict]:
+    # memories: [{"id": "m01", "text": "MySQL 连接池排查记录", "source": "notes://m01"}]
+    # 返回：[{"id": "m01", "score": 1.23}]
+    ...
+```
+
+候选：字符 TF-IDF + 余弦相似度；中文单字/双字与英文词的 BM25。
+每个候选最多两次代码修复。只有通过验证者能被选中；先比较 Recall，再比较 MRR，同分优先依赖更少的 BM25。
+最终测试失败即停止，不利用测试结果修复或重新选择方案。
+
+可查看 [完整生成代码样例](examples/demo/selected_retrieval.py)、[角色调用记录](examples/demo/llm/) 与 [流程图](examples/demo/workflow.mmd)。
+mock 使用仓库内可检查模板，不宣称其能够泛化理解任意需求或自由创作代码。
+
+## 5. 数据与验证机制
+
+24 条人工编写技术记忆，12 条验证查询，10 条独立测试查询；全部为模拟资料，无真实个人信息。
+通过 `scripts/create_demo_data.py` 重建。详见 [数据说明](data/README.md)。
+TF-IDF/BM25 在记忆语料上构建统计量，无须训练分类模型；验证/测试的相关文档标注用于评估检索质量。
+
+| 检查维度 | 实现 |
+| --- | --- |
+| 功能正确性 | 完整记忆文本查询应返回自身；空查询、空语料和非正 top_k 返回空列表 |
+| 接口规范 | 参数名与默认值、输出字段、ID 合法性、去重、有限非负分数、降序及同分排序 |
+| 指标表现 | Recall@k 为前 k 个结果中找到的相关文档占全部相关文档的比例；MRR@k 为首个相关结果倒数排名的平均值 |
+| 稳定性 | 不修改输入，同一进程重复查询与新进程查询得到一致结果；超时/异常不通过 |
+| 性能 | 每次查询函数耗时的 P95，包含索引重建；解释器和依赖导入另计为 worker wall_seconds |
+| 来源与可复现性 | 材料证据、代码与数据 SHA-256、Python/依赖版本、候选修订关系、完整调用日志 |
+
+阈值及修复次数位于 `config.json`，由用户配置，Agent 不能修改。默认 Recall≥0.75、MRR≥0.65、P95≤1000ms。
+可信父进程保留相关 ID 标注并评分，执行器只收到无标注输入。
+最终测试的文本、标注和结果不进入本次生成或修复提示，后续能力检索也排除最终测试反馈。
+管理员能访问项目数据，因此这是一项系统设计边界，不是对宿主管理员的访问隔离。
+
+独立验证：
+
+```bash
+agent-factory validate --code examples/demo/selected_retrieval.py --runner local
+```
+
+本项目模拟查询与笔记词面重合较多，示例高分只证明闭环可执行。真实场景需要自然改写、近似负例、无答案查询及更大语料评估。
+
+## 6. 接入 Jetson Ollama
+
+电脑负责工作流与评估，Jetson 只运行 Ollama 模型服务。请填入自己的地址与已安装模型名称。
+
+```bash
+# 第一次准备执行镜像，需要 Docker 正常运行
+docker build -f Dockerfile.runner -t agent-factory-runner:0.1 .
+
+# 用真实模型从材料抽取能力，检查返回的原文证据
+agent-factory ingest --provider ollama \
+  --base-url http://JETSON_IP:11434 --model YOUR_INSTALLED_MODEL
+
+# 用真实模型生成/修复算法，默认 Docker 执行
+agent-factory --verbose run --provider ollama \
+  --base-url http://JETSON_IP:11434 --model YOUR_INSTALLED_MODEL \
+  --request-file examples/request.txt
+```
+
+使用 Ollama 原生 `/api/chat`，`stream=false`，`format` 为当前角色 JSON schema。
+CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变量。
+每次响应由 Pydantic 验证，无效 JSON、服务错误最多重试一次并保留错误。
+某次调用失败不会自动切换 mock 并宣称 LLM 成功。
+若电脑无法访问，先检查监听地址、局域网连接与防火墙；服务地址和模型未给定前，不能报告真实模型实测结果。
+若明确接受本机代码执行边界，可加 `--runner local --allow-local`；默认推荐 Docker。
+
+部署方式与你的 Memority 项目衔接：**App → 本项目 HTTPS 业务接口 → Jetson worker → Ollama**。
+FastAPI 网关可使用 `compose.yaml`，长任务由 Jetson 宿主 worker 执行。网关容器不用管理宿主 Docker。
+`host.docker.internal` 仅适用于 Jetson 容器；宿主 worker 使用 `127.0.0.1`。当前无需 embedding 模型。
+配置、启动和业务接口详见 [Jetson 部署指南](docs/jetson-deployment.md)。
+
+## 7. 完整示例与验证报告
+
+[示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
+
+报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
+当前 27 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。两者都明确使用 mock，未宣称完成真实 Jetson 模型运行。
+所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
+显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
+
+## 8. 用于未来个人记忆系统
+
+生成的算法不需要在查询时再调用 LLM。应用整理好记忆后可直接调用经过检查的生成文件：
+
+```python
+# 将通过最终测试的 selected_retrieval.py 放进个人记忆应用，按常规模块导入
+from selected_retrieval import retrieve
+
+hits = retrieve("MySQL 连接池耗尽", memories, top_k=5)
+```
+
+也可使用保留哈希检查与执行边界的适配器：
+
+```python
+from agent_factory.runtime import MemoryRetriever
+
+retriever = MemoryRetriever("runs/YOUR_RUN_ID/plugin.json")
+hits = retriever.retrieve("MySQL 连接池耗尽", memories, top_k=5)
+```
+
+能复用的部分为 LLM 适配、角色工作流结构、算法插件契约、检索算法、评估集及回归验证方法。
+个人事实图谱、记忆冲突管理、自动更新、用户权限与回答生成是后续独立模块。
+
+## 9. 挑战、边界与后续方向
+
+- 控制生成代码风险：AST、受限导入、外部评分、Docker 及资源预算。local 子进程不构成可靠安全沙箱。
+- 区分修复建议与事实：图谱中只有修复版本实际通过才记录 validated_fix；失败建议保持未验证标记。
+- 保持跨进程稳定：BM25 查询词排序后再累加，避免无序集合造成浮点差异；计时结果不承诺逐次完全一致。
+- 防止指标泄漏：候选只用验证集；最终测试在版本冻结后执行。多次人工查看并用于优化后，应重新建立最终测试集。
+- 一周实现范围：CLI、鉴权 API、持久任务队列、两个候选、有限修复、图检索、离线图谱、版本/经验回写；暂未实现 Web 前端、工作流中断恢复、MCTS、任意任务与插件自动发现。
+- 后续扩展：向量与混合检索、持久化索引、多任务验证配置、更严格隔离服务、真实代码仓库函数抽取、个人事实图谱。
+
+分步学习和扩展路线见 [实现指南](docs/implementation-guide.md)。
+
+## 10. 开发与提交
+
+```bash
+scripts/run_tests.sh -q
+ruff check agent_factory scripts tests
+git status
+
+# 建立自己的 GitHub 仓库后，使用实际仓库地址配置 remote，再推送
+# git remote add origin <your-repository-url>
+# git push -u origin main
+```
+
+已有本地 Git 版本控制；远端 GitHub 尚未配置。`.venv`、运行数据库、临时运行目录和密钥不纳入版本控制。
+所有演示资料均由本项目编写；外部库遵循各自许可证。
+
+参考：[LangGraph 状态图](https://docs.langchain.com/oss/python/langgraph/graph-api)、[Ollama chat API](https://docs.ollama.com/api/chat)、[scikit-learn TF-IDF](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html)、[BEIR 检索评估](https://github.com/beir-cellar/beir)。

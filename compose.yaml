@@ -1,0 +1,26 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "127.0.0.1:8010:8000"
+    environment:
+      FACTORY_API_TOKEN: ${FACTORY_API_TOKEN:?Set a private random token in .env}
+      FACTORY_WORKSPACE: /workspace
+    user: "${FACTORY_UID:-1000}:${FACTORY_GID:-1000}"
+    volumes:
+      - ./state/jobs:/workspace/state/jobs
+      - ./runs:/workspace/runs:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 512m
+    restart: unless-stopped
+    # API 只收发任务，不调用模型，也不接入 Docker socket。
+    # Ollama 与算法执行由 Jetson 宿主机的可信 job_worker 负责。
