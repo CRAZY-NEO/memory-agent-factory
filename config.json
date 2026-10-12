@@ -1,0 +1,8 @@
+{
+  "task": "memory_retrieval",
+  "min_recall": 0.75,
+  "min_mrr": 0.65,
+  "max_p95_ms": 1000,
+  "timeout_seconds": 30,
+  "max_repairs": 2
+}

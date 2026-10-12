@@ -1,0 +1,10 @@
+.venv
+.git
+runs
+state
+tests
+examples
+data
+knowledge
+__pycache__
+*.egg-info
