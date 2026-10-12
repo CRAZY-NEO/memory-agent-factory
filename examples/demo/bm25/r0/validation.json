@@ -1,0 +1,127 @@
+{
+  "split": "validation",
+  "passed": false,
+  "errors": [
+    "functional: exact memory text must retrieve its own ID first",
+    "metric: recall_at_k=0.000 below 0.750",
+    "metric: mrr_at_k=0.000 below 0.650"
+  ],
+  "metrics": {
+    "recall_at_k": 0.0,
+    "mrr_at_k": 0.0,
+    "p95_ms": 0.5174628109671173
+  },
+  "top_k": 5,
+  "query_count": 12,
+  "memory_count": 24,
+  "execution": {
+    "wall_seconds": 0.04218629212118685,
+    "runner": "local"
+  },
+  "gates": {
+    "task": "memory_retrieval",
+    "min_recall": 0.75,
+    "min_mrr": 0.65,
+    "max_p95_ms": 1000.0,
+    "timeout_seconds": 30.0,
+    "max_repairs": 2
+  },
+  "per_query": [
+    {
+      "query_id": "v01",
+      "query": "MySQL 连接池等待导致请求超时怎么排查",
+      "relevant_ids": [
+        "m01"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v02",
+      "query": "Redis 不存在的 key 一直查数据库",
+      "relevant_ids": [
+        "m03"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v03",
+      "query": "Docker 容器退出 137 内存不足",
+      "relevant_ids": [
+        "m05"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v04",
+      "query": "Git rebase 冲突如何处理",
+      "relevant_ids": [
+        "m07"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v05",
+      "query": "asyncio 同步请求阻塞事件循环",
+      "relevant_ids": [
+        "m09"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v06",
+      "query": "RAG 检索效果用哪些指标评估",
+      "relevant_ids": [
+        "m11"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v07",
+      "query": "Jetson Ollama 如何在局域网访问",
+      "relevant_ids": [
+        "m13"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v08",
+      "query": "文本分类类别不平衡不能只看 accuracy",
+      "relevant_ids": [
+        "m16"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v09",
+      "query": "SQLite 并发写事务被阻塞",
+      "relevant_ids": [
+        "m19"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v10",
+      "query": "BM25 和向量检索怎么融合",
+      "relevant_ids": [
+        "m21"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v11",
+      "query": "中文 TF-IDF 字符 ngram 余弦相似度",
+      "relevant_ids": [
+        "m22"
+      ],
+      "predictions": []
+    },
+    {
+      "query_id": "v12",
+      "query": "API 超时指数退避与幂等重试",
+      "relevant_ids": [
+        "m18"
+      ],
+      "predictions": []
+    }
+  ]
+}

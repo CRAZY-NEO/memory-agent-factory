@@ -1,0 +1,6 @@
+{
+  "summary": "验证器发现：functional: exact memory text must retrieve its own ID first; metric: recall_at_k=0.000 below 0.750; metric: mrr_at_k=0.000 below 0.650",
+  "repair_instructions": [
+    "恢复有效命中返回，检查空输入、top_k、排序与相同输入一致性。"
+  ]
+}

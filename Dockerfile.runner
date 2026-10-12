@@ -1,0 +1,6 @@
+FROM python:3.12-slim
+RUN pip install --no-cache-dir scikit-learn==1.9.1
+COPY agent_factory/worker.py /runner/worker.py
+ENV OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0
+USER 65534:65534
+ENTRYPOINT ["python", "-I", "/runner/worker.py"]

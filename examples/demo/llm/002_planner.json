@@ -1,0 +1,289 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "planner",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "请为软件研发人员的个人技术记忆库生成中文与英文混合检索算法。输入 query、memories 和 top_k，返回相关记忆的 ID 和分数，默认返回前 5 条。比较 TF-IDF 和 BM25，验证检索效果、空输入行为、接口规范与运行稳定性，保留验证通过的实现用于未来个人记忆系统。\n",
+      "language": "mixed",
+      "top_k": 5
+    },
+    "capabilities": [
+      {
+        "node_id": "char_tfidf_2e0165db",
+        "algorithm": "tfidf",
+        "applicable_conditions": [
+          "小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "evidence": "适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。",
+        "id": "char_tfidf_2e0165db",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。"
+        ],
+        "metrics": [
+          "recall_at_k",
+          "mrr_at_k",
+          "p95_ms"
+        ],
+        "name": "中文技术记忆 tfidf",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "task": "memory_retrieval"
+      },
+      {
+        "node_id": "char_tfidf_5330da4c2476",
+        "algorithm": "tfidf",
+        "applicable_conditions": [
+          "小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "evidence": "适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。",
+        "id": "char_tfidf_5330da4c2476",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。"
+        ],
+        "metrics": [
+          "recall_at_k",
+          "mrr_at_k",
+          "p95_ms"
+        ],
+        "name": "中文技术记忆 tfidf",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "task": "memory_retrieval"
+      },
+      {
+        "node_id": "char_bm25_aeefc74e",
+        "algorithm": "bm25",
+        "applicable_conditions": [
+          "不同长度的技术笔记、包含明确组件名或故障词的查询。"
+        ],
+        "dependencies": [
+          "Python stdlib"
+        ],
+        "evidence": "适用：不同长度的技术笔记、包含明确组件名或故障词的查询。",
+        "id": "char_bm25_aeefc74e",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "局限：词面匹配对纯语义改写有限；分词策略影响排序。"
+        ],
+        "metrics": [
+          "recall_at_k",
+          "mrr_at_k",
+          "p95_ms"
+        ],
+        "name": "中文技术记忆 bm25",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "task": "memory_retrieval"
+      },
+      {
+        "node_id": "char_bm25_149eb7835529",
+        "algorithm": "bm25",
+        "applicable_conditions": [
+          "不同长度的技术笔记、包含明确组件名或故障词的查询。"
+        ],
+        "dependencies": [
+          "Python stdlib"
+        ],
+        "evidence": "适用：不同长度的技术笔记、包含明确组件名或故障词的查询。",
+        "id": "char_bm25_149eb7835529",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "局限：词面匹配对纯语义改写有限；分词策略影响排序。"
+        ],
+        "metrics": [
+          "recall_at_k",
+          "mrr_at_k",
+          "p95_ms"
+        ],
+        "name": "中文技术记忆 bm25",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "task": "memory_retrieval"
+      }
+    ],
+    "lessons": [
+      {
+        "node_id": "lesson_20261012T051049_a8598345_bm25_r0",
+        "algorithm": "bm25",
+        "origin": "failed validation; advice is not a verified fix",
+        "repair_instructions": [
+          "恢复有效命中返回，检查空输入、top_k、排序与相同输入一致性。"
+        ],
+        "scope": "memory_retrieval",
+        "summary": "验证器发现：functional: exact memory text must retrieve its own ID first; metric: recall_at_k=0.000 below 0.750; metric: mrr_at_k=0.000 below 0.650",
+        "validated_fix": false
+      },
+      {
+        "node_id": "lesson_20261012T051049_a8598345_bm25_r1",
+        "algorithm": "bm25",
+        "origin": "failed validation; advice is not a verified fix",
+        "repair_instructions": [
+          "恢复有效命中返回，检查空输入、top_k、排序与相同输入一致性。"
+        ],
+        "scope": "memory_retrieval",
+        "summary": "验证器发现：stability: fresh process returned different results",
+        "validated_fix": false
+      }
+    ],
+    "historical_validations": [
+      {
+        "node_id": "validation_20261012T051049_a8598345_tfidf_r0",
+        "passed": true,
+        "metrics": {
+          "mrr_at_k": 1.0,
+          "p95_ms": 3.6246312083676444,
+          "recall_at_k": 1.0
+        },
+        "errors": []
+      },
+      {
+        "node_id": "validation_20261012T051049_a8598345_bm25_r0",
+        "passed": false,
+        "metrics": {
+          "mrr_at_k": 0.0,
+          "p95_ms": 0.5331330117769536,
+          "recall_at_k": 0.0
+        },
+        "errors": [
+          "functional: exact memory text must retrieve its own ID first",
+          "metric: recall_at_k=0.000 below 0.750",
+          "metric: mrr_at_k=0.000 below 0.650"
+        ]
+      },
+      {
+        "node_id": "validation_20261012T051049_a8598345_bm25_r1",
+        "passed": false,
+        "metrics": {
+          "mrr_at_k": 1.0,
+          "p95_ms": 0.5455670994706449,
+          "recall_at_k": 1.0
+        },
+        "errors": [
+          "stability: fresh process returned different results"
+        ]
+      },
+      {
+        "node_id": "validation_20261012T051049_a8598345_bm25_r2",
+        "passed": false,
+        "metrics": {
+          "mrr_at_k": 1.0,
+          "p95_ms": 0.5286642583087084,
+          "recall_at_k": 1.0
+        },
+        "errors": [
+          "stability: fresh process returned different results"
+        ]
+      }
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "enum": [
+              "tfidf",
+              "bm25"
+            ],
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "capability_id": {
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "algorithm",
+          "capability_id",
+          "rationale"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/Candidate"
+        },
+        "maxItems": 2,
+        "minItems": 1,
+        "title": "Candidates",
+        "type": "array"
+      },
+      "design_explanation": {
+        "title": "Design Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "candidates",
+      "design_explanation"
+    ],
+    "title": "Plan",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "candidates": [
+      {
+        "algorithm": "tfidf",
+        "capability_id": "char_tfidf_2e0165db",
+        "rationale": "来自材料的适用条件：适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+      },
+      {
+        "algorithm": "bm25",
+        "capability_id": "char_bm25_aeefc74e",
+        "rationale": "来自材料的适用条件：适用：不同长度的技术笔记、包含明确组件名或故障词的查询。"
+      }
+    ],
+    "design_explanation": "比较字符 TF-IDF 与 BM25，按可信验证集指标选择通过检查的方案。"
+  },
+  "duration_seconds": 0.00031295791268348694
+}

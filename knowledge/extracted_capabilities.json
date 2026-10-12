@@ -1,0 +1,64 @@
+[
+  {
+    "id": "char_bm25_149eb7835529",
+    "name": "中文技术记忆 bm25",
+    "task": "memory_retrieval",
+    "algorithm": "bm25",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "不同长度的技术笔记、包含明确组件名或故障词的查询。"
+    ],
+    "metrics": [
+      "recall_at_k",
+      "mrr_at_k",
+      "p95_ms"
+    ],
+    "dependencies": [
+      "Python stdlib"
+    ],
+    "limitations": [
+      "局限：词面匹配对纯语义改写有限；分词策略影响排序。"
+    ],
+    "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+    "evidence": "适用：不同长度的技术笔记、包含明确组件名或故障词的查询。"
+  },
+  {
+    "id": "char_tfidf_5330da4c2476",
+    "name": "中文技术记忆 tfidf",
+    "task": "memory_retrieval",
+    "algorithm": "tfidf",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+    ],
+    "metrics": [
+      "recall_at_k",
+      "mrr_at_k",
+      "p95_ms"
+    ],
+    "dependencies": [
+      "scikit-learn"
+    ],
+    "limitations": [
+      "局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。"
+    ],
+    "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+    "evidence": "适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+  }
+]

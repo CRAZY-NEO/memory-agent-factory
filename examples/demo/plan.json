@@ -1,0 +1,15 @@
+{
+  "candidates": [
+    {
+      "algorithm": "tfidf",
+      "capability_id": "char_tfidf_2e0165db",
+      "rationale": "来自材料的适用条件：适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+    },
+    {
+      "algorithm": "bm25",
+      "capability_id": "char_bm25_aeefc74e",
+      "rationale": "来自材料的适用条件：适用：不同长度的技术笔记、包含明确组件名或故障词的查询。"
+    }
+  ],
+  "design_explanation": "比较字符 TF-IDF 与 BM25，按可信验证集指标选择通过检查的方案。"
+}
