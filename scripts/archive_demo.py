@@ -11,12 +11,17 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("run_id")
+    parser.add_argument("--workspace", type=Path, default=ROOT)
+    parser.add_argument("--output-name", choices=["demo", "ollama-demo"], default="demo")
     arguments = parser.parse_args()
-    source = ROOT / "runs" / arguments.run_id
+    if Path(arguments.run_id).name != arguments.run_id:
+        raise ValueError("run_id must be a directory name")
+    workspace = arguments.workspace.resolve()
+    source = workspace / "runs" / arguments.run_id
     report = json.loads((source / "report.json").read_text(encoding="utf-8"))
     if report["status"] != "passed":
         raise ValueError("Only archive a completed successful demo")
-    destination = ROOT / "examples" / "demo"
+    destination = ROOT / "examples" / arguments.output_name
     if destination.exists():
         # Only the repository-owned generated demo is replaced, never user's run history.
         shutil.rmtree(destination)
@@ -24,7 +29,8 @@ def main():
     for path in destination.rglob("*"):
         if path.is_file():
             text = path.read_text(encoding="utf-8")
-            text = text.replace(str(source), "examples/demo").replace(str(ROOT), ".")
+            text = text.replace(str(source), f"examples/{arguments.output_name}")
+            text = text.replace(str(workspace), ".").replace(str(ROOT), ".")
             path.write_text(text, encoding="utf-8")
     print(destination)
 

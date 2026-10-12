@@ -80,6 +80,11 @@ class KnowledgeStore:
         order = sorted(range(len(scores)), key=lambda i: (-scores[i], capabilities[i]["id"]))
         selected = [capabilities[i] for i in order[:limit]]
         graph = self.graph()
+        # Include the verified source text so generation receives actual algorithm
+        # formulas and tokenization details, beyond capability labels and metadata.
+        source_ids = sorted({cap["source_id"] for cap in selected})
+        sources = [{"source_id": uid, "text": graph.nodes[uid]["payload"]["text"]}
+                   for uid in source_ids]
         lessons = []
         histories = []
         for cap in selected:
@@ -94,7 +99,7 @@ class KnowledgeStore:
                                           "metrics": payload["metrics"], "errors": payload["errors"]})
         lessons = list({row["node_id"]: row for row in lessons}.values())
         histories = list({row["node_id"]: row for row in histories}.values())
-        return {"capabilities": selected, "lessons": lessons[-6:],
+        return {"capabilities": selected, "sources": sources, "lessons": lessons[-6:],
                 "historical_validations": histories[-6:]}
 
     def export(self, directory):

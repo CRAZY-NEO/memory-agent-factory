@@ -1,0 +1,39 @@
+{
+  "split": "validation",
+  "passed": false,
+  "errors": [
+    "v01: NameError: name 're' is not defined",
+    "v02: NameError: name 're' is not defined",
+    "v03: NameError: name 're' is not defined",
+    "v04: NameError: name 're' is not defined",
+    "v05: NameError: name 're' is not defined",
+    "v06: NameError: name 're' is not defined",
+    "v07: NameError: name 're' is not defined",
+    "v08: NameError: name 're' is not defined",
+    "v09: NameError: name 're' is not defined",
+    "v10: NameError: name 're' is not defined",
+    "v11: NameError: name 're' is not defined",
+    "v12: NameError: name 're' is not defined",
+    "contract:exact: NameError: name 're' is not defined",
+    "contract:repeat: NameError: name 're' is not defined",
+    "contract:large_k: NameError: name 're' is not defined",
+    "contract:unicode: NameError: name 're' is not defined"
+  ],
+  "metrics": {},
+  "top_k": 5,
+  "query_count": 12,
+  "memory_count": 24,
+  "execution": {
+    "wall_seconds": 0.2777094580233097,
+    "runner": "docker"
+  },
+  "gates": {
+    "task": "memory_retrieval",
+    "min_recall": 0.75,
+    "min_mrr": 0.65,
+    "max_p95_ms": 1000.0,
+    "timeout_seconds": 30.0,
+    "max_repairs": 2
+  },
+  "per_query": []
+}

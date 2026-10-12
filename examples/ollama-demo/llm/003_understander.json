@@ -1,0 +1,60 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "understander",
+  "context": {
+    "description": "请为软件研发人员的个人技术记忆库生成中文与英文混合检索算法。输入 query、memories 和 top_k，返回相关记忆的 ID 和分数，默认返回前 5 条。比较 TF-IDF 和 BM25，验证检索效果、空输入行为、接口规范与运行稳定性，保留验证通过的实现用于未来个人记忆系统。\n"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "const": "memory_retrieval",
+        "title": "Task",
+        "type": "string"
+      },
+      "description": {
+        "minLength": 1,
+        "title": "Description",
+        "type": "string"
+      },
+      "language": {
+        "enum": [
+          "zh",
+          "mixed"
+        ],
+        "title": "Language",
+        "type": "string"
+      },
+      "top_k": {
+        "maximum": 20,
+        "minimum": 1,
+        "title": "Top K",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "task",
+      "description",
+      "language",
+      "top_k"
+    ],
+    "title": "Request",
+    "type": "object"
+  },
+  "retry": 0,
+  "raw_content": "{\"task\": \"memory_retrieval\", \"description\": \"为软件研发人员的个人技术记忆库生成中文与英文混合检索算法。输入 query、memories 和 top_k，返回相关记忆的 ID 和分数，默认返回前 5 条。比较 TF-IDF 和 BM25，验证检索效果、空输入行为、接口规范与运行稳定性，保留验证通过的实现用于未来个人记忆系统。\", \"language\": \"zh\", \"top_k\": 5}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 287,
+    "eval_count": 104,
+    "total_duration": 4243495278
+  },
+  "response": {
+    "task": "memory_retrieval",
+    "description": "为软件研发人员的个人技术记忆库生成中文与英文混合检索算法。输入 query、memories 和 top_k，返回相关记忆的 ID 和分数，默认返回前 5 条。比较 TF-IDF 和 BM25，验证检索效果、空输入行为、接口规范与运行稳定性，保留验证通过的实现用于未来个人记忆系统。",
+    "language": "zh",
+    "top_k": 5
+  },
+  "duration_seconds": 4.275626209098846
+}

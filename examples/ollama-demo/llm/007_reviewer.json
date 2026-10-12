@@ -1,0 +1,96 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "reviewer",
+  "context": {
+    "candidate": {
+      "algorithm": "bm25",
+      "capability_id": "char_bm25_5d58173937bf",
+      "rationale": "BM25 适用于不同长度的技术笔记，对包含明确组件名或故障词的查询效果更佳，依赖 Python 标准库，适合需要精确匹配的场景。"
+    },
+    "code": "def retrieve(query, memories, top_k=5):\n    \"\"\"Compute nonnegative BM25 scores and break score ties by memory ID.\"\"\"\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    corpus = [tokenize(memory[\"text\"]) for memory in memories]\n    average_length = sum(map(len, corpus)) / len(corpus) or 1\n    document_frequency = Counter(token for tokens in corpus for token in set(tokens))\n    # Sorting also stabilizes floating-point accumulation across interpreter hash seeds.\n    query_tokens = sorted(set(tokenize(query)))\n    k1, b = 1.5, 0.75\n    hits = []\n    for memory, tokens in zip(memories, corpus):\n        frequencies = Counter(tokens)\n        score = 0.0\n        for token in query_tokens:\n            frequency = frequencies[token]\n            if not frequency:\n                continue\n            df = document_frequency[token]\n            idf = math.log(1 + (len(corpus) - df + 0.5) / (df + 0.5))\n            denominator = frequency + k1 * (1 - b + b * len(tokens) / average_length)\n            score += idf * frequency * (k1 + 1) / denominator\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": score})\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n\n\ndef tokenize(text):\n    \"\"\"Simple deterministic tokenization avoids a heavyweight Chinese segmenter.\"\"\"\n    english = re.findall(r\"[a-z0-9_]+\", text.lower())\n    chinese = re.findall(r\"[\\u4e00-\\u9fff]+\", text)\n    tokens = list(english)\n    for fragment in chinese:\n        tokens.extend(list(fragment))\n        tokens.extend(fragment[index:index + 2] for index in range(len(fragment) - 1))\n    return tokens\n",
+    "validation": {
+      "split": "validation",
+      "passed": false,
+      "errors": [
+        "v01: NameError: name 're' is not defined",
+        "v02: NameError: name 're' is not defined",
+        "v03: NameError: name 're' is not defined",
+        "v04: NameError: name 're' is not defined",
+        "v05: NameError: name 're' is not defined",
+        "v06: NameError: name 're' is not defined",
+        "v07: NameError: name 're' is not defined",
+        "v08: NameError: name 're' is not defined",
+        "v09: NameError: name 're' is not defined",
+        "v10: NameError: name 're' is not defined",
+        "v11: NameError: name 're' is not defined",
+        "v12: NameError: name 're' is not defined",
+        "contract:exact: NameError: name 're' is not defined",
+        "contract:repeat: NameError: name 're' is not defined",
+        "contract:large_k: NameError: name 're' is not defined",
+        "contract:unicode: NameError: name 're' is not defined"
+      ],
+      "metrics": {},
+      "top_k": 5,
+      "query_count": 12,
+      "memory_count": 24,
+      "execution": {
+        "wall_seconds": 0.2777094580233097,
+        "runner": "docker"
+      },
+      "gates": {
+        "task": "memory_retrieval",
+        "min_recall": 0.75,
+        "min_mrr": 0.65,
+        "max_p95_ms": 1000.0,
+        "timeout_seconds": 30.0,
+        "max_repairs": 2
+      },
+      "per_query": []
+    }
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "repair_instructions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 6,
+        "minItems": 1,
+        "title": "Repair Instructions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "summary",
+      "repair_instructions"
+    ],
+    "title": "Diagnosis",
+    "type": "object"
+  },
+  "retry": 0,
+  "raw_content": "{\"summary\":\"代码中多次使用未定义的 're' 模块，导致 NameError 异常。\",\"repair_instructions\":[\"导入 Python 标准库的 're' 模块以定义正则表达式函数。\",\"检查代码中所有使用 're' 的地方，确保已正确导入。\",\"移除或注释掉未使用的正则表达式代码块。\",\"验证 're' 模块在文件顶部是否已正确导入。\",\"确认正则表达式模式语法符合 Python 标准库要求。\",\"检查是否有其他依赖 're' 的第三方库被错误地引用。\"]}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 1152,
+    "eval_count": 119,
+    "total_duration": 5533126461
+  },
+  "response": {
+    "summary": "代码中多次使用未定义的 're' 模块，导致 NameError 异常。",
+    "repair_instructions": [
+      "导入 Python 标准库的 're' 模块以定义正则表达式函数。",
+      "检查代码中所有使用 're' 的地方，确保已正确导入。",
+      "移除或注释掉未使用的正则表达式代码块。",
+      "验证 're' 模块在文件顶部是否已正确导入。",
+      "确认正则表达式模式语法符合 Python 标准库要求。",
+      "检查是否有其他依赖 're' 的第三方库被错误地引用。"
+    ]
+  },
+  "duration_seconds": 5.74617650010623
+}

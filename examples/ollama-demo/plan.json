@@ -1,0 +1,15 @@
+{
+  "candidates": [
+    {
+      "algorithm": "tfidf",
+      "capability_id": "char_tfidf_e5ef71f95357",
+      "rationale": "TF-IDF 适用于小规模中文与英文混合笔记，能处理词面相近的排错记录和项目决策，依赖 scikit-learn 库，适合原型快速构建。"
+    },
+    {
+      "algorithm": "bm25",
+      "capability_id": "char_bm25_5d58173937bf",
+      "rationale": "BM25 适用于不同长度的技术笔记，对包含明确组件名或故障词的查询效果更佳，依赖 Python 标准库，适合需要精确匹配的场景。"
+    }
+  ],
+  "design_explanation": "为软件研发人员的个人技术记忆库生成中文与英文混合检索算法，比较 TF-IDF 和 BM25 两种算法。TF-IDF 基于词频和逆文档频率，适合处理混合语言且词面相近的记录；BM25 基于词频和文档长度，适合精确匹配组件名或故障词。两种算法均支持空输入返回空列表，并保留 ID 排序规则。"
+}

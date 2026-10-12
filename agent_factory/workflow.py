@@ -105,6 +105,11 @@ class Factory:
     def _generate(self, state):
         candidate = state["plan"]["candidates"][state["candidate_index"]]
         context = {"request": state["request"], "candidate": candidate, **state["knowledge"]}
+        reference = Path(__file__).with_name("templates") / f"{candidate['algorithm']}.py"
+        reference_code = reference.read_text(encoding="utf-8")
+        context["reference_example"] = {"algorithm": candidate["algorithm"],
+                                        "source": f"agent_factory/templates/{reference.name}",
+                                        "sha256": digest(reference_code), "code": reference_code}
         role = "coder"
         if state["revision"]:
             role = "repairer"

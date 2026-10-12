@@ -65,7 +65,7 @@ class CodeArtifact(Contract):
 
 class Diagnosis(Contract):
     summary: str
-    repair_instructions: list[str] = Field(min_length=1)
+    repair_instructions: list[str] = Field(min_length=1, max_length=6)
 
 
 class Hit(Contract):

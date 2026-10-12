@@ -4,7 +4,7 @@
 
 工厂输入是“生成一个中文技术记忆检索算法”，产物为 Python 代码、依赖说明、验证报告与版本历史。生成的插件输入查询和记忆列表，输出相关记忆的 ID 与得分，可用于后续个人记忆系统。
 
-**当前可运行模式**：离线 mock/规则模板演示，以及 Jetson Ollama 原生 API 接入。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。Jetson 部署使用你提供的 `qwen3.5:2b` 配置，真实设备运行尚待实测。
+**当前可运行模式**：离线 mock/规则模板演示，以及远端 Ollama 原生 API 接入。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。已通过本机 11435 转发接口调用 `qwen3.5:2b`，完成真实模型抽取、两候选生成、一次 BM25 修复、Docker 验证及知识回写，见 [真实模型报告](examples/ollama-demo/report.md)。工厂和算法执行容器运行在 Mac；远端硬件与 SSH 隧道由用户管理。
 
 ## 1. 快速开始
 
@@ -133,40 +133,35 @@ agent-factory validate --code examples/demo/selected_retrieval.py --runner local
 
 ## 6. 接入 Jetson Ollama
 
-电脑负责工作流与评估，Jetson 只运行 Ollama 模型服务。请填入自己的地址与已安装模型名称。
+电脑负责工作流、Docker 验证和知识库，Jetson 只运行 Ollama 模型服务。当前通过 SSH 隧道访问已安装的 `qwen3.5:2b`，本机转发端口为 11435。详细说明见 [Mac + Jetson Ollama 运行指南](docs/mac-jetson-ollama.md)。
 
 ```bash
 # 第一次准备执行镜像，需要 Docker 正常运行
 docker build -f Dockerfile.runner -t agent-factory-runner:0.1 .
 
-# 用真实模型从材料抽取能力，检查返回的原文证据
-agent-factory ingest --provider ollama \
-  --base-url http://JETSON_IP:11434 --model YOUR_INSTALLED_MODEL
-
-# 用真实模型生成/修复算法，默认 Docker 执行
-agent-factory --verbose run --provider ollama \
-  --base-url http://JETSON_IP:11434 --model YOUR_INSTALLED_MODEL \
-  --request-file examples/request.txt
+# 保持 SSH 隧道连接，首次抽取能力知识后运行完整流程
+# 单独使用 state/ollama-real 保存真实模型知识库与结果
+bash scripts/run_ollama_demo.sh
 ```
 
-使用 Ollama 原生 `/api/chat`，`stream=false`，`format` 为当前角色 JSON schema。
+使用 Ollama 原生 `/api/chat`，`stream=false`，`think=false`，`format` 为当前角色 JSON schema；schema 同时进入角色提示词。默认上下文 8192、输出上限 4096 token，单次 HTTP 等待上限 600 秒，最多尝试两次。原始响应、结束原因、token 用量和耗时均记录在本次 `llm/` 目录。
+代码角色使用 4096 输出 token 上限，其他角色使用 1024；诊断最多六条建议。生成与修复上下文包含检索到的原始算法材料及对应基线代码示例，模型返回完整复刻代码，系统不以模板替换无效响应。参考示例来源及哈希一同保存，明确区分示例辅助复刻和从零算法创新。
 CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变量。
 每次响应由 Pydantic 验证，无效 JSON、服务错误最多重试一次并保留错误。
 某次调用失败不会自动切换 mock 并宣称 LLM 成功。
 若电脑无法访问，先检查监听地址、局域网连接与防火墙；服务地址和模型未给定前，不能报告真实模型实测结果。
 若明确接受本机代码执行边界，可加 `--runner local --allow-local`；默认推荐 Docker。
 
-部署方式与你的 Memority 项目衔接：**App → 本项目 HTTPS 业务接口 → Jetson worker → Ollama**。
-FastAPI 网关可使用 `compose.yaml`，长任务由 Jetson 宿主 worker 执行。网关容器不用管理宿主 Docker。
-`host.docker.internal` 仅适用于 Jetson 容器；宿主 worker 使用 `127.0.0.1`。当前无需 embedding 模型。
-配置、启动和业务接口详见 [Jetson 部署指南](docs/jetson-deployment.md)。
+当前运行结构是 **Mac 工厂 → SSH 隧道 → Jetson Ollama**，算法执行容器和产物均在 Mac。
+未来若需要将整个后端迁移到 Jetson，可使用 FastAPI 队列网关及 Jetson 宿主 worker；这是另一种部署方式，配置、启动和接口详见 [Jetson 后端部署指南](docs/jetson-deployment.md)。当前无需 embedding 模型。
 
 ## 7. 完整示例与验证报告
 
 [示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
 
 报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
-当前 27 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。两者都明确使用 mock，未宣称完成真实 Jetson 模型运行。
+当前 28 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
+真实模型例子见 [Ollama 完整报告](examples/ollama-demo/report.md)、[候选规划](examples/ollama-demo/plan.json)、[BM25 首版与修订](examples/ollama-demo/bm25/)、[模型调用记录](examples/ollama-demo/llm/) 和 [最终插件](examples/ollama-demo/selected_retrieval.py)。2026-10-12 的样例调用八次模型；TF-IDF 首版通过，BM25 首版因缺少 `re` 导入失败，模型根据真实错误修复后通过。选定 BM25 修订版的最终测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；这些数值只描述 24 条模拟记忆与 10 条最终测试查询。
 所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
 显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
 
