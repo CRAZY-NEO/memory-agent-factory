@@ -16,6 +16,7 @@
 | 能力知识 | knowledge.py | 材料抽取、原文证据检查、SQLite 版本存储、词面检索及图遍历 |
 | 编排 | workflow.py | LangGraph 状态、角色交接、分支、修复预算、冻结候选与结果回写 |
 | 执行边界 | safety.py、runner.py、worker.py | AST 策略、无标注输入、限时进程、Docker 隔离选项 |
+| 修复支持 | repair.py | 专属上下文、可信失败定位、AST 进展检查、哈希校验的历史失败重放 |
 | 可信验证 | validation.py | 输入数据检查、接口/功能/稳定性、注册指标（Recall/MRR/Precision/P95）、配置门槛 |
 | 结果交付 | reporting.py、runtime.py、visualization.py | 报告、可复用插件适配器、图谱导出 |
 | 业务接口 | api.py、jobs.py、job_worker.py | token 鉴权、输入限制、持久任务队列、租约与宿主 worker |
@@ -68,3 +69,5 @@ Docker 共用宿主内核，不等同于独立虚拟机；生产场景可升级�
 mock 默认 local，为可查看的仓库模板提供简单复现。local 使用独立进程、清理环境、超时与资源限制，
 仍不能可靠阻止恶意代码接触宿主资源。真实模型默认 Docker，使用 local 必须显式 `--allow-local`。
 LLM 不能更改验证器、数据标注、阈值或发布条件。模型服务错误不会自动伪装成 mock 成功。
+
+新生成只传入当前算法能力；错误行及参考实现参与审查，重复实现被拒绝，最后一轮从参考示例重新复刻。公开算法契约检查具体评分公式。详情见 generation-repair.md。

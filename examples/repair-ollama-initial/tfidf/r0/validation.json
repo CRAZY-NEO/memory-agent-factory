@@ -1,0 +1,119 @@
+{
+  "split": "validation",
+  "passed": false,
+  "errors": [
+    "v01: IndexError: list index out of range",
+    "v02: IndexError: list index out of range",
+    "v03: IndexError: list index out of range",
+    "v04: IndexError: list index out of range",
+    "v05: IndexError: list index out of range",
+    "v06: IndexError: list index out of range",
+    "v07: IndexError: list index out of range",
+    "v08: IndexError: list index out of range",
+    "v09: IndexError: list index out of range",
+    "v10: IndexError: list index out of range",
+    "v11: IndexError: list index out of range",
+    "v12: IndexError: list index out of range",
+    "contract:exact: IndexError: list index out of range",
+    "contract:repeat: IndexError: list index out of range",
+    "contract:large_k: IndexError: list index out of range",
+    "contract:unicode: IndexError: list index out of range",
+    "contract:algorithm:0: IndexError: list index out of range"
+  ],
+  "metrics": {},
+  "top_k": 5,
+  "query_count": 12,
+  "memory_count": 24,
+  "execution": {
+    "wall_seconds": 1.0138669579755515,
+    "runner": "docker"
+  },
+  "gates": {
+    "task": "memory_retrieval",
+    "algorithms": [
+      "tfidf",
+      "bm25",
+      "jaccard"
+    ],
+    "plugin_packages": [],
+    "max_candidates": 3,
+    "compare_all_algorithms": true,
+    "metrics": {
+      "recall_at_k": {
+        "min": 0.75,
+        "max": null
+      },
+      "mrr_at_k": {
+        "min": 0.65,
+        "max": null
+      },
+      "precision_at_k": {
+        "min": 0.2,
+        "max": null
+      },
+      "p95_ms": {
+        "min": null,
+        "max": 1000.0
+      }
+    },
+    "selection_order": [
+      "recall_at_k",
+      "mrr_at_k",
+      "precision_at_k"
+    ],
+    "timeout_seconds": 30.0,
+    "max_repairs": 2
+  },
+  "per_query": [],
+  "metric_plugins": [
+    {
+      "id": "recall_at_k",
+      "name": "Recall@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "mrr_at_k",
+      "name": "MRR@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "precision_at_k",
+      "name": "Precision@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "p95_ms",
+      "name": "P95 ms",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "lower",
+      "minimum": 0,
+      "maximum": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "error": "IndexError: list index out of range",
+      "frames": [
+        {
+          "line": 57,
+          "function": "retrieve",
+          "source": "                'id': memories[i]['id'],"
+        }
+      ],
+      "count": 17
+    }
+  ]
+}

@@ -18,7 +18,7 @@ agent_factory/templates/*.py               # 可检查的算法参考实现
 
 | 契约 | 必要信息 |
 | --- | --- |
-| AlgorithmSpec | id、name、version、task、material、reference、guidance；可选 dependencies、environment |
+| AlgorithmSpec | id、name、version、task、material、reference、guidance；可选 dependencies、environment、public_cases |
 | MetricSpec | id、name、version、task、direction、compute；可选 minimum、maximum |
 | MetricContext | predictions、queries（含可信相关 ID）、top_k、durations_ms |
 
@@ -30,9 +30,9 @@ ID 使用小写字母开头及小写字母/数字/下划线。算法当前只支
 
 | 类型 | ID | 版本 | 含义 |
 | --- | --- | --- | --- |
-| 算法 | tfidf | 1.0.0 | 字符 TF-IDF 与余弦相似度 |
+| 算法 | tfidf | 1.0.1 | 字符 TF-IDF 与余弦相似度，含公开评分契约 |
 | 算法 | bm25 | 1.0.0 | 中文单字/双字及英文词 BM25 |
-| 算法 | jaccard | 1.0.0 | 中文单字/双字及英文词的集合相似度 |
+| 算法 | jaccard | 1.0.1 | 中文单字/双字及英文词的集合相似度，含中英文契约 |
 | 指标 | recall_at_k | 1.0.0 | 平均 Recall@k，越高越好 |
 | 指标 | mrr_at_k | 1.0.0 | 平均首个相关结果的倒数排名，越高越好 |
 | 指标 | precision_at_k | 1.0.0 | 平均 Precision@k，越高越好 |
@@ -178,3 +178,5 @@ bash scripts/run_tests.sh -q
 报告保留算法/指标版本、配置、所有修订、实际测量、模型调用和失败信息。知识回写保留 `plugin_catalog` 与指标元数据；发布的 `plugin.json` 保存选定算法的版本和依赖。
 
 生成代码的质量依赖模型响应。候选集合约束加强后仍可能遇到实现或验证失败，应保留实际报告；系统不会用模板替换失败的真实响应。
+
+算法还可声明 public_cases（query/memories/top_k/expected），作为公开公式契约，自动进入生成提示与可信验证。新增评分逻辑宜加入手算样例。改进的修复流程及历史重放见 generation-repair.md；独立 CLI validate 可使用 --algorithm jaccard 启用对应公式检查。

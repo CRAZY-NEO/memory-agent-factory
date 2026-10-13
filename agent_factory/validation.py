@@ -59,7 +59,7 @@ def check_result(observation, case):
     return hits
 
 
-def validate(code, runner, memories, queries, top_k, config, split="validation", registry=None):
+def validate(code, runner, memories, queries, top_k, config, split="validation", registry=None, algorithm=None):
     """The worker never sees labels. Gates cannot be changed by reviewer/coder agents."""
     registry = registry or load_registry(config.plugin_packages)
     registry.validate_config(config)
@@ -78,6 +78,9 @@ def validate(code, runner, memories, queries, top_k, config, split="validation",
                   case("contract:repeat", queries[0]["query"]),
                   case("contract:large_k", anchor["text"], k=len(memories) + 10),
                   case("contract:unicode", "中文 Python 数据库 🧠")])
+    public_cases = registry.algorithm(algorithm).public_cases if algorithm else ()
+    for index, example in enumerate(public_cases):
+        cases.append(case(f'contract:algorithm:{index}', example['query'], example['memories'], example['top_k']))
     raw = runner.execute(code, cases)
     errors = []
     report = {"split": split, "passed": False, "errors": errors, "metrics": {},
@@ -92,6 +95,16 @@ def validate(code, runner, memories, queries, top_k, config, split="validation",
     if [row.get("case_id") for row in observations] != [row["case_id"] for row in cases]:
         errors.append("worker returned missing, reordered or duplicate cases")
         return report
+    # Deduplicate exception evidence while retaining the exact generated source line.
+    grouped = {}
+    for observation in observations:
+        if 'error' in observation:
+            signature = (observation['error'], json.dumps(observation.get('error_frames', []), sort_keys=True))
+            if signature not in grouped:
+                grouped[signature] = {'error': observation['error'],
+                                      'frames': observation.get('error_frames', []), 'count': 0}
+            grouped[signature]['count'] += 1
+    report['diagnostics'] = list(grouped.values())[:8]
     results = {}
     for observation, input_case in zip(observations, cases):
         try:
@@ -112,6 +125,13 @@ def validate(code, runner, memories, queries, top_k, config, split="validation",
             errors.append("stability: fresh process returned different results")
     except (ValueError, KeyError, IndexError, TypeError, ValidationError) as exc:
         errors.append("stability: fresh process failed: " + str(exc)[:1000])
+    for index, example in enumerate(public_cases):
+        actual = results[f'contract:algorithm:{index}']
+        expected = example['expected']
+        if [hit['id'] for hit in actual] != [hit['id'] for hit in expected] or any(
+                not math.isclose(hit['score'], target['score'], rel_tol=1e-8, abs_tol=1e-8)
+                for hit, target in zip(actual, expected)):
+            errors.append(f'algorithm contract: {algorithm} public example {index} scores or ranking mismatch')
     # Timing includes index construction; excludes interpreter/import startup.
     context = MetricContext(results, queries, top_k,
                             tuple(row["duration_ms"] for row in observations[:len(queries)]))

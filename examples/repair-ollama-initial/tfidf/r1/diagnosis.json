@@ -1,0 +1,21 @@
+{
+  "summary": "代码中未导入正则表达式模块 're'，导致在提取查询词时抛出 NameError 异常，使检索功能无法正常运行。",
+  "repair_instructions": [
+    "在文件顶部添加 import re; 以修复未导入正则表达式的错误。"
+  ],
+  "trusted_findings": [],
+  "execution_diagnostics": [
+    {
+      "error": "NameError: name 're' is not defined",
+      "frames": [
+        {
+          "line": 16,
+          "function": "retrieve",
+          "source": "        token_clean = re.sub(r'[^a-z0-9_]', '', token)"
+        }
+      ],
+      "count": 17
+    }
+  ],
+  "unchanged_previous_repair": false
+}

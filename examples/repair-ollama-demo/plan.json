@@ -1,0 +1,20 @@
+{
+  "candidates": [
+    {
+      "algorithm": "tfidf",
+      "capability_id": "char_tfidf_6fbe483b4556",
+      "rationale": "TF-IDF 适用于词面相近的排错记录和项目决策，能处理小规模中文与英文混合笔记，依赖 scikit-learn 库。"
+    },
+    {
+      "algorithm": "bm25",
+      "capability_id": "char_bm25_3819f381772f",
+      "rationale": "BM25 适合包含明确组件名或故障词的查询，结合词频与逆文档频率，依赖 Python 标准库。"
+    },
+    {
+      "algorithm": "jaccard",
+      "capability_id": "char_jaccard_e1ac25927248",
+      "rationale": "Jaccard 轻量且可解释，仅约束集合重合，适合需要轻量且可解释的词集合重合检索，依赖 Python 标准库。"
+    }
+  ],
+  "design_explanation": "为个人技术记忆库复刻检索算法，分别生成 TF-IDF、BM25、Jaccard 三个独立候选并比较三者，覆盖用户要求比较的所有已启用算法。"
+}

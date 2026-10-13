@@ -17,6 +17,7 @@ from .knowledge import KnowledgeStore, digest, ingest_sources
 from .llm import LLMClient, LLMError
 from .models import CodeArtifact, Diagnosis, Plan, Request, ValidationConfig
 from .registry import load_registry
+from .repair import code_fingerprint, focused_context, static_findings, validation_feedback
 from .reporting import write_report
 from .runner import Runner
 from .validation import load_dataset, validate
@@ -34,6 +35,8 @@ class FactoryState(TypedDict, total=False):
     code: str
     code_explanation: str
     generation_error: str | None
+    generation: dict
+    initial_codes: dict
     validation: dict
     diagnosis: dict
     attempts: list[dict]
@@ -69,6 +72,7 @@ class Factory:
                             "dependencies": {name: version(name) for name in
                                              ["langgraph", "pydantic", "scikit-learn", "networkx"]},
                             "runner": self.runner_mode,
+                            "worker_sha256": digest(Path(__file__).with_name("worker.py").read_text()),
                             "docker_image": self.runner.image if self.runner_mode == "docker" else None}
         self.environment_id = "environment_" + digest(json.dumps(self.environment, sort_keys=True))
 
@@ -121,32 +125,47 @@ class Factory:
 
     def _generate(self, state):
         candidate = state["plan"]["candidates"][state["candidate_index"]]
-        context = {"request": state["request"], "candidate": candidate, **state["knowledge"]}
-        algorithm_plugin = self.registry.algorithm(candidate["algorithm"])
-        context["algorithm_plugin"] = algorithm_plugin.metadata()
-        reference = algorithm_plugin.reference
-        reference_code = reference.read_text(encoding="utf-8")
-        context["reference_example"] = {"algorithm": candidate["algorithm"],
-                                        "source": f"plugin:{algorithm_plugin.id}@{algorithm_plugin.version}",
-                                        "sha256": digest(reference_code), "code": reference_code}
-        role = "coder"
-        if state["revision"]:
-            role = "repairer"
-            context.update(previous_code=state["code"], diagnosis=state["diagnosis"],
-                           validation=state["validation"])
+        seed = state.get('initial_codes', {}).get(candidate['algorithm'])
+        if state['revision'] == 0 and seed:
+            return {'code': seed['code'], 'code_explanation': '重放已校验哈希的历史失败代码，等待真实模型修复',
+                    'generation_error': None, 'generation': {'strategy': 'historical_replay',
+                    'source_run': seed['source_run'], 'source_revision': seed['source_revision'],
+                    'source_hash': seed['source_hash'], 'unchanged': False}}
+        context = focused_context(state, self.registry)
+        role = 'coder'
+        strategy = 'reproduce_reference'
+        if state['revision']:
+            role = 'repairer'
+            strategy = 'rebuild_from_reference' if state['revision'] >= 2 else 'targeted_repair'
+            context.update(repair_strategy=strategy, diagnosis=state['diagnosis'],
+                           validation=validation_feedback(state['validation']))
+            if strategy == 'targeted_repair':
+                context['previous_code'] = state['code']
+            else:
+                # Do not anchor the final repair on the repeatedly failing implementation.
+                context['failed_code_hash'] = digest(state['code'])
+        context['repair_strategy'] = strategy
         try:
             artifact = self.client.ask(role, context, CodeArtifact)
-            return {"code": artifact.code, "code_explanation": artifact.explanation, "generation_error": None}
+            unchanged = bool(state['revision'] and code_fingerprint(artifact.code) == code_fingerprint(state['code']))
+            return {'code': artifact.code, 'code_explanation': artifact.explanation, 'generation_error': None,
+                    'generation': {'strategy': strategy, 'unchanged': unchanged,
+                                   'semantic_hash': code_fingerprint(artifact.code)}}
         except LLMError as exc:
-            return {"code": "", "code_explanation": "", "generation_error": str(exc)}
+            return {'code': '', 'code_explanation': '', 'generation_error': str(exc),
+                    'generation': {'strategy': strategy, 'unchanged': False}}
 
     def _validate(self, state):
         memories, queries = load_dataset(self.workspace / "data", "validation")
         report = validate(state["code"], self.runner, memories, queries,
-                          state["request"]["top_k"], self.config, registry=self.registry)
+                          state["request"]["top_k"], self.config, registry=self.registry,
+                          algorithm=state["plan"]["candidates"][state["candidate_index"]]["algorithm"])
         if state["generation_error"]:
             report["errors"].append(state["generation_error"])
             report["passed"] = False
+        if state.get('generation', {}).get('unchanged'):
+            report['errors'].append('repair: implementation unchanged apart from comments or docstrings')
+            report['passed'] = False
         candidate = state["plan"]["candidates"][state["candidate_index"]]
         algorithm, revision = candidate["algorithm"], state["revision"]
         directory = self.directory / algorithm / f"r{revision}"
@@ -159,7 +178,7 @@ class Factory:
         attempt = {"algorithm": algorithm, "revision": revision, "implementation_id": impl_id,
                    "capability_id": candidate["capability_id"], "parent": parent,
                    "code_hash": digest(state["code"]), "code_path": str(directory / "retrieval.py"),
-                   "explanation": state["code_explanation"], "validation": report}
+                   "explanation": state["code_explanation"], "generation": state.get("generation", {}), "validation": report}
         self.store.add_node(impl_id, "Implementation", {key: value for key, value in attempt.items() if key != "validation"})
         self.store.add_node(val_id, "ValidationRun", report)
         self.store.add_edge(candidate["capability_id"], impl_id, "realized_by")
@@ -181,12 +200,17 @@ class Factory:
 
     def _review(self, state):
         candidate = state["plan"]["candidates"][state["candidate_index"]]
-        context = {"candidate": candidate, "code": state["code"], "validation": state["validation"]}
+        context = focused_context(state, self.registry)
+        context.update(code=state['code'], validation=validation_feedback(state['validation']),
+                       trusted_findings=static_findings(state['code']))
         try:
             diagnosis = self.client.ask("reviewer", context, Diagnosis).model_dump()
         except LLMError as exc:
             diagnosis = {"summary": "Reviewer unavailable: " + str(exc),
                          "repair_instructions": state["validation"]["errors"]}
+        diagnosis['trusted_findings'] = context['trusted_findings']
+        diagnosis['execution_diagnostics'] = context['validation']['diagnostics']
+        diagnosis['unchanged_previous_repair'] = state.get('generation', {}).get('unchanged', False)
         lesson_id = f"lesson_{self.run_id}_{candidate['algorithm']}_r{state['revision']}"
         self.store.add_node(lesson_id, "Lesson", {**diagnosis, "scope": "memory_retrieval",
                                                  "algorithm": candidate["algorithm"],
@@ -228,7 +252,8 @@ class Factory:
             raise ValueError("Selected code changed before final test")
         memories, queries = load_dataset(self.workspace / "data", "test")
         report = validate(code, self.runner, memories, queries, state["request"]["top_k"],
-                          self.config, "test", registry=self.registry)
+                          self.config, "test", registry=self.registry,
+                          algorithm=state["selected"]["algorithm"])
         uid = "test_" + self.run_id
         self.store.add_node(uid, "ValidationRun", report)
         self.store.add_edge(state["selected"]["implementation_id"], uid, "tested_by")
@@ -248,6 +273,7 @@ class Factory:
                    "environment": self.environment, "dataset_hashes": files,
                    "validation_config": self.config.model_dump(), "llm_calls": self.client.calls,
                    "plugin_catalog": self.registry.catalog(self.config),
+                   "generation_policy": "focused-repair-v2",
                    "mock_fault_algorithm": self.client.fault_algorithm if self.client.inject_fault else None,
                    "workflow_events": state["events"] + ["persist"]}
         self.store.add_node("run_" + self.run_id, "FactoryRun", summary)
@@ -287,7 +313,7 @@ class Factory:
         builder.add_edge("persist", END)
         return builder.compile()
 
-    def run(self, description):
+    def run(self, description, initial_codes=None):
         try:
             if not description.strip():
                 raise ValueError("Empty capability description")
@@ -305,7 +331,8 @@ class Factory:
                                algorithm_ids=missing)
             graph = self.graph()
             (self.directory / "workflow.mmd").write_text(graph.get_graph().draw_mermaid(), encoding="utf-8")
-            state = graph.invoke({"description": description, "attempts": [], "events": []},
+            state = graph.invoke({"description": description, "attempts": [], "events": [],
+                                  "initial_codes": initial_codes or {}},
                                  config={"recursion_limit": 10 + self.config.max_candidates *
                                          (3 + 3 * self.config.max_repairs)})
             return {"status": state["status"], "run_id": self.run_id,

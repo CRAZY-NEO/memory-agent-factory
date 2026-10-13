@@ -1,0 +1,211 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "reviewer",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "请为个人技术记忆库复刻检索算法，分别生成 TF-IDF、BM25、Jaccard 三个独立候选并比较三者，不要只选择其中一个来生成。输入 query、memories、top_k，输出相关记忆 ID 与分数，默认前 5 条。每个候选使用自己的评分方法：TF-IDF 使用余弦相似度，BM25 使用词频与逆文档频率，Jaccard 使用词集合交并比；Jaccard 的集合规则仅约束 Jaccard 候选，不能用于排除 TF-IDF 或 BM25。三者都遵循各自的算法插件指导和参考示例。按配置评估 Recall@k、MRR@k、Precision@k 和 P95 查询耗时，同时检查接口、空输入及跨进程稳定性，选择验证通过的方案并将结果沉淀回知识库。\n",
+      "language": "zh",
+      "top_k": 5
+    },
+    "candidate": {
+      "algorithm": "tfidf",
+      "capability_id": "char_tfidf_6fbe483b4556",
+      "rationale": "TF-IDF 适用于词面相近的排错记录和项目决策，能处理小规模中文与英文混合笔记，依赖 scikit-learn 库。"
+    },
+    "algorithm_plugin": {
+      "id": "tfidf",
+      "name": "字符 TF-IDF",
+      "version": "1.0.1",
+      "task": "memory_retrieval",
+      "dependencies": [
+        "scikit-learn"
+      ],
+      "environment": "retrieval-v1",
+      "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。必须对 texts=[memory[\"text\"] for memory in memories] 拟合，每条完整记忆对应矩阵一行，行数必须等于 len(memories)。禁止把拆分去重的词当成多篇文档，禁止移除中文或过滤行后仍用原列表索引；transform([query]) 后与整个语料计算相似度。",
+      "public_cases": [
+        {
+          "query": "甲乙 alpha beta",
+          "memories": [
+            {
+              "id": "a",
+              "text": "甲乙 alpha beta",
+              "source": "public://a"
+            },
+            {
+              "id": "b",
+              "text": "乙丙 alpha gamma",
+              "source": "public://b"
+            }
+          ],
+          "top_k": 5,
+          "expected": [
+            {
+              "id": "a",
+              "score": 1.0000000000000016
+            },
+            {
+              "id": "b",
+              "score": 0.46518071501565006
+            }
+          ]
+        }
+      ]
+    },
+    "capabilities": [
+      {
+        "node_id": "char_tfidf_6fbe483b4556",
+        "algorithm": "tfidf",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "小规模中文与英文混合笔记",
+          "词面相近的排错记录",
+          "项目决策"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "evidence": "中文技术记忆检索：TF-IDF",
+        "id": "char_tfidf_6fbe483b4556",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "难以解决同义改写",
+          "缺少词面重合的查询",
+          "原型每次查询重建索引"
+        ],
+        "metrics": [
+          "Recall@k",
+          "MRR@k",
+          "P95 查询耗时"
+        ],
+        "name": "字符 TF-IDF",
+        "outputs": [
+          "memory id",
+          "score"
+        ],
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "text": "# 中文技术记忆检索：TF-IDF\n\n能力标识：char_tfidf。算法：tfidf。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文技术笔记可以使用字符一至三元组 TF-IDF 与余弦相似度进行检索，无须额外标注训练数据。先在记忆文本上拟合向量器，再转换查询；不要把查询加入拟合语料。保留英文技术词并统一大小写。检索分数相同按 ID 排序，空查询、空语料和非正 top_k 返回空列表。\n\n适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：scikit-learn。\n局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。\n来源为本项目编写的演示算法说明，算法接口参考 scikit-learn 官方文档：\nhttps://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html\n"
+      }
+    ],
+    "validated_lessons": [
+      {
+        "node_id": "outcome_20261013T182845_0e195da1_tfidf_r2",
+        "algorithm": "tfidf",
+        "diagnosis": {
+          "execution_diagnostics": [
+            {
+              "count": 17,
+              "error": "NameError: name 're' is not defined",
+              "frames": [
+                {
+                  "function": "retrieve",
+                  "line": 16,
+                  "source": "        token_clean = re.sub(r'[^a-z0-9_]', '', token)"
+                }
+              ]
+            }
+          ],
+          "repair_instructions": [
+            "在文件顶部添加 import re; 以修复未导入正则表达式的错误。"
+          ],
+          "summary": "代码中未导入正则表达式模块 're'，导致在提取查询词时抛出 NameError 异常，使检索功能无法正常运行。",
+          "trusted_findings": [],
+          "unchanged_previous_repair": false
+        },
+        "evidence": {
+          "code_hash": "b613e9ddf18cede468a3757641318d9797ae568a88152fe8a856ebb2e0c4a962",
+          "validation_id": "validation_20261013T182845_0e195da1_tfidf_r2"
+        },
+        "implementation_id": "implementation_20261013T182845_0e195da1_tfidf_r2",
+        "parent": "implementation_20261013T182845_0e195da1_tfidf_r1",
+        "scope": "memory_retrieval",
+        "summary": "修复后的版本通过可信验证集检查",
+        "validated_fix": true
+      }
+    ],
+    "reference_example": {
+      "algorithm": "tfidf",
+      "source": "plugin:tfidf@1.0.1",
+      "sha256": "84fbe993c241919f3a551f0f81a7be700dfa09e16c23ae1a37b746ca7b432d6a",
+      "code": "\"\"\"Character TF-IDF cosine retrieval; usable directly by a future memory application.\"\"\"\n\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.metrics.pairwise import cosine_similarity\n\n\ndef retrieve(query, memories, top_k=5):\n    \"\"\"Return unique memory IDs with finite descending similarity scores.\"\"\"\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    # No fitting on query text: the corpus defines vocabulary and IDF statistics.\n    texts = [memory[\"text\"] for memory in memories]\n    vectorizer = TfidfVectorizer(analyzer=\"char\", ngram_range=(1, 3), lowercase=True)\n    try:\n        corpus = vectorizer.fit_transform(texts)\n    except ValueError:\n        return []\n    scores = cosine_similarity(vectorizer.transform([query]), corpus)[0]\n    hits = [{\"id\": memory[\"id\"], \"score\": float(score)}\n            for memory, score in zip(memories, scores) if score > 0]\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n"
+    },
+    "code": "from sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.metrics.pairwise import cosine_similarity\nimport math\nimport re\nimport collections\n\ndef retrieve(query, memories, top_k=5):\n    \"\"\"Return unique memory IDs with finite descending similarity scores.\"\"\"\n    if not query or not memories or top_k <= 0:\n        return []\n    \n    # Normalize query to lowercase for consistent tokenization\n    query_lower = query.lower()\n    \n    # Extract unique tokens from query\n    query_tokens = set()\n    for token in query_lower.split():\n        # Keep only alphanumeric and underscore, remove punctuation\n        token_clean = re.sub(r'[^a-z0-9_]', '', token)\n        if token_clean:\n            query_tokens.add(token_clean)\n    \n    # Extract unique tokens from memories\n    doc_tokens = []\n    for memory in memories:\n        text = memory.get('text', '')\n        if not text:\n            continue\n        doc_tokens.extend(text.lower().split())\n        doc_tokens = list(set(doc_tokens))  # Remove duplicates\n    \n    # Handle empty cases\n    if not query_tokens or not doc_tokens:\n        return []\n    \n    # Build vocabulary from all documents\n    vocab = set(doc_tokens)\n    \n    # Build TF-IDF matrix\n    try:\n        vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(1, 3), lowercase=True)\n        corpus = vectorizer.fit_transform(doc_tokens)\n    except ValueError:\n        return []\n    \n    # Transform query\n    query_vec = vectorizer.transform([query_lower])\n    \n    # Calculate cosine similarity\n    scores = cosine_similarity(query_vec, corpus)[0]\n    \n    # Filter positive scores and sort descending\n    hits = []\n    for i, score in enumerate(scores):\n        if score > 0:\n            hits.append({\n                'id': memories[i]['id'],\n                'score': float(score)\n            })\n    \n    # Sort by score descending, then by id ascending for stability\n    hits.sort(key=lambda x: (-x['score'], x['id']))\n    \n    # Return top_k results\n    return hits[:top_k]\n",
+    "validation": {
+      "passed": false,
+      "split": "validation",
+      "errors": [
+        "IndexError: list index out of range"
+      ],
+      "diagnostics": [
+        {
+          "error": "IndexError: list index out of range",
+          "frames": [
+            {
+              "line": 57,
+              "function": "retrieve",
+              "source": "                'id': memories[i]['id'],"
+            }
+          ],
+          "count": 17
+        }
+      ],
+      "metrics": {}
+    },
+    "trusted_findings": []
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "repair_instructions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 6,
+        "minItems": 1,
+        "title": "Repair Instructions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "summary",
+      "repair_instructions"
+    ],
+    "title": "Diagnosis",
+    "type": "object"
+  },
+  "retry": 0,
+  "raw_content": "{\"summary\": \"代码在计算 TF-IDF 矩阵时，对查询向量进行了 `transform` 操作，但随后在计算余弦相似度时，直接将 `query_vec` 与 `corpus` 进行矩阵乘法运算，而 `corpus` 是 `fit_transform` 后的矩阵，两者维度不匹配导致 `IndexError`。\", \"repair_instructions\": [\"在计算余弦相似度前，将 `query_vec` 转换为与 `corpus` 相同维度的向量（即 `corpus.dot(query_vec.T)` 或 `corpus @ query_vec.T`），而不是直接相乘。\", \"或者，在计算相似度前，确保 `query_vec` 和 `corpus` 的形状一致，通常通过 `corpus.dot(query_vec.T)` 实现。\", \"修正代码中 `scores = cosine_similarity(query_vec, corpus)[0]` 这一行，使其在维度匹配的前提下执行。\", \"由于 `corpus` 是 `fit_transform` 的结果，其形状为 (n_docs, n_features)，而 `query_vec` 是 `transform` 的结果，形状为 (n_features,)。余弦相似度需要两个向量，因此应使用 `corpus.dot(query_vec.T)` 获取相似度矩阵，再取第一个元素。\", \"在修复后，需确保 `query_vec` 和 `corpus` 的维度一致，否则会导致 `IndexError`。\", \"检查 `corpus` 是否已正确构建，确保其形状与 `query_vec` 兼容。\"]}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 2738,
+    "eval_count": 328,
+    "total_duration": 15163431551
+  },
+  "response": {
+    "summary": "代码在计算 TF-IDF 矩阵时，对查询向量进行了 `transform` 操作，但随后在计算余弦相似度时，直接将 `query_vec` 与 `corpus` 进行矩阵乘法运算，而 `corpus` 是 `fit_transform` 后的矩阵，两者维度不匹配导致 `IndexError`。",
+    "repair_instructions": [
+      "在计算余弦相似度前，将 `query_vec` 转换为与 `corpus` 相同维度的向量（即 `corpus.dot(query_vec.T)` 或 `corpus @ query_vec.T`），而不是直接相乘。",
+      "或者，在计算相似度前，确保 `query_vec` 和 `corpus` 的形状一致，通常通过 `corpus.dot(query_vec.T)` 实现。",
+      "修正代码中 `scores = cosine_similarity(query_vec, corpus)[0]` 这一行，使其在维度匹配的前提下执行。",
+      "由于 `corpus` 是 `fit_transform` 的结果，其形状为 (n_docs, n_features)，而 `query_vec` 是 `transform` 的结果，形状为 (n_features,)。余弦相似度需要两个向量，因此应使用 `corpus.dot(query_vec.T)` 获取相似度矩阵，再取第一个元素。",
+      "在修复后，需确保 `query_vec` 和 `corpus` 的维度一致，否则会导致 `IndexError`。",
+      "检查 `corpus` 是否已正确构建，确保其形状与 `query_vec` 兼容。"
+    ]
+  },
+  "duration_seconds": 15.249386708019301
+}

@@ -23,6 +23,14 @@ def write_report(directory, summary):
         error = "; ".join(attempt["validation"]["errors"]).replace("|", "/").replace("\n", " ")
         lines.append("| " + " | ".join([attempt["algorithm"], str(attempt["revision"]),
                                           str(attempt["validation"]["passed"]), *values, error]) + " |")
+    if any(attempt.get('generation') for attempt in summary['attempts']):
+        lines += ['', '## 生成与修复轨迹', '',
+                  '| 算法 | 版本 | 策略 | 结构重复 | 历史来源 |', '| --- | --- | --- | --- | --- |']
+        for attempt in summary['attempts']:
+            generation = attempt.get('generation', {})
+            lines.append('| ' + ' | '.join([attempt['algorithm'], str(attempt['revision']),
+                         generation.get('strategy', 'legacy'), str(generation.get('unchanged', False)),
+                         generation.get('source_run', '')]) + ' |')
     lines += ["", "## 冻结后的最终测试", ""]
     if summary["selected"]:
         lines += [f"选定：`{summary['selected']['algorithm']}` 版本 {summary['selected']['revision']}",

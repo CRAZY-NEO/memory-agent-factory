@@ -11,6 +11,7 @@ from .knowledge import KnowledgeStore, ingest_sources
 from .llm import LLMClient
 from .models import ValidationConfig
 from .registry import load_registry
+from .repair import load_failed_codes
 from .runtime import MemoryRetriever
 from .validation import load_dataset, validate
 from .visualization import write_graph_html
@@ -45,6 +46,7 @@ def parser():
     request.add_argument("--request-file", type=Path, help="UTF-8 算法开发需求文件")
     run.add_argument("--runner", choices=["local", "docker"], help="mock 默认 local；Ollama 默认 docker")
     run.add_argument("--allow-local", action="store_true", help="明确接受本地执行边界，允许真实模型代码在本机子进程运行")
+    run.add_argument("--repair-from", type=Path, help="重放该运行目录中哈希校验通过的历史失败代码并修复")
     run.add_argument("--inject-fault", action="store_true", help="仅 mock：故意破坏 BM25 首版，演示真实检测和修复")
     query = commands.add_parser("query", help="调用已验证插件，供未来个人记忆应用复用")
     query.add_argument("text")
@@ -55,6 +57,7 @@ def parser():
     export = commands.add_parser("export", help="导出 JSON/GraphML/离线 HTML 图谱")
     export.add_argument("--output", type=Path)
     check = commands.add_parser("validate", help="独立运行可信算法验证器")
+    check.add_argument("--algorithm", help="可选：检查注册算法的公开公式样例")
     check.add_argument("--code", type=Path, required=True)
     check.add_argument("--split", choices=["validation", "test"], default="validation")
     check.add_argument("--runner", choices=["local", "docker"], default="docker", help="local 不提供 OS 安全隔离")
@@ -80,7 +83,10 @@ def main(argv=None):
             factory = Factory(workspace, arguments.provider, resolve_model(arguments), arguments.base_url,
                               arguments.runner, arguments.inject_fault, arguments.allow_local,
                               config=config, registry=registry)
-            result = factory.run(description)
+            if arguments.repair_from and arguments.inject_fault:
+                raise ValueError('Historical replay cannot be combined with mock fault injection')
+            seeds = load_failed_codes(arguments.repair_from, config.algorithms) if arguments.repair_from else None
+            result = factory.run(description, initial_codes=seeds)
             print(json.dumps({"status": result["status"], "run_id": result["run_id"],
                               "report": str(Path(result["directory"]) / "report.md"),
                               "algorithm": result["selected"]["algorithm"] if result["selected"] else None},
@@ -120,7 +126,7 @@ def main(argv=None):
             memories, queries = load_dataset(workspace / "data", arguments.split)
             result = validate(arguments.code.read_text(encoding="utf-8"),
                               Runner(arguments.runner, config.timeout_seconds), memories, queries,
-                              arguments.top_k, config, arguments.split, registry=registry)
+                              arguments.top_k, config, arguments.split, registry=registry, algorithm=arguments.algorithm)
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0 if result["passed"] else 1
         return 0

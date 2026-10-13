@@ -10,6 +10,7 @@ import json
 import resource
 import sys
 import time
+import traceback
 
 IMPORTS = {
     "math", "re", "collections", "sklearn.feature_extraction.text", "sklearn.metrics.pairwise"
@@ -25,6 +26,14 @@ def limited_import(name, globals=None, locals=None, fromlist=(), level=0):
     if level or name not in IMPORTS:
         raise ImportError("Import denied: " + name)
     return builtins.__import__(name, globals, locals, fromlist, level)
+
+
+def failure(exc, code):
+    lines = code.splitlines()
+    frames = [{'line': frame.lineno, 'function': frame.name,
+               'source': lines[frame.lineno - 1][:300] if 0 < frame.lineno <= len(lines) else ''}
+              for frame in traceback.extract_tb(exc.__traceback__) if frame.filename == 'retrieval.py'][-4:]
+    return {'error': f"{type(exc).__name__}: {str(exc)[:2000]}", 'error_frames': frames}
 
 
 def main():
@@ -58,10 +67,10 @@ def main():
                                      "duration_ms": duration, "mutated": memories != case["memories"]})
             except Exception as exc:
                 observations.append({"case_id": case["case_id"],
-                                     "error": f"{type(exc).__name__}: {str(exc)[:2000]}"})
+                                     **failure(exc, payload["code"])})
         print(json.dumps({"observations": observations}, ensure_ascii=False, allow_nan=False))
     except Exception as exc:
-        print(json.dumps({"error": f"{type(exc).__name__}: {str(exc)[:2000]}"}))
+        print(json.dumps({**failure(exc, payload["code"])}))
         return 1
     return 0
 

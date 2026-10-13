@@ -1,0 +1,443 @@
+{
+  "split": "validation",
+  "passed": true,
+  "errors": [],
+  "metrics": {
+    "recall_at_k": 1.0,
+    "mrr_at_k": 1.0,
+    "precision_at_k": 0.20000000000000004,
+    "p95_ms": 0.48346451658289846
+  },
+  "top_k": 5,
+  "query_count": 12,
+  "memory_count": 24,
+  "execution": {
+    "wall_seconds": 0.23936495813541114,
+    "runner": "docker"
+  },
+  "gates": {
+    "task": "memory_retrieval",
+    "algorithms": [
+      "tfidf",
+      "bm25",
+      "jaccard"
+    ],
+    "plugin_packages": [],
+    "max_candidates": 3,
+    "compare_all_algorithms": true,
+    "metrics": {
+      "recall_at_k": {
+        "min": 0.75,
+        "max": null
+      },
+      "mrr_at_k": {
+        "min": 0.65,
+        "max": null
+      },
+      "precision_at_k": {
+        "min": 0.2,
+        "max": null
+      },
+      "p95_ms": {
+        "min": null,
+        "max": 1000.0
+      }
+    },
+    "selection_order": [
+      "recall_at_k",
+      "mrr_at_k",
+      "precision_at_k"
+    ],
+    "timeout_seconds": 30.0,
+    "max_repairs": 2
+  },
+  "per_query": [
+    {
+      "query_id": "v01",
+      "query": "MySQL 连接池等待导致请求超时怎么排查",
+      "relevant_ids": [
+        "m01"
+      ],
+      "predictions": [
+        {
+          "id": "m01",
+          "score": 0.24731182795698925
+        },
+        {
+          "id": "m19",
+          "score": 0.08421052631578947
+        },
+        {
+          "id": "m10",
+          "score": 0.08139534883720931
+        },
+        {
+          "id": "m09",
+          "score": 0.07920792079207921
+        },
+        {
+          "id": "m02",
+          "score": 0.07
+        }
+      ]
+    },
+    {
+      "query_id": "v02",
+      "query": "Redis 不存在的 key 一直查数据库",
+      "relevant_ids": [
+        "m03"
+      ],
+      "predictions": [
+        {
+          "id": "m03",
+          "score": 0.22077922077922077
+        },
+        {
+          "id": "m04",
+          "score": 0.13580246913580246
+        },
+        {
+          "id": "m05",
+          "score": 0.10126582278481013
+        },
+        {
+          "id": "m10",
+          "score": 0.09090909090909091
+        },
+        {
+          "id": "m06",
+          "score": 0.08641975308641975
+        }
+      ]
+    },
+    {
+      "query_id": "v03",
+      "query": "Docker 容器退出 137 内存不足",
+      "relevant_ids": [
+        "m05"
+      ],
+      "predictions": [
+        {
+          "id": "m05",
+          "score": 0.3709677419354839
+        },
+        {
+          "id": "m06",
+          "score": 0.13157894736842105
+        },
+        {
+          "id": "m16",
+          "score": 0.07317073170731707
+        },
+        {
+          "id": "m03",
+          "score": 0.06976744186046512
+        },
+        {
+          "id": "m10",
+          "score": 0.06493506493506493
+        }
+      ]
+    },
+    {
+      "query_id": "v04",
+      "query": "Git rebase 冲突如何处理",
+      "relevant_ids": [
+        "m07"
+      ],
+      "predictions": [
+        {
+          "id": "m07",
+          "score": 0.17073170731707318
+        },
+        {
+          "id": "m16",
+          "score": 0.09090909090909091
+        },
+        {
+          "id": "m10",
+          "score": 0.08333333333333333
+        },
+        {
+          "id": "m08",
+          "score": 0.08
+        },
+        {
+          "id": "m19",
+          "score": 0.07317073170731707
+        }
+      ]
+    },
+    {
+      "query_id": "v05",
+      "query": "asyncio 同步请求阻塞事件循环",
+      "relevant_ids": [
+        "m09"
+      ],
+      "predictions": [
+        {
+          "id": "m09",
+          "score": 0.3116883116883117
+        },
+        {
+          "id": "m19",
+          "score": 0.10465116279069768
+        },
+        {
+          "id": "m10",
+          "score": 0.08974358974358974
+        },
+        {
+          "id": "m07",
+          "score": 0.07291666666666667
+        },
+        {
+          "id": "m16",
+          "score": 0.07058823529411765
+        }
+      ]
+    },
+    {
+      "query_id": "v06",
+      "query": "RAG 检索效果用哪些指标评估",
+      "relevant_ids": [
+        "m11"
+      ],
+      "predictions": [
+        {
+          "id": "m11",
+          "score": 0.12048192771084337
+        },
+        {
+          "id": "m06",
+          "score": 0.04819277108433735
+        },
+        {
+          "id": "m21",
+          "score": 0.04807692307692308
+        },
+        {
+          "id": "m16",
+          "score": 0.047058823529411764
+        },
+        {
+          "id": "m02",
+          "score": 0.043010752688172046
+        }
+      ]
+    },
+    {
+      "query_id": "v07",
+      "query": "Jetson Ollama 如何在局域网访问",
+      "relevant_ids": [
+        "m13"
+      ],
+      "predictions": [
+        {
+          "id": "m13",
+          "score": 0.23684210526315788
+        },
+        {
+          "id": "m06",
+          "score": 0.16
+        },
+        {
+          "id": "m10",
+          "score": 0.10666666666666667
+        },
+        {
+          "id": "m09",
+          "score": 0.1
+        },
+        {
+          "id": "m03",
+          "score": 0.09411764705882353
+        }
+      ]
+    },
+    {
+      "query_id": "v08",
+      "query": "文本分类类别不平衡不能只看 accuracy",
+      "relevant_ids": [
+        "m16"
+      ],
+      "predictions": [
+        {
+          "id": "m16",
+          "score": 0.4090909090909091
+        },
+        {
+          "id": "m07",
+          "score": 0.06060606060606061
+        },
+        {
+          "id": "m11",
+          "score": 0.05434782608695652
+        },
+        {
+          "id": "m10",
+          "score": 0.04819277108433735
+        },
+        {
+          "id": "m02",
+          "score": 0.041237113402061855
+        }
+      ]
+    },
+    {
+      "query_id": "v09",
+      "query": "SQLite 并发写事务被阻塞",
+      "relevant_ids": [
+        "m19"
+      ],
+      "predictions": [
+        {
+          "id": "m19",
+          "score": 0.21621621621621623
+        },
+        {
+          "id": "m20",
+          "score": 0.12162162162162163
+        },
+        {
+          "id": "m09",
+          "score": 0.11627906976744186
+        },
+        {
+          "id": "m05",
+          "score": 0.07792207792207792
+        },
+        {
+          "id": "m03",
+          "score": 0.07142857142857142
+        }
+      ]
+    },
+    {
+      "query_id": "v10",
+      "query": "BM25 和向量检索怎么融合",
+      "relevant_ids": [
+        "m21"
+      ],
+      "predictions": [
+        {
+          "id": "m21",
+          "score": 0.16483516483516483
+        },
+        {
+          "id": "m11",
+          "score": 0.07142857142857142
+        },
+        {
+          "id": "m02",
+          "score": 0.056179775280898875
+        },
+        {
+          "id": "m06",
+          "score": 0.037037037037037035
+        },
+        {
+          "id": "m13",
+          "score": 0.03409090909090909
+        }
+      ]
+    },
+    {
+      "query_id": "v11",
+      "query": "中文 TF-IDF 字符 ngram 余弦相似度",
+      "relevant_ids": [
+        "m22"
+      ],
+      "predictions": [
+        {
+          "id": "m22",
+          "score": 0.2926829268292683
+        },
+        {
+          "id": "m10",
+          "score": 0.10666666666666667
+        },
+        {
+          "id": "m16",
+          "score": 0.09876543209876543
+        },
+        {
+          "id": "m11",
+          "score": 0.09411764705882353
+        },
+        {
+          "id": "m07",
+          "score": 0.08602150537634409
+        }
+      ]
+    },
+    {
+      "query_id": "v12",
+      "query": "API 超时指数退避与幂等重试",
+      "relevant_ids": [
+        "m18"
+      ],
+      "predictions": [
+        {
+          "id": "m18",
+          "score": 0.24358974358974358
+        },
+        {
+          "id": "m02",
+          "score": 0.06593406593406594
+        },
+        {
+          "id": "m01",
+          "score": 0.06
+        },
+        {
+          "id": "m09",
+          "score": 0.05319148936170213
+        },
+        {
+          "id": "m23",
+          "score": 0.05263157894736842
+        }
+      ]
+    }
+  ],
+  "metric_plugins": [
+    {
+      "id": "recall_at_k",
+      "name": "Recall@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "mrr_at_k",
+      "name": "MRR@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "precision_at_k",
+      "name": "Precision@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "p95_ms",
+      "name": "P95 ms",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "lower",
+      "minimum": 0,
+      "maximum": null
+    }
+  ],
+  "diagnostics": []
+}

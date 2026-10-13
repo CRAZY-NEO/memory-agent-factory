@@ -1,0 +1,639 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "planner",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "请为个人技术记忆库复刻检索算法，分别生成 TF-IDF、BM25、Jaccard 三个独立候选并比较三者，不要只选择其中一个来生成。输入 query、memories、top_k，输出相关记忆 ID 与分数，默认前 5 条。每个候选使用自己的评分方法：TF-IDF 使用余弦相似度，BM25 使用词频与逆文档频率，Jaccard 使用词集合交并比；Jaccard 的集合规则仅约束 Jaccard 候选，不能用于排除 TF-IDF 或 BM25。三者都遵循各自的算法插件指导和参考示例。按配置评估 Recall@k、MRR@k、Precision@k 和 P95 查询耗时，同时检查接口、空输入及跨进程稳定性，选择验证通过的方案并将结果沉淀回知识库。\n",
+      "language": "zh",
+      "top_k": 5
+    },
+    "capabilities": [
+      {
+        "node_id": "char_jaccard_e1ac25927248",
+        "algorithm": "jaccard",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "小规模中文与英文混合技术笔记",
+          "需要轻量且可解释的词集合重合检索"
+        ],
+        "dependencies": [
+          "Python 标准库"
+        ],
+        "evidence": "中文技术记忆检索：Jaccard",
+        "id": "char_jaccard_e1ac25927248",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "不考虑词频与逆文档频率",
+          "长文档的并集会稀释得分",
+          "无法解决缺少词面重合的语义改写"
+        ],
+        "metrics": [
+          "Recall@k",
+          "MRR@k",
+          "Precision@k",
+          "P95 查询耗时"
+        ],
+        "name": "集合 Jaccard",
+        "outputs": [
+          "有序的 memory id 和 score"
+        ],
+        "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+        "task": "memory_retrieval"
+      },
+      {
+        "node_id": "char_bm25_3819f381772f",
+        "algorithm": "bm25",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "不同长度的技术笔记",
+          "包含明确组件名或故障词的查询"
+        ],
+        "dependencies": [
+          "Python 标准库"
+        ],
+        "evidence": "BM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。",
+        "id": "char_bm25_3819f381772f",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "词面匹配对纯语义改写有限",
+          "分词策略影响排序"
+        ],
+        "metrics": [
+          "Recall@k",
+          "MRR@k",
+          "P95 查询耗时"
+        ],
+        "name": "字符 BM25",
+        "outputs": [
+          "memory id",
+          "score"
+        ],
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "task": "memory_retrieval"
+      },
+      {
+        "node_id": "char_tfidf_6fbe483b4556",
+        "algorithm": "tfidf",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "小规模中文与英文混合笔记",
+          "词面相近的排错记录",
+          "项目决策"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "evidence": "中文技术记忆检索：TF-IDF",
+        "id": "char_tfidf_6fbe483b4556",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "难以解决同义改写",
+          "缺少词面重合的查询",
+          "原型每次查询重建索引"
+        ],
+        "metrics": [
+          "Recall@k",
+          "MRR@k",
+          "P95 查询耗时"
+        ],
+        "name": "字符 TF-IDF",
+        "outputs": [
+          "memory id",
+          "score"
+        ],
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "text": "# 中文技术记忆检索：TF-IDF\n\n能力标识：char_tfidf。算法：tfidf。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文技术笔记可以使用字符一至三元组 TF-IDF 与余弦相似度进行检索，无须额外标注训练数据。先在记忆文本上拟合向量器，再转换查询；不要把查询加入拟合语料。保留英文技术词并统一大小写。检索分数相同按 ID 排序，空查询、空语料和非正 top_k 返回空列表。\n\n适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：scikit-learn。\n局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。\n来源为本项目编写的演示算法说明，算法接口参考 scikit-learn 官方文档：\nhttps://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html\n"
+      },
+      {
+        "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+        "text": "# 中文技术记忆检索：Jaccard\n\n能力标识：char_jaccard。算法：jaccard。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文使用单字及相邻双字，英文技术标识使用小写单词，将分词结果去重为集合。查询集合 Q 与文档集合 D 的 Jaccard 相似度为 len(Q & D) / len(Q | D)，并集为空时返回零。词频不参与评分，不需要训练或 IDF。只返回正分结果，分数降序，同分按 ID 排序。空查询、空语料和非正 top_k 返回空列表。标点查询无词项时返回空列表。\n\n适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。\n指标：Recall@k、MRR@k、Precision@k、P95 查询耗时；依赖：Python 标准库。\n局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。\n来源为本项目编写的演示算法说明和可复现基线实现。\n"
+      },
+      {
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "text": "# 中文技术记忆检索：BM25\n\n能力标识：char_bm25。算法：bm25。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\nBM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。\n\n适用：不同长度的技术笔记、包含明确组件名或故障词的查询。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：Python 标准库。\n局限：词面匹配对纯语义改写有限；分词策略影响排序。\n来源为本项目编写的演示算法说明，研究背景：\nhttps://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf\n"
+      }
+    ],
+    "lessons": [
+      {
+        "node_id": "outcome_20261013T182845_0e195da1_jaccard_r2",
+        "algorithm": "jaccard",
+        "diagnosis": {
+          "execution_diagnostics": [
+            {
+              "count": 10,
+              "error": "TypeError: 'set' object is not subscriptable",
+              "frames": [
+                {
+                  "function": "retrieve",
+                  "line": 54,
+                  "source": "        document_tokens = tokenize(document_text)"
+                },
+                {
+                  "function": "tokenize",
+                  "line": 21,
+                  "source": "        chinese_chars.add(chinese_chars[i:i+2])"
+                }
+              ]
+            },
+            {
+              "count": 6,
+              "error": "TypeError: 'set' object is not subscriptable",
+              "frames": [
+                {
+                  "function": "retrieve",
+                  "line": 42,
+                  "source": "    query_tokens = tokenize(query)"
+                },
+                {
+                  "function": "tokenize",
+                  "line": 21,
+                  "source": "        chinese_chars.add(chinese_chars[i:i+2])"
+                }
+              ]
+            }
+          ],
+          "repair_instructions": [
+            "修复 `tokenize` 函数中相邻双字生成的逻辑：将 `chinese_chars[i:i+2]` 改为 `chinese_chars[i] + chinese_chars[i+1]` 或直接使用切片 `chinese_chars[i:i+2]` 获取字符串切片后再加入集合，避免集合对象被当作列表索引。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：由于 `i` 是整数，`chinese_chars[i:i+2]` 返回的是字符串切片而非集合元素，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或更安全的 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。"
+          ],
+          "summary": "代码在 token 集合的相邻双字生成逻辑中，错误地将集合赋值操作 `chinese_chars.add(...)` 与集合下标访问 `chinese_chars[i:i+2]` 混用，导致 `TypeError: 'set' object is not subscriptable`。",
+          "trusted_findings": [
+            {
+              "detail": "局部静态检查发现集合赋值与下标访问并存；结合错误行确认。相邻双字应从原文字符串切片。",
+              "kind": "set_subscript",
+              "line": 21,
+              "source": "chinese_chars[i:i+2]"
+            }
+          ],
+          "unchanged_previous_repair": false
+        },
+        "evidence": {
+          "code_hash": "eb6526751bfba5d4d8e5ba1acddae85110479efa5f9f52a0b9585115745a194a",
+          "validation_id": "validation_20261013T182845_0e195da1_jaccard_r2"
+        },
+        "implementation_id": "implementation_20261013T182845_0e195da1_jaccard_r2",
+        "parent": "implementation_20261013T182845_0e195da1_jaccard_r1",
+        "scope": "memory_retrieval",
+        "summary": "修复后的版本通过可信验证集检查",
+        "validated_fix": true
+      },
+      {
+        "node_id": "lesson_20261013T182845_0e195da1_tfidf_r0",
+        "algorithm": "tfidf",
+        "execution_diagnostics": [
+          {
+            "count": 17,
+            "error": "IndexError: list index out of range",
+            "frames": [
+              {
+                "function": "retrieve",
+                "line": 57,
+                "source": "                'id': memories[i]['id'],"
+              }
+            ]
+          }
+        ],
+        "origin": "failed validation; advice is not a verified fix",
+        "repair_instructions": [
+          "在构建 TF-IDF 矩阵前，必须将查询文本加入语料库进行 `fit_transform`，确保词汇表包含查询中出现的字符。",
+          "修改代码逻辑，先执行 `vectorizer.fit_transform(texts)` 构建完整语料矩阵，再执行 `vectorizer.transform([query])` 计算相似度。",
+          "确保 `fit_transform` 的语料列表 `texts` 包含所有记忆文本，而不仅仅是去重后的列表，以支持完整的词汇统计。",
+          "验证 `fit_transform` 是否成功返回矩阵，若失败则返回空列表，避免后续步骤执行。",
+          "检查 `ngram_range` 参数是否合理，避免在空语料或单字符语料上导致矩阵维度异常。",
+          "确认 `top_k` 参数限制不会超出已构建矩阵的行数，防止索引越界。"
+        ],
+        "scope": "memory_retrieval",
+        "summary": "代码在计算 TF-IDF 矩阵时，由于 `fit_transform` 在第一次调用时未包含查询文本，导致后续 `transform` 操作无法正确构建词汇表，进而引发索引越界错误。",
+        "trusted_findings": [],
+        "unchanged_previous_repair": false,
+        "validated_fix": false
+      },
+      {
+        "node_id": "lesson_20261013T182845_0e195da1_tfidf_r1",
+        "algorithm": "tfidf",
+        "execution_diagnostics": [
+          {
+            "count": 17,
+            "error": "NameError: name 're' is not defined",
+            "frames": [
+              {
+                "function": "retrieve",
+                "line": 16,
+                "source": "        token_clean = re.sub(r'[^a-z0-9_]', '', token)"
+              }
+            ]
+          }
+        ],
+        "origin": "failed validation; advice is not a verified fix",
+        "repair_instructions": [
+          "在文件顶部添加 import re; 以修复未导入正则表达式的错误。"
+        ],
+        "scope": "memory_retrieval",
+        "summary": "代码中未导入正则表达式模块 're'，导致在提取查询词时抛出 NameError 异常，使检索功能无法正常运行。",
+        "trusted_findings": [],
+        "unchanged_previous_repair": false,
+        "validated_fix": false
+      },
+      {
+        "node_id": "outcome_20261013T182845_0e195da1_tfidf_r0",
+        "algorithm": "tfidf",
+        "diagnosis": null,
+        "evidence": {
+          "code_hash": "3706924caa63a765d36bf30e162eb585c1890e7317e5637f613614d91808acea",
+          "validation_id": "validation_20261013T182845_0e195da1_tfidf_r0"
+        },
+        "implementation_id": "implementation_20261013T182845_0e195da1_tfidf_r0",
+        "parent": null,
+        "scope": "memory_retrieval",
+        "summary": "v01: IndexError: list index out of range; v02: IndexError: list index out of range; v03: IndexError: list index out of range; v04: IndexError: list index out of range; v05: IndexError: list index out of range; v06: IndexError: list index out of range; v07: IndexError: list index out of range; v08: IndexError: list index out of range; v09: IndexError: list index out of range; v10: IndexError: list index out of range; v11: IndexError: list index out of range; v12: IndexError: list index out of range; contract:exact: IndexError: list index out of range; contract:repeat: IndexError: list index out of range; contract:large_k: IndexError: list index out of range; contract:unicode: IndexError: list index out of range; contract:algorithm:0: IndexError: list index out of range",
+        "validated_fix": false
+      },
+      {
+        "node_id": "outcome_20261013T182845_0e195da1_tfidf_r1",
+        "algorithm": "tfidf",
+        "diagnosis": {
+          "execution_diagnostics": [
+            {
+              "count": 17,
+              "error": "IndexError: list index out of range",
+              "frames": [
+                {
+                  "function": "retrieve",
+                  "line": 57,
+                  "source": "                'id': memories[i]['id'],"
+                }
+              ]
+            }
+          ],
+          "repair_instructions": [
+            "在构建 TF-IDF 矩阵前，必须将查询文本加入语料库进行 `fit_transform`，确保词汇表包含查询中出现的字符。",
+            "修改代码逻辑，先执行 `vectorizer.fit_transform(texts)` 构建完整语料矩阵，再执行 `vectorizer.transform([query])` 计算相似度。",
+            "确保 `fit_transform` 的语料列表 `texts` 包含所有记忆文本，而不仅仅是去重后的列表，以支持完整的词汇统计。",
+            "验证 `fit_transform` 是否成功返回矩阵，若失败则返回空列表，避免后续步骤执行。",
+            "检查 `ngram_range` 参数是否合理，避免在空语料或单字符语料上导致矩阵维度异常。",
+            "确认 `top_k` 参数限制不会超出已构建矩阵的行数，防止索引越界。"
+          ],
+          "summary": "代码在计算 TF-IDF 矩阵时，由于 `fit_transform` 在第一次调用时未包含查询文本，导致后续 `transform` 操作无法正确构建词汇表，进而引发索引越界错误。",
+          "trusted_findings": [],
+          "unchanged_previous_repair": false
+        },
+        "evidence": {
+          "code_hash": "accefa338b4b9650139441b990184001daf13981fc6779d2b2c274796cc7adf6",
+          "validation_id": "validation_20261013T182845_0e195da1_tfidf_r1"
+        },
+        "implementation_id": "implementation_20261013T182845_0e195da1_tfidf_r1",
+        "parent": "implementation_20261013T182845_0e195da1_tfidf_r0",
+        "scope": "memory_retrieval",
+        "summary": "v01: NameError: name 're' is not defined; v02: NameError: name 're' is not defined; v03: NameError: name 're' is not defined; v04: NameError: name 're' is not defined; v05: NameError: name 're' is not defined; v06: NameError: name 're' is not defined; v07: NameError: name 're' is not defined; v08: NameError: name 're' is not defined; v09: NameError: name 're' is not defined; v10: NameError: name 're' is not defined; v11: NameError: name 're' is not defined; v12: NameError: name 're' is not defined; contract:exact: NameError: name 're' is not defined; contract:repeat: NameError: name 're' is not defined; contract:large_k: NameError: name 're' is not defined; contract:unicode: NameError: name 're' is not defined; contract:algorithm:0: NameError: name 're' is not defined",
+        "validated_fix": false
+      },
+      {
+        "node_id": "outcome_20261013T182845_0e195da1_tfidf_r2",
+        "algorithm": "tfidf",
+        "diagnosis": {
+          "execution_diagnostics": [
+            {
+              "count": 17,
+              "error": "NameError: name 're' is not defined",
+              "frames": [
+                {
+                  "function": "retrieve",
+                  "line": 16,
+                  "source": "        token_clean = re.sub(r'[^a-z0-9_]', '', token)"
+                }
+              ]
+            }
+          ],
+          "repair_instructions": [
+            "在文件顶部添加 import re; 以修复未导入正则表达式的错误。"
+          ],
+          "summary": "代码中未导入正则表达式模块 're'，导致在提取查询词时抛出 NameError 异常，使检索功能无法正常运行。",
+          "trusted_findings": [],
+          "unchanged_previous_repair": false
+        },
+        "evidence": {
+          "code_hash": "b613e9ddf18cede468a3757641318d9797ae568a88152fe8a856ebb2e0c4a962",
+          "validation_id": "validation_20261013T182845_0e195da1_tfidf_r2"
+        },
+        "implementation_id": "implementation_20261013T182845_0e195da1_tfidf_r2",
+        "parent": "implementation_20261013T182845_0e195da1_tfidf_r1",
+        "scope": "memory_retrieval",
+        "summary": "修复后的版本通过可信验证集检查",
+        "validated_fix": true
+      }
+    ],
+    "historical_validations": [
+      {
+        "node_id": "validation_20261013T182845_0e195da1_jaccard_r1",
+        "passed": false,
+        "metrics": {},
+        "errors": [
+          "v01: TypeError: 'set' object is not subscriptable",
+          "v02: TypeError: 'set' object is not subscriptable",
+          "v03: TypeError: 'set' object is not subscriptable",
+          "v04: TypeError: 'set' object is not subscriptable",
+          "v05: TypeError: 'set' object is not subscriptable",
+          "v06: TypeError: 'set' object is not subscriptable",
+          "v07: TypeError: 'set' object is not subscriptable",
+          "v08: TypeError: 'set' object is not subscriptable",
+          "v09: TypeError: 'set' object is not subscriptable",
+          "v10: TypeError: 'set' object is not subscriptable",
+          "v11: TypeError: 'set' object is not subscriptable",
+          "v12: TypeError: 'set' object is not subscriptable",
+          "contract:exact: TypeError: 'set' object is not subscriptable",
+          "contract:repeat: TypeError: 'set' object is not subscriptable",
+          "contract:large_k: TypeError: 'set' object is not subscriptable",
+          "contract:unicode: TypeError: 'set' object is not subscriptable"
+        ]
+      },
+      {
+        "node_id": "validation_20261013T182845_0e195da1_jaccard_r2",
+        "passed": true,
+        "metrics": {
+          "mrr_at_k": 1.0,
+          "p95_ms": 0.48346451658289846,
+          "precision_at_k": 0.20000000000000004,
+          "recall_at_k": 1.0
+        },
+        "errors": []
+      },
+      {
+        "node_id": "validation_20261013T182845_0e195da1_bm25_r0",
+        "passed": true,
+        "metrics": {
+          "mrr_at_k": 1.0,
+          "p95_ms": 2.721239402308128,
+          "precision_at_k": 0.20000000000000004,
+          "recall_at_k": 1.0
+        },
+        "errors": []
+      },
+      {
+        "node_id": "validation_20261013T182845_0e195da1_tfidf_r0",
+        "passed": false,
+        "metrics": {},
+        "errors": [
+          "v01: IndexError: list index out of range",
+          "v02: IndexError: list index out of range",
+          "v03: IndexError: list index out of range",
+          "v04: IndexError: list index out of range",
+          "v05: IndexError: list index out of range",
+          "v06: IndexError: list index out of range",
+          "v07: IndexError: list index out of range",
+          "v08: IndexError: list index out of range",
+          "v09: IndexError: list index out of range",
+          "v10: IndexError: list index out of range",
+          "v11: IndexError: list index out of range",
+          "v12: IndexError: list index out of range",
+          "contract:exact: IndexError: list index out of range",
+          "contract:repeat: IndexError: list index out of range",
+          "contract:large_k: IndexError: list index out of range",
+          "contract:unicode: IndexError: list index out of range",
+          "contract:algorithm:0: IndexError: list index out of range"
+        ]
+      },
+      {
+        "node_id": "validation_20261013T182845_0e195da1_tfidf_r1",
+        "passed": false,
+        "metrics": {},
+        "errors": [
+          "v01: NameError: name 're' is not defined",
+          "v02: NameError: name 're' is not defined",
+          "v03: NameError: name 're' is not defined",
+          "v04: NameError: name 're' is not defined",
+          "v05: NameError: name 're' is not defined",
+          "v06: NameError: name 're' is not defined",
+          "v07: NameError: name 're' is not defined",
+          "v08: NameError: name 're' is not defined",
+          "v09: NameError: name 're' is not defined",
+          "v10: NameError: name 're' is not defined",
+          "v11: NameError: name 're' is not defined",
+          "v12: NameError: name 're' is not defined",
+          "contract:exact: NameError: name 're' is not defined",
+          "contract:repeat: NameError: name 're' is not defined",
+          "contract:large_k: NameError: name 're' is not defined",
+          "contract:unicode: NameError: name 're' is not defined",
+          "contract:algorithm:0: NameError: name 're' is not defined"
+        ]
+      },
+      {
+        "node_id": "validation_20261013T182845_0e195da1_tfidf_r2",
+        "passed": true,
+        "metrics": {
+          "mrr_at_k": 1.0,
+          "p95_ms": 5.150348096503873,
+          "precision_at_k": 0.20000000000000004,
+          "recall_at_k": 1.0
+        },
+        "errors": []
+      }
+    ],
+    "algorithm_catalog": [
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "version": "1.0.1",
+        "task": "memory_retrieval",
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "environment": "retrieval-v1",
+        "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。必须对 texts=[memory[\"text\"] for memory in memories] 拟合，每条完整记忆对应矩阵一行，行数必须等于 len(memories)。禁止把拆分去重的词当成多篇文档，禁止移除中文或过滤行后仍用原列表索引；transform([query]) 后与整个语料计算相似度。",
+        "public_cases": [
+          {
+            "query": "甲乙 alpha beta",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙 alpha beta",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙 alpha gamma",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0000000000000016
+              },
+              {
+                "id": "b",
+                "score": 0.46518071501565006
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。",
+        "public_cases": []
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "version": "1.0.1",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。中文双字必须从原文连续中文片段按相邻位置切分，不能从无序集合取字符再拼接。英文标识符必须整词加入集合，例如 tokens.add(fragment)，禁止 tokens.update(fragment) 将英文拆成字母；alpha 与 beta 的英文词集合没有交集。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。",
+        "public_cases": [
+          {
+            "query": "甲乙",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0
+              },
+              {
+                "id": "b",
+                "score": 0.2
+              }
+            ]
+          },
+          {
+            "query": "ALPHA",
+            "memories": [
+              {
+                "id": "a",
+                "text": "alpha",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "beta",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "max_candidates": 3,
+    "required_algorithms": [
+      "tfidf",
+      "bm25",
+      "jaccard"
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Algorithm",
+            "type": "string",
+            "enum": [
+              "tfidf",
+              "bm25",
+              "jaccard"
+            ]
+          },
+          "capability_id": {
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "algorithm",
+          "capability_id",
+          "rationale"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/Candidate"
+        },
+        "maxItems": 3,
+        "minItems": 3,
+        "title": "Candidates",
+        "type": "array"
+      },
+      "design_explanation": {
+        "title": "Design Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "candidates",
+      "design_explanation"
+    ],
+    "title": "Plan",
+    "type": "object"
+  },
+  "retry": 0,
+  "raw_content": "{\n\"candidates\": [\n  {\n    \"algorithm\": \"tfidf\",\n    \"capability_id\": \"char_tfidf_6fbe483b4556\",\n    \"rationale\": \"TF-IDF 能处理中文与英文混合文本，利用余弦相似度计算语义相关性，适合项目决策类查询。但存在多次验证失败，需修复 fit_transform 语料包含查询文本的问题。\"\n  },\n  {\n    \"algorithm\": \"bm25\",\n    \"capability_id\": \"char_bm25_3819f381772f\",\n    \"rationale\": \"BM25 擅长处理不同长度文档，通过词频与逆文档频率加权，对故障词等明确组件匹配有效。验证结果显示 Recall@k 和 MRR@k 均为 1.0，性能稳定。\"\n  },\n  {\n    \"algorithm\": \"jaccard\",\n    \"capability_id\": \"char_jaccard_e1ac25927248\",\n    \"rationale\": \"Jaccard 仅基于词集合交并比，轻量且可解释，适合小规模混合笔记。修复了集合下标访问错误后，MRR@k 和 Recall@k 均达到 1.0，验证通过。\"\n  }\n],\n\"design_explanation\": \"为满足用户要求，同时生成 TF-IDF、BM25、Jaccard 三个独立候选方案，并比较其 Recall@k、MRR@k、Precision@k 和 P95 查询耗时。经评估，三者均通过验证，TF-IDF",
+  "done_reason": "length",
+  "usage": {
+    "prompt_eval_count": 7834,
+    "eval_count": 358,
+    "total_duration": 20233126635
+  },
+  "error": "Unterminated string starting at: line 19 column 23 (char 595)",
+  "duration_seconds": 20.32206262485124
+}

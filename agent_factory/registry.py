@@ -24,11 +24,12 @@ class AlgorithmSpec:
     guidance: str
     dependencies: tuple[str, ...] = ()
     environment: str = "retrieval-v1"
+    public_cases: tuple[dict, ...] = ()
 
     def metadata(self):
         return {"id": self.id, "name": self.name, "version": self.version, "task": self.task,
                 "dependencies": list(self.dependencies), "environment": self.environment,
-                "guidance": self.guidance}
+                "guidance": self.guidance, "public_cases": list(self.public_cases)}
 
 
 @dataclass(frozen=True)

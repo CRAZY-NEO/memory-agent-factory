@@ -1,0 +1,21 @@
+{
+  "task": "memory_retrieval",
+  "entrypoint": "retrieve",
+  "interface_version": "1",
+  "runner": "docker",
+  "run_id": "20261013T182845_0e195da1",
+  "code_hash": "a68fae3c50925689492cb3cb78dca5d24c96396b70083db2577e39e4af1c2b4c",
+  "code_path": "examples/repair-ollama-initial/selected_retrieval.py",
+  "algorithm_plugin": {
+    "id": "bm25",
+    "name": "字符 BM25",
+    "version": "1.0.0",
+    "task": "memory_retrieval",
+    "dependencies": [],
+    "environment": "retrieval-v1",
+    "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。",
+    "public_cases": []
+  },
+  "dependencies": [],
+  "validation_report": "examples/repair-ollama-initial/report.json"
+}

@@ -1,0 +1,60 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "understander",
+  "context": {
+    "description": "请为个人技术记忆库复刻检索算法，分别生成 TF-IDF、BM25、Jaccard 三个独立候选并比较三者，不要只选择其中一个来生成。输入 query、memories、top_k，输出相关记忆 ID 与分数，默认前 5 条。每个候选使用自己的评分方法：TF-IDF 使用余弦相似度，BM25 使用词频与逆文档频率，Jaccard 使用词集合交并比；Jaccard 的集合规则仅约束 Jaccard 候选，不能用于排除 TF-IDF 或 BM25。三者都遵循各自的算法插件指导和参考示例。按配置评估 Recall@k、MRR@k、Precision@k 和 P95 查询耗时，同时检查接口、空输入及跨进程稳定性，选择验证通过的方案并将结果沉淀回知识库。\n"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "const": "memory_retrieval",
+        "title": "Task",
+        "type": "string"
+      },
+      "description": {
+        "minLength": 1,
+        "title": "Description",
+        "type": "string"
+      },
+      "language": {
+        "enum": [
+          "zh",
+          "mixed"
+        ],
+        "title": "Language",
+        "type": "string"
+      },
+      "top_k": {
+        "maximum": 20,
+        "minimum": 1,
+        "title": "Top K",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "task",
+      "description",
+      "language",
+      "top_k"
+    ],
+    "title": "Request",
+    "type": "object"
+  },
+  "retry": 0,
+  "raw_content": "{\"task\": \"memory_retrieval\", \"description\": \"请为个人技术记忆库复刻检索算法，分别生成 TF-IDF、BM25、Jaccard 三个独立候选并比较三者，不要只选择其中一个来生成。输入 query、memories、top_k，输出相关记忆 ID 与分数，默认前 5 条。每个候选使用自己的评分方法：TF-IDF 使用余弦相似度，BM25 使用词频与逆文档频率，Jaccard 使用词集合交并比；Jaccard 的集合规则仅约束 Jaccard 候选，不能用于排除 TF-IDF 或 BM25。三者都遵循各自的算法插件指导和参考示例。按配置评估 Recall@k、MRR@k、Precision@k 和 P95 查询耗时，同时检查接口、空输入及跨进程稳定性，选择验证通过的方案并将结果沉淀回知识库。\", \"language\": \"zh\", \"top_k\": 5}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 393,
+    "eval_count": 211,
+    "total_duration": 8067696325
+  },
+  "response": {
+    "task": "memory_retrieval",
+    "description": "请为个人技术记忆库复刻检索算法，分别生成 TF-IDF、BM25、Jaccard 三个独立候选并比较三者，不要只选择其中一个来生成。输入 query、memories、top_k，输出相关记忆 ID 与分数，默认前 5 条。每个候选使用自己的评分方法：TF-IDF 使用余弦相似度，BM25 使用词频与逆文档频率，Jaccard 使用词集合交并比；Jaccard 的集合规则仅约束 Jaccard 候选，不能用于排除 TF-IDF 或 BM25。三者都遵循各自的算法插件指导和参考示例。按配置评估 Recall@k、MRR@k、Precision@k 和 P95 查询耗时，同时检查接口、空输入及跨进程稳定性，选择验证通过的方案并将结果沉淀回知识库。",
+    "language": "zh",
+    "top_k": 5
+  },
+  "duration_seconds": 8.16728675016202
+}

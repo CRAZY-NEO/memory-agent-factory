@@ -1,0 +1,54 @@
+{
+  "summary": "代码在 token 集合的相邻双字生成逻辑中，错误地将集合赋值操作 `chinese_chars.add(...)` 与集合下标访问 `chinese_chars[i:i+2]` 混用，导致 `TypeError: 'set' object is not subscriptable`。",
+  "repair_instructions": [
+    "修复 `tokenize` 函数中相邻双字生成的逻辑：将 `chinese_chars[i:i+2]` 改为 `chinese_chars[i] + chinese_chars[i+1]` 或直接使用切片 `chinese_chars[i:i+2]` 获取字符串切片后再加入集合，避免集合对象被当作列表索引。",
+    "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：由于 `i` 是整数，`chinese_chars[i:i+2]` 返回的是字符串切片而非集合元素，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或更安全的 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+    "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+    "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+    "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+    "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。"
+  ],
+  "trusted_findings": [
+    {
+      "kind": "set_subscript",
+      "line": 21,
+      "source": "chinese_chars[i:i+2]",
+      "detail": "局部静态检查发现集合赋值与下标访问并存；结合错误行确认。相邻双字应从原文字符串切片。"
+    }
+  ],
+  "execution_diagnostics": [
+    {
+      "error": "TypeError: 'set' object is not subscriptable",
+      "frames": [
+        {
+          "line": 54,
+          "function": "retrieve",
+          "source": "        document_tokens = tokenize(document_text)"
+        },
+        {
+          "line": 21,
+          "function": "tokenize",
+          "source": "        chinese_chars.add(chinese_chars[i:i+2])"
+        }
+      ],
+      "count": 10
+    },
+    {
+      "error": "TypeError: 'set' object is not subscriptable",
+      "frames": [
+        {
+          "line": 42,
+          "function": "retrieve",
+          "source": "    query_tokens = tokenize(query)"
+        },
+        {
+          "line": 21,
+          "function": "tokenize",
+          "source": "        chinese_chars.add(chinese_chars[i:i+2])"
+        }
+      ],
+      "count": 6
+    }
+  ],
+  "unchanged_previous_repair": false
+}

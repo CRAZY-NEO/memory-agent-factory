@@ -1,0 +1,256 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "reviewer",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "请为个人技术记忆库复刻检索算法，分别生成 TF-IDF、BM25、Jaccard 三个独立候选并比较三者，不要只选择其中一个来生成。输入 query、memories、top_k，输出相关记忆 ID 与分数，默认前 5 条。每个候选使用自己的评分方法：TF-IDF 使用余弦相似度，BM25 使用词频与逆文档频率，Jaccard 使用词集合交并比；Jaccard 的集合规则仅约束 Jaccard 候选，不能用于排除 TF-IDF 或 BM25。三者都遵循各自的算法插件指导和参考示例。按配置评估 Recall@k、MRR@k、Precision@k 和 P95 查询耗时，同时检查接口、空输入及跨进程稳定性，选择验证通过的方案并将结果沉淀回知识库。\n",
+      "language": "zh",
+      "top_k": 5
+    },
+    "candidate": {
+      "algorithm": "jaccard",
+      "capability_id": "char_jaccard_e1ac25927248",
+      "rationale": "Jaccard 轻量且可解释，仅约束集合重合，适合需要轻量且可解释的词集合重合检索，依赖 Python 标准库。"
+    },
+    "algorithm_plugin": {
+      "id": "jaccard",
+      "name": "集合 Jaccard",
+      "version": "1.0.1",
+      "task": "memory_retrieval",
+      "dependencies": [],
+      "environment": "retrieval-v1",
+      "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。中文双字必须从原文连续中文片段按相邻位置切分，不能从无序集合取字符再拼接。英文标识符必须整词加入集合，例如 tokens.add(fragment)，禁止 tokens.update(fragment) 将英文拆成字母；alpha 与 beta 的英文词集合没有交集。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。",
+      "public_cases": [
+        {
+          "query": "甲乙",
+          "memories": [
+            {
+              "id": "a",
+              "text": "甲乙",
+              "source": "public://a"
+            },
+            {
+              "id": "b",
+              "text": "乙丙",
+              "source": "public://b"
+            }
+          ],
+          "top_k": 5,
+          "expected": [
+            {
+              "id": "a",
+              "score": 1.0
+            },
+            {
+              "id": "b",
+              "score": 0.2
+            }
+          ]
+        },
+        {
+          "query": "ALPHA",
+          "memories": [
+            {
+              "id": "a",
+              "text": "alpha",
+              "source": "public://a"
+            },
+            {
+              "id": "b",
+              "text": "beta",
+              "source": "public://b"
+            }
+          ],
+          "top_k": 5,
+          "expected": [
+            {
+              "id": "a",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    "capabilities": [
+      {
+        "node_id": "char_jaccard_e1ac25927248",
+        "algorithm": "jaccard",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "小规模中文与英文混合技术笔记",
+          "需要轻量且可解释的词集合重合检索"
+        ],
+        "dependencies": [
+          "Python 标准库"
+        ],
+        "evidence": "中文技术记忆检索：Jaccard",
+        "id": "char_jaccard_e1ac25927248",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "不考虑词频与逆文档频率",
+          "长文档的并集会稀释得分",
+          "无法解决缺少词面重合的语义改写"
+        ],
+        "metrics": [
+          "Recall@k",
+          "MRR@k",
+          "Precision@k",
+          "P95 查询耗时"
+        ],
+        "name": "集合 Jaccard",
+        "outputs": [
+          "有序的 memory id 和 score"
+        ],
+        "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+        "text": "# 中文技术记忆检索：Jaccard\n\n能力标识：char_jaccard。算法：jaccard。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文使用单字及相邻双字，英文技术标识使用小写单词，将分词结果去重为集合。查询集合 Q 与文档集合 D 的 Jaccard 相似度为 len(Q & D) / len(Q | D)，并集为空时返回零。词频不参与评分，不需要训练或 IDF。只返回正分结果，分数降序，同分按 ID 排序。空查询、空语料和非正 top_k 返回空列表。标点查询无词项时返回空列表。\n\n适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。\n指标：Recall@k、MRR@k、Precision@k、P95 查询耗时；依赖：Python 标准库。\n局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。\n来源为本项目编写的演示算法说明和可复现基线实现。\n"
+      }
+    ],
+    "validated_lessons": [
+      {
+        "node_id": "outcome_20261013T182845_0e195da1_jaccard_r2",
+        "algorithm": "jaccard",
+        "diagnosis": {
+          "execution_diagnostics": [
+            {
+              "count": 10,
+              "error": "TypeError: 'set' object is not subscriptable",
+              "frames": [
+                {
+                  "function": "retrieve",
+                  "line": 54,
+                  "source": "        document_tokens = tokenize(document_text)"
+                },
+                {
+                  "function": "tokenize",
+                  "line": 21,
+                  "source": "        chinese_chars.add(chinese_chars[i:i+2])"
+                }
+              ]
+            },
+            {
+              "count": 6,
+              "error": "TypeError: 'set' object is not subscriptable",
+              "frames": [
+                {
+                  "function": "retrieve",
+                  "line": 42,
+                  "source": "    query_tokens = tokenize(query)"
+                },
+                {
+                  "function": "tokenize",
+                  "line": 21,
+                  "source": "        chinese_chars.add(chinese_chars[i:i+2])"
+                }
+              ]
+            }
+          ],
+          "repair_instructions": [
+            "修复 `tokenize` 函数中相邻双字生成的逻辑：将 `chinese_chars[i:i+2]` 改为 `chinese_chars[i] + chinese_chars[i+1]` 或直接使用切片 `chinese_chars[i:i+2]` 获取字符串切片后再加入集合，避免集合对象被当作列表索引。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：由于 `i` 是整数，`chinese_chars[i:i+2]` 返回的是字符串切片而非集合元素，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或更安全的 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+            "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。"
+          ],
+          "summary": "代码在 token 集合的相邻双字生成逻辑中，错误地将集合赋值操作 `chinese_chars.add(...)` 与集合下标访问 `chinese_chars[i:i+2]` 混用，导致 `TypeError: 'set' object is not subscriptable`。",
+          "trusted_findings": [
+            {
+              "detail": "局部静态检查发现集合赋值与下标访问并存；结合错误行确认。相邻双字应从原文字符串切片。",
+              "kind": "set_subscript",
+              "line": 21,
+              "source": "chinese_chars[i:i+2]"
+            }
+          ],
+          "unchanged_previous_repair": false
+        },
+        "evidence": {
+          "code_hash": "eb6526751bfba5d4d8e5ba1acddae85110479efa5f9f52a0b9585115745a194a",
+          "validation_id": "validation_20261013T182845_0e195da1_jaccard_r2"
+        },
+        "implementation_id": "implementation_20261013T182845_0e195da1_jaccard_r2",
+        "parent": "implementation_20261013T182845_0e195da1_jaccard_r1",
+        "scope": "memory_retrieval",
+        "summary": "修复后的版本通过可信验证集检查",
+        "validated_fix": true
+      }
+    ],
+    "reference_example": {
+      "algorithm": "jaccard",
+      "source": "plugin:jaccard@1.0.1",
+      "sha256": "4fb0baa6a02f22aae5d5a6329794e367342d3c178e437b7c22b8d96b77de0894",
+      "code": "\"\"\"Set Jaccard retrieval with Chinese characters/bigrams and English identifiers.\"\"\"\n\nimport re\n\n\ndef tokenize(text):\n    tokens = set(re.findall(r\"[a-z0-9_]+\", text.lower()))\n    for fragment in re.findall(r\"[\\u4e00-\\u9fff]+\", text):\n        tokens.update(fragment)\n        tokens.update(fragment[index:index + 2] for index in range(len(fragment) - 1))\n    return tokens\n\n\ndef retrieve(query, memories, top_k=5):\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    query_tokens = tokenize(query)\n    if not query_tokens:\n        return []\n    hits = []\n    for memory in memories:\n        document_tokens = tokenize(memory[\"text\"])\n        union = query_tokens | document_tokens\n        score = len(query_tokens & document_tokens) / len(union) if union else 0.0\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": float(score)})\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n"
+    },
+    "code": "import re\nimport math\nfrom collections import defaultdict\n\ndef tokenize(text):\n    \"\"\"\n    Tokenize text into sets of characters for Jaccard similarity.\n    \n    Rules:\n    - English identifiers: alphanumeric and underscore (lowercase).\n    - Chinese characters: single characters and adjacent bigrams (2 chars).\n    - No bigram generation for English.\n    - Case insensitive matching for tokens.\n    \"\"\"\n    # Extract English identifiers (alphanumeric and underscore)\n    english_tokens = set(re.findall(r\"[a-z0-9_]+\", text.lower()))\n    \n    # Extract Chinese characters (single and adjacent bigrams)\n    chinese_chars = set()\n    for char in re.findall(r\"[\\u4e00-\\u9fff]+\", text):\n        chinese_chars.add(char)\n        # Add adjacent bigrams for Chinese\n        for i in range(len(char) - 1):\n            chinese_chars.add(char[i:i+2])\n    \n    return english_tokens | chinese_chars\n\ndef retrieve(query, memories, top_k=5):\n    \"\"\"\n    Retrieve memories using Jaccard similarity on token sets.\n    \n    Args:\n        query (str): Search query string.\n        memories (list): List of memory dicts with 'id' and 'text' keys.\n        top_k (int): Number of top results to return.\n    \n    Returns:\n        list: List of dicts with 'id' and 'score', sorted by score desc then id asc.\n    \"\"\"\n    # Handle edge cases: empty query, empty memories, invalid top_k\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    \n    # Tokenize query\n    query_tokens = tokenize(query)\n    if not query_tokens:\n        return []\n    \n    hits = []\n    \n    for memory in memories:\n        # Retrieve text and id directly from memory dict\n        document_text = memory.get(\"text\", \"\")\n        memory_id = memory.get(\"id\", \"\")\n        \n        # Tokenize document\n        document_tokens = tokenize(document_text)\n        \n        # Calculate Jaccard similarity: |Q & D| / |Q | D|\n        intersection = query_tokens.intersection(document_tokens)\n        union = query_tokens.union(document_tokens)\n        \n        if union:\n            score = len(intersection) / len(union)\n        else:\n            score = 0.0\n        \n        # Only return positive scores\n        if score > 0:\n            hits.append({\"id\": memory_id, \"score\": float(score)})\n    \n    # Sort by score descending, then by id ascending for stability\n    hits.sort(key=lambda x: (-x[\"score\"], x[\"id\"]))\n    \n    return hits[:top_k]\n",
+    "validation": {
+      "passed": false,
+      "split": "validation",
+      "errors": [
+        "algorithm contract: jaccard public example 0 scores or ranking mismatch"
+      ],
+      "diagnostics": [],
+      "metrics": {
+        "recall_at_k": 1.0,
+        "mrr_at_k": 1.0,
+        "precision_at_k": 0.20000000000000004,
+        "p95_ms": 0.3811376431258392
+      }
+    },
+    "trusted_findings": []
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "repair_instructions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 6,
+        "minItems": 1,
+        "title": "Repair Instructions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "summary",
+      "repair_instructions"
+    ],
+    "title": "Diagnosis",
+    "type": "object"
+  },
+  "retry": 0,
+  "raw_content": "{\"summary\": \"代码中 `tokenize` 函数在遍历中文大小时，错误地将 `chinese_chars` 集合赋值给变量 `chinese_chars` 后，又在循环内部尝试对该集合进行切片操作 `char[i:i+2]`，导致 `TypeError: 'set' object is not subscriptable`。\", \"repair_instructions\": [\"修复 `tokenize` 函数中遍历中文大小时，将 `chinese_chars[i:i+2]` 改为 `chinese_chars[i] + chinese_chars[i+1]` 获取字符串切片后再加入集合，避免集合对象被当作列表索引。\", \"修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：由于 `i` 是整数，`chinese_chars[i:i+2]` 返回的是字符串切片而非集合元素，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或更安全的 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。\", \"修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。\", \"修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。\", \"修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。\", \"修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。\"]}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 3809,
+    "eval_count": 666,
+    "total_duration": 29295714284
+  },
+  "response": {
+    "summary": "代码中 `tokenize` 函数在遍历中文大小时，错误地将 `chinese_chars` 集合赋值给变量 `chinese_chars` 后，又在循环内部尝试对该集合进行切片操作 `char[i:i+2]`，导致 `TypeError: 'set' object is not subscriptable`。",
+    "repair_instructions": [
+      "修复 `tokenize` 函数中遍历中文大小时，将 `chinese_chars[i:i+2]` 改为 `chinese_chars[i] + chinese_chars[i+1]` 获取字符串切片后再加入集合，避免集合对象被当作列表索引。",
+      "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：由于 `i` 是整数，`chinese_chars[i:i+2]` 返回的是字符串切片而非集合元素，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或更安全的 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+      "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+      "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+      "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。",
+      "修复 `tokenize` 函数中 `chinese_chars.add(chinese_chars[i:i+2])` 的逻辑：原代码 `chinese_chars.add(chinese_chars[i:i+2])` 中 `chinese_chars[i:i+2]` 是字符串切片，应改为 `chinese_chars.add(chinese_chars[i:i+2])` 或 `chinese_chars.add(chinese_chars[i:i+2])` 后，确保 `i` 是索引且切片操作正确。"
+    ]
+  },
+  "duration_seconds": 29.368872874882072
+}

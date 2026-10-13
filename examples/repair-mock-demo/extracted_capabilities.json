@@ -1,0 +1,101 @@
+[
+  {
+    "id": "char_tfidf_b4505e839264",
+    "name": "中文技术记忆 tfidf",
+    "task": "memory_retrieval",
+    "algorithm": "tfidf",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+    ],
+    "metrics": [
+      "mrr_at_k",
+      "p95_ms",
+      "precision_at_k",
+      "recall_at_k"
+    ],
+    "dependencies": [
+      "scikit-learn"
+    ],
+    "limitations": [
+      "局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。"
+    ],
+    "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+    "evidence": "适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。",
+    "algorithm_plugin_version": "1.0.0"
+  },
+  {
+    "id": "char_bm25_0f592b104c61",
+    "name": "中文技术记忆 bm25",
+    "task": "memory_retrieval",
+    "algorithm": "bm25",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "不同长度的技术笔记、包含明确组件名或故障词的查询。"
+    ],
+    "metrics": [
+      "mrr_at_k",
+      "p95_ms",
+      "precision_at_k",
+      "recall_at_k"
+    ],
+    "dependencies": [
+      "Python stdlib"
+    ],
+    "limitations": [
+      "局限：词面匹配对纯语义改写有限；分词策略影响排序。"
+    ],
+    "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+    "evidence": "适用：不同长度的技术笔记、包含明确组件名或故障词的查询。",
+    "algorithm_plugin_version": "1.0.0"
+  },
+  {
+    "id": "char_jaccard_45115d64dc38",
+    "name": "中文技术记忆 jaccard",
+    "task": "memory_retrieval",
+    "algorithm": "jaccard",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。"
+    ],
+    "metrics": [
+      "mrr_at_k",
+      "p95_ms",
+      "precision_at_k",
+      "recall_at_k"
+    ],
+    "dependencies": [
+      "Python stdlib"
+    ],
+    "limitations": [
+      "局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。"
+    ],
+    "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+    "evidence": "适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。",
+    "algorithm_plugin_version": "1.0.0"
+  }
+]

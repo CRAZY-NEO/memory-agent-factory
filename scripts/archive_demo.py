@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("run_id")
     parser.add_argument("--workspace", type=Path, default=ROOT)
-    parser.add_argument("--output-name", choices=["demo", "ollama-demo", "plugin-demo", "plugin-ollama-demo", "plugin-jaccard-ollama-demo", "plugin-ollama-failure"], default="demo")
+    parser.add_argument("--output-name", choices=["demo", "ollama-demo", "plugin-demo", "plugin-ollama-demo", "plugin-jaccard-ollama-demo", "plugin-ollama-failure", "repair-ollama-demo", "repair-ollama-initial", "repair-mock-demo"], default="demo")
     parser.add_argument("--allow-failure", action="store_true", help="明确归档失败记录，保留真实错误")
     arguments = parser.parse_args()
     if Path(arguments.run_id).name != arguments.run_id:

@@ -161,7 +161,7 @@ CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变�
 [示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
 
 报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
-当前 40 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
+当前 50 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
 真实模型例子见 [Ollama 完整报告](examples/ollama-demo/report.md)、[候选规划](examples/ollama-demo/plan.json)、[BM25 首版与修订](examples/ollama-demo/bm25/)、[模型调用记录](examples/ollama-demo/llm/) 和 [最终插件](examples/ollama-demo/selected_retrieval.py)。2026-10-12 的样例调用八次模型；TF-IDF 首版通过，BM25 首版因缺少 `re` 导入失败，模型根据真实错误修复后通过。选定 BM25 修订版的最终测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；这些数值只描述 24 条模拟记忆与 10 条最终测试查询。
 所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
 显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
@@ -180,6 +180,8 @@ FACTORY_DEMO_WORKSPACE=state/jaccard-demo bash scripts/run_plugin_demo.sh
 ```
 
 三算法真实模型运行 `20261013T172815_22ac726c` 共调用模型 13 次，复用已由真实模型抽取的三份能力知识。TF-IDF 三版索引越界，Jaccard 三版错误地切片集合，都被可信验证器拒绝；BM25 首版通过并被选定，最终测试 Recall@5=1、MRR@5=1、Precision@5=0.22、P95=1.15 ms。真实模型的不同次运行可能产生不同质量的代码，单个 Jaccard 通过样例不代表它每次生成都能通过。
+
+针对上述失败，新增算法专属上下文、错误源码定位、无效修复检测、第二轮参考实现重新复刻及中英文公开算法契约。[改进后的真实复验](examples/repair-ollama-demo/report.md)共 12 次模型调用：重放旧失败代码后，TF-IDF/Jaccard 都在 r2 通过验证，BM25 本次新生成 r0 通过；选定 BM25 的最终测试 Recall@5=1、MRR@5=1、Precision@5=0.22、P95=0.7026 ms。历史重放明确标注，只有修复版本属于本次模型输出。首次复验曾遗漏英文拆字缺陷，记录单独保留；原因、契约补齐过程及命令见 [生成与修复说明](docs/generation-repair.md)。
 
 三算法演示启用 `compare_all_algorithms=true`，规划及可信检查均要求覆盖全部启用算法，避免模型漏掉候选。新增算法只需材料、参考实现与注册模块；新增指标只需可信计算函数和注册模块。也可通过配置接入已安装的外部插件包，详见 [插件接入指南](docs/plugins.md)。当前支持检索任务及已审查的执行环境，其他任务或新依赖环境需要扩展契约和镜像。
 
@@ -233,3 +235,5 @@ git status
 所有演示资料均由本项目编写；外部库遵循各自许可证。
 
 参考：[LangGraph 状态图](https://docs.langchain.com/oss/python/langgraph/graph-api)、[Ollama chat API](https://docs.ollama.com/api/chat)、[scikit-learn TF-IDF](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html)、[BEIR 检索评估](https://github.com/beir-cellar/beir)。
+
+生成与修复的新策略、旧失败原因及复验命令见 [生成与修复说明](docs/generation-repair.md)。剩余功能及实现成本见 [补齐路线](docs/roadmap.md)。

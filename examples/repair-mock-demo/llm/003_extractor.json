@@ -1,0 +1,258 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "extractor",
+  "context": {
+    "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+    "text": "# 中文技术记忆检索：Jaccard\n\n能力标识：char_jaccard。算法：jaccard。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文使用单字及相邻双字，英文技术标识使用小写单词，将分词结果去重为集合。查询集合 Q 与文档集合 D 的 Jaccard 相似度为 len(Q & D) / len(Q | D)，并集为空时返回零。词频不参与评分，不需要训练或 IDF。只返回正分结果，分数降序，同分按 ID 排序。空查询、空语料和非正 top_k 返回空列表。标点查询无词项时返回空列表。\n\n适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。\n指标：Recall@k、MRR@k、Precision@k、P95 查询耗时；依赖：Python 标准库。\n局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。\n来源为本项目编写的演示算法说明和可复现基线实现。\n",
+    "registered_algorithms": [
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "environment": "retrieval-v1",
+        "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。必须对 texts=[memory[\"text\"] for memory in memories] 拟合，每条完整记忆对应矩阵一行，行数必须等于 len(memories)。禁止把拆分去重的词当成多篇文档，禁止移除中文或过滤行后仍用原列表索引；transform([query]) 后与整个语料计算相似度。",
+        "public_cases": [
+          {
+            "query": "甲乙 alpha beta",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙 alpha beta",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙 alpha gamma",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0000000000000016
+              },
+              {
+                "id": "b",
+                "score": 0.46518071501565006
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。",
+        "public_cases": []
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。中文双字必须从原文连续中文片段按相邻位置切分，不能从无序集合取字符再拼接。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。",
+        "public_cases": [
+          {
+            "query": "甲乙",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0
+              },
+              {
+                "id": "b",
+                "score": 0.2
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "registered_metrics": [
+      "mrr_at_k",
+      "p95_ms",
+      "precision_at_k",
+      "recall_at_k"
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "Capability": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "pattern": "^[a-z][a-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "task": {
+            "const": "memory_retrieval",
+            "title": "Task",
+            "type": "string"
+          },
+          "algorithm": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Algorithm",
+            "type": "string",
+            "enum": [
+              "tfidf",
+              "bm25",
+              "jaccard"
+            ]
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "applicable_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Applicable Conditions",
+            "type": "array"
+          },
+          "metrics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "dependencies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "evidence": {
+            "minLength": 10,
+            "title": "Evidence",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "task",
+          "algorithm",
+          "inputs",
+          "outputs",
+          "applicable_conditions",
+          "metrics",
+          "dependencies",
+          "limitations",
+          "source_id",
+          "evidence"
+        ],
+        "title": "Capability",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "capabilities": {
+        "items": {
+          "$ref": "#/$defs/Capability"
+        },
+        "maxItems": 4,
+        "minItems": 1,
+        "title": "Capabilities",
+        "type": "array"
+      }
+    },
+    "required": [
+      "capabilities"
+    ],
+    "title": "Extraction",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "capabilities": [
+      {
+        "id": "char_jaccard",
+        "name": "中文技术记忆 jaccard",
+        "task": "memory_retrieval",
+        "algorithm": "jaccard",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "applicable_conditions": [
+          "小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。"
+        ],
+        "metrics": [
+          "mrr_at_k",
+          "p95_ms",
+          "precision_at_k",
+          "recall_at_k"
+        ],
+        "dependencies": [
+          "Python stdlib"
+        ],
+        "limitations": [
+          "局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。"
+        ],
+        "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+        "evidence": "适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。"
+      }
+    ]
+  },
+  "duration_seconds": 1.0916031897068024e-05
+}
