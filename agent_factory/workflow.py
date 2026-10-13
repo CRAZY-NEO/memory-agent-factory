@@ -16,6 +16,7 @@ from langgraph.graph import END, START, StateGraph
 from .knowledge import KnowledgeStore, digest, ingest_sources
 from .llm import LLMClient, LLMError
 from .models import CodeArtifact, Diagnosis, Plan, Request, ValidationConfig
+from .registry import load_registry
 from .reporting import write_report
 from .runner import Runner
 from .validation import load_dataset, validate
@@ -45,10 +46,12 @@ class FactoryState(TypedDict, total=False):
 class Factory:
     def __init__(self, workspace, provider="mock", model="mock-template-v1",
                  base_url="http://localhost:11434", runner=None, inject_fault=False,
-                 allow_local=False, config=None):
+                 allow_local=False, config=None, registry=None):
         self.workspace = Path(workspace).resolve()
         self.config = config or ValidationConfig.model_validate(
             json.loads((self.workspace / "config.json").read_text(encoding="utf-8")))
+        self.registry = registry or load_registry(self.config.plugin_packages)
+        self.registry.validate_config(self.config)
         self.runner_mode = runner or ("docker" if provider == "ollama" else "local")
         if provider == "ollama" and self.runner_mode == "local" and not allow_local:
             raise ValueError("真实 LLM 代码请使用 Docker；若明确接受本地执行边界，添加 --allow-local")
@@ -57,7 +60,9 @@ class Factory:
         self.run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "_" + uuid.uuid4().hex[:8]
         self.directory = self.workspace / "runs" / self.run_id
         self.directory.mkdir(parents=True)
-        self.client = LLMClient(provider, model, base_url, self.directory / "llm", inject_fault)
+        self.client = LLMClient(provider, model, base_url, self.directory / "llm", inject_fault,
+                                registry=self.registry,
+                                fault_algorithm=self.config.algorithms[min(1, len(self.config.algorithms) - 1)])
         self.store = KnowledgeStore(self.workspace / "state" / "knowledge.sqlite")
         self.runner = Runner(self.runner_mode, self.config.timeout_seconds)
         self.environment = {"python": sys.version, "platform": platform.platform(),
@@ -84,31 +89,45 @@ class Factory:
         return {"request": request.model_dump()}
 
     def _retrieve(self, state):
-        knowledge = self.store.retrieve(state["description"])
+        knowledge = self.store.retrieve(state["description"], limit=max(4, len(self.config.algorithms)),
+                                        algorithms=self.config.algorithms)
         (self.directory / "retrieved_knowledge.json").write_text(
             json.dumps(knowledge, ensure_ascii=False, indent=2), encoding="utf-8")
         return {"knowledge": knowledge}
 
     def _plan(self, state):
-        plan = self.client.ask("planner", {"request": state["request"], **state["knowledge"]}, Plan)
+        plan = self.client.ask("planner", {"request": state["request"], **state["knowledge"],
+                                          "algorithm_catalog": self.registry.catalog(self.config)["algorithms"],
+                                          "max_candidates": self.config.max_candidates,
+                                          "required_algorithms": self.config.algorithms
+                                          if self.config.compare_all_algorithms else []}, Plan)
+        if len(plan.candidates) > self.config.max_candidates:
+            raise ValueError("Plan exceeds configured candidate budget")
         available = {cap["id"]: cap for cap in state["knowledge"]["capabilities"]}
         algorithms = []
         for candidate in plan.candidates:
+            self.registry.algorithm(candidate.algorithm)
+            if candidate.algorithm not in self.config.algorithms:
+                raise ValueError("Plan references disabled algorithm")
             if candidate.capability_id not in available or available[candidate.capability_id]["algorithm"] != candidate.algorithm:
                 raise ValueError("Plan references unsupported capability/algorithm")
             if candidate.algorithm in algorithms:
                 raise ValueError("Plan must compare distinct algorithms")
             algorithms.append(candidate.algorithm)
+        if self.config.compare_all_algorithms and set(algorithms) != set(self.config.algorithms):
+            raise ValueError("Plan must include all enabled algorithms in comparison mode")
         (self.directory / "plan.json").write_text(plan.model_dump_json(indent=2), encoding="utf-8")
         return {"plan": plan.model_dump(), "candidate_index": 0, "revision": 0}
 
     def _generate(self, state):
         candidate = state["plan"]["candidates"][state["candidate_index"]]
         context = {"request": state["request"], "candidate": candidate, **state["knowledge"]}
-        reference = Path(__file__).with_name("templates") / f"{candidate['algorithm']}.py"
+        algorithm_plugin = self.registry.algorithm(candidate["algorithm"])
+        context["algorithm_plugin"] = algorithm_plugin.metadata()
+        reference = algorithm_plugin.reference
         reference_code = reference.read_text(encoding="utf-8")
         context["reference_example"] = {"algorithm": candidate["algorithm"],
-                                        "source": f"agent_factory/templates/{reference.name}",
+                                        "source": f"plugin:{algorithm_plugin.id}@{algorithm_plugin.version}",
                                         "sha256": digest(reference_code), "code": reference_code}
         role = "coder"
         if state["revision"]:
@@ -124,7 +143,7 @@ class Factory:
     def _validate(self, state):
         memories, queries = load_dataset(self.workspace / "data", "validation")
         report = validate(state["code"], self.runner, memories, queries,
-                          state["request"]["top_k"], self.config)
+                          state["request"]["top_k"], self.config, registry=self.registry)
         if state["generation_error"]:
             report["errors"].append(state["generation_error"])
             report["passed"] = False
@@ -191,10 +210,15 @@ class Factory:
         passed = [attempt for attempt in state["attempts"] if attempt["validation"]["passed"]]
         if not passed:
             return {"selected": None, "test": None, "status": "failed_validation"}
-        # Primary metrics first; BM25 wins equal metrics because it has no external model dependency.
-        selected = max(passed, key=lambda row: (row["validation"]["metrics"]["recall_at_k"],
-                                               row["validation"]["metrics"]["mrr_at_k"],
-                                               row["algorithm"] == "bm25", -row["revision"]))
+        def ranking(row):
+            values = tuple(row["validation"]["metrics"][name]
+                           * (1 if self.registry.metric(name).direction == "higher" else -1)
+                           for name in self.config.selection_order)
+            plugin = self.registry.algorithm(row["algorithm"])
+            # Equal metrics: fewer dependencies, configured algorithm order, earliest revision.
+            return (*values, -len(plugin.dependencies),
+                    -self.config.algorithms.index(row["algorithm"]), -row["revision"])
+        selected = max(passed, key=ranking)
         return {"selected": selected}
 
     def _test(self, state):
@@ -203,7 +227,8 @@ class Factory:
         if digest(code) != state["selected"]["code_hash"]:
             raise ValueError("Selected code changed before final test")
         memories, queries = load_dataset(self.workspace / "data", "test")
-        report = validate(code, self.runner, memories, queries, state["request"]["top_k"], self.config, "test")
+        report = validate(code, self.runner, memories, queries, state["request"]["top_k"],
+                          self.config, "test", registry=self.registry)
         uid = "test_" + self.run_id
         self.store.add_node(uid, "ValidationRun", report)
         self.store.add_edge(state["selected"]["implementation_id"], uid, "tested_by")
@@ -222,6 +247,8 @@ class Factory:
                    "selected": state["selected"], "test": state["test"], "status": state["status"],
                    "environment": self.environment, "dataset_hashes": files,
                    "validation_config": self.config.model_dump(), "llm_calls": self.client.calls,
+                   "plugin_catalog": self.registry.catalog(self.config),
+                   "mock_fault_algorithm": self.client.fault_algorithm if self.client.inject_fault else None,
                    "workflow_events": state["events"] + ["persist"]}
         self.store.add_node("run_" + self.run_id, "FactoryRun", summary)
         for attempt in state["attempts"]:
@@ -231,7 +258,8 @@ class Factory:
                       "runner": self.runner_mode,
                       "run_id": self.run_id, "code_hash": state["selected"]["code_hash"],
                       "code_path": str(self.directory / "selected_retrieval.py"),
-                      "dependencies": [] if state["selected"]["algorithm"] == "bm25" else ["scikit-learn"],
+                      "algorithm_plugin": self.registry.algorithm(state["selected"]["algorithm"]).metadata(),
+                      "dependencies": list(self.registry.algorithm(state["selected"]["algorithm"]).dependencies),
                       "validation_report": str(self.directory / "report.json")}
             (self.directory / "plugin.json").write_text(json.dumps(plugin, ensure_ascii=False, indent=2), encoding="utf-8")
         write_report(self.directory, summary)
@@ -269,13 +297,17 @@ class Factory:
             if {q["query"] for q in validation_queries} & {q["query"] for q in test_queries}:
                 raise ValueError("Validation and final-test queries must be disjoint")
             self.store.add_node(self.environment_id, "Environment", self.environment)
-            if not self.store.nodes("Capability"):
+            known = {cap["algorithm"] for cap in self.store.nodes("Capability")}
+            missing = [name for name in self.config.algorithms if name not in known]
+            if missing:
                 ingest_sources(self.store, self.client, self.workspace / "knowledge" / "sources",
-                               self.directory / "extracted_capabilities.json")
+                               self.directory / "extracted_capabilities.json", registry=self.registry,
+                               algorithm_ids=missing)
             graph = self.graph()
             (self.directory / "workflow.mmd").write_text(graph.get_graph().draw_mermaid(), encoding="utf-8")
             state = graph.invoke({"description": description, "attempts": [], "events": []},
-                                 config={"recursion_limit": 80})
+                                 config={"recursion_limit": 10 + self.config.max_candidates *
+                                         (3 + 3 * self.config.max_repairs)})
             return {"status": state["status"], "run_id": self.run_id,
                     "directory": str(self.directory), "selected": state["selected"]}
         except Exception as exc:

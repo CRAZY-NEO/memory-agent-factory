@@ -1,0 +1,173 @@
+[
+  {
+    "id": "char_tfidf_efd747a4fcac",
+    "name": "字符 TF-IDF",
+    "task": "memory_retrieval",
+    "algorithm": "tfidf",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "memory id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "小规模中文与英文混合笔记",
+      "词面相近的排错记录",
+      "项目决策"
+    ],
+    "metrics": [
+      "Recall@k",
+      "MRR@k",
+      "P95 查询耗时"
+    ],
+    "dependencies": [
+      "scikit-learn"
+    ],
+    "limitations": [
+      "难以解决同义改写",
+      "缺少词面重合的查询",
+      "原型每次查询重建索引"
+    ],
+    "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+    "evidence": "中文技术记忆检索：TF-IDF\n\n能力标识：char_tfidf。算法：tfidf。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。",
+    "algorithm_plugin_version": "1.0.0"
+  },
+  {
+    "id": "bm25_8e927a9f2faf",
+    "name": "字符 BM25",
+    "task": "memory_retrieval",
+    "algorithm": "bm25",
+    "inputs": [
+      "query",
+      "memories"
+    ],
+    "outputs": [
+      "memory id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "小规模中文与英文混合笔记",
+      "词面相近的排错记录",
+      "项目决策"
+    ],
+    "metrics": [
+      "Recall@k",
+      "MRR@k",
+      "P95 查询耗时"
+    ],
+    "dependencies": [],
+    "limitations": [
+      "难以解决同义改写",
+      "缺少词面重合的查询",
+      "原型每次查询重建索引"
+    ],
+    "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+    "evidence": "中文技术笔记可以使用字符一至三元组 TF-IDF 与余弦相似度进行检索，无须额外标注训练数据。先在记忆文本上拟合向量器，再转换查询；不要把查询加入拟合语料。保留英文技术词并统一大小写。检索分数相同按 ID 排序，空查询、空语料和非正 top_k 返回空列表。",
+    "algorithm_plugin_version": "1.0.0"
+  },
+  {
+    "id": "jaccard_65e3bfc05337",
+    "name": "集合 Jaccard",
+    "task": "memory_retrieval",
+    "algorithm": "jaccard",
+    "inputs": [
+      "query",
+      "memories"
+    ],
+    "outputs": [
+      "memory id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "小规模中文与英文混合笔记",
+      "词面相近的排错记录",
+      "项目决策"
+    ],
+    "metrics": [
+      "Recall@k",
+      "MRR@k",
+      "P95 查询耗时"
+    ],
+    "dependencies": [],
+    "limitations": [
+      "难以解决同义改写",
+      "缺少词面重合的查询",
+      "原型每次查询重建索引"
+    ],
+    "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+    "evidence": "中文技术笔记可以使用字符一至三元组 TF-IDF 与余弦相似度进行检索，无须额外标注训练数据。先在记忆文本上拟合向量器，再转换查询；不要把查询加入拟合语料。保留英文技术词并统一大小写。检索分数相同按 ID 排序，空查询、空语料和非正 top_k 返回空列表。",
+    "algorithm_plugin_version": "1.0.0"
+  },
+  {
+    "id": "char_bm25_3819f381772f",
+    "name": "字符 BM25",
+    "task": "memory_retrieval",
+    "algorithm": "bm25",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "memory id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "不同长度的技术笔记",
+      "包含明确组件名或故障词的查询"
+    ],
+    "metrics": [
+      "Recall@k",
+      "MRR@k",
+      "P95 查询耗时"
+    ],
+    "dependencies": [
+      "Python 标准库"
+    ],
+    "limitations": [
+      "词面匹配对纯语义改写有限",
+      "分词策略影响排序"
+    ],
+    "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+    "evidence": "BM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。",
+    "algorithm_plugin_version": "1.0.0"
+  },
+  {
+    "id": "char_jaccard_d9bf825b40ee",
+    "name": "集合 Jaccard",
+    "task": "memory_retrieval",
+    "algorithm": "jaccard",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "有序的 memory id 和 score"
+    ],
+    "applicable_conditions": [
+      "小规模中文与英文混合技术笔记",
+      "需要轻量且可解释的词集合重合检索"
+    ],
+    "metrics": [
+      "Recall@k",
+      "MRR@k",
+      "Precision@k",
+      "P95 查询耗时"
+    ],
+    "dependencies": [
+      "Python 标准库"
+    ],
+    "limitations": [
+      "不考虑词频与逆文档频率",
+      "长文档的并集会稀释得分",
+      "无法解决缺少词面重合的语义改写"
+    ],
+    "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+    "evidence": "中文技术记忆检索：Jaccard\n\n能力标识：char_jaccard。算法：jaccard。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文使用单字及相邻双字，英文技术标识使用小写单词，将分词结果去重为集合。查询集合 Q 与文档集合 D 的 Jaccard 相似度为 len(Q & D) / len(Q | D)，并集为空时返回零。词频不参与评分，不需要训练或 IDF。只返回正分结果，分数降序，同分按 ID 排序。空查询、空语料和非正 top_k 返回空列表。标点查询无词项时返回空列表。\n\n适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。\n指标：Recall@k、MRR@k、Precision@k、P95 查询耗时；依赖：Python 标准库。\n局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。\n来源为本项目编写的演示算法说明和可复现基线实现。",
+    "algorithm_plugin_version": "1.0.0"
+  }
+]

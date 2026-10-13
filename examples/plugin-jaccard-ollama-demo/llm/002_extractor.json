@@ -1,0 +1,209 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "extractor",
+  "context": {
+    "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+    "text": "# 中文技术记忆检索：BM25\n\n能力标识：char_bm25。算法：bm25。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\nBM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。\n\n适用：不同长度的技术笔记、包含明确组件名或故障词的查询。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：Python 标准库。\n局限：词面匹配对纯语义改写有限；分词策略影响排序。\n来源为本项目编写的演示算法说明，研究背景：\nhttps://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf\n",
+    "registered_algorithms": [
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "environment": "retrieval-v1",
+        "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。拟合语料仅为记忆文本，transform([query]) 后与整个语料计算相似度。"
+      },
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。"
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。"
+      }
+    ],
+    "registered_metrics": [
+      "mrr_at_k",
+      "p95_ms",
+      "precision_at_k",
+      "recall_at_k"
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "Capability": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "pattern": "^[a-z][a-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "task": {
+            "const": "memory_retrieval",
+            "title": "Task",
+            "type": "string"
+          },
+          "algorithm": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Algorithm",
+            "type": "string",
+            "enum": [
+              "tfidf",
+              "bm25",
+              "jaccard"
+            ]
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "applicable_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Applicable Conditions",
+            "type": "array"
+          },
+          "metrics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "dependencies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "evidence": {
+            "minLength": 10,
+            "title": "Evidence",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "task",
+          "algorithm",
+          "inputs",
+          "outputs",
+          "applicable_conditions",
+          "metrics",
+          "dependencies",
+          "limitations",
+          "source_id",
+          "evidence"
+        ],
+        "title": "Capability",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "capabilities": {
+        "items": {
+          "$ref": "#/$defs/Capability"
+        },
+        "maxItems": 4,
+        "minItems": 1,
+        "title": "Capabilities",
+        "type": "array"
+      }
+    },
+    "required": [
+      "capabilities"
+    ],
+    "title": "Extraction",
+    "type": "object"
+  },
+  "retry": 0,
+  "raw_content": "{\n  \"capabilities\": [\n    {\n      \"id\": \"char_bm25\",\n      \"name\": \"字符 BM25\",\n      \"task\": \"memory_retrieval\",\n      \"algorithm\": \"bm25\",\n      \"inputs\": [\"query\", \"memories\", \"top_k\"],\n      \"outputs\": [\"memory id\", \"score\"],\n      \"applicable_conditions\": [\"不同长度的技术笔记\", \"包含明确组件名或故障词的查询\"],\n      \"metrics\": [\"Recall@k\", \"MRR@k\", \"P95 查询耗时\"],\n      \"dependencies\": [\"Python 标准库\"],\n      \"limitations\": [\"词面匹配对纯语义改写有限\", \"分词策略影响排序\"],\n      \"source_id\": \"source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2\",\n      \"evidence\": \"BM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。\"\n    }\n  ]\n}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 1182,
+    "eval_count": 346,
+    "total_duration": 13873926195
+  },
+  "response": {
+    "capabilities": [
+      {
+        "id": "char_bm25",
+        "name": "字符 BM25",
+        "task": "memory_retrieval",
+        "algorithm": "bm25",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "outputs": [
+          "memory id",
+          "score"
+        ],
+        "applicable_conditions": [
+          "不同长度的技术笔记",
+          "包含明确组件名或故障词的查询"
+        ],
+        "metrics": [
+          "Recall@k",
+          "MRR@k",
+          "P95 查询耗时"
+        ],
+        "dependencies": [
+          "Python 标准库"
+        ],
+        "limitations": [
+          "词面匹配对纯语义改写有限",
+          "分词策略影响排序"
+        ],
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "evidence": "BM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。"
+      }
+    ]
+  },
+  "duration_seconds": 13.903794500045478
+}

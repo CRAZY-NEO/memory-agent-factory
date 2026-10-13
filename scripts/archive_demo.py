@@ -12,14 +12,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("run_id")
     parser.add_argument("--workspace", type=Path, default=ROOT)
-    parser.add_argument("--output-name", choices=["demo", "ollama-demo"], default="demo")
+    parser.add_argument("--output-name", choices=["demo", "ollama-demo", "plugin-demo", "plugin-ollama-demo", "plugin-jaccard-ollama-demo", "plugin-ollama-failure"], default="demo")
+    parser.add_argument("--allow-failure", action="store_true", help="明确归档失败记录，保留真实错误")
     arguments = parser.parse_args()
     if Path(arguments.run_id).name != arguments.run_id:
         raise ValueError("run_id must be a directory name")
     workspace = arguments.workspace.resolve()
     source = workspace / "runs" / arguments.run_id
     report = json.loads((source / "report.json").read_text(encoding="utf-8"))
-    if report["status"] != "passed":
+    if report["status"] != "passed" and not arguments.allow_failure:
         raise ValueError("Only archive a completed successful demo")
     destination = ROOT / "examples" / arguments.output_name
     if destination.exists():

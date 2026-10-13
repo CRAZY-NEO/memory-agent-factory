@@ -40,7 +40,7 @@ bash scripts/run_ollama_demo.sh
 FACTORY_DEMO_WORKSPACE=state/ollama-real-2 bash scripts/run_ollama_demo.sh
 ```
 
-闭环包括：能力材料抽取 → 理解需求 → 检索知识 → 规划候选 → 生成代码 → Docker 验证 → 必要时审查与修复 → 比较候选 → 冻结后最终测试 → 写回知识库。最多两个候选，每个候选最多修复两次；失败不会替换成 mock。
+闭环包括：能力材料抽取 → 理解需求 → 检索知识 → 规划候选 → 生成代码 → Docker 验证 → 必要时审查与修复 → 比较候选 → 冻结后最终测试 → 写回知识库。候选和修复预算由工作目录 config.json 控制；新插件演示明确比较三个候选，每个候选默认最多修复两次；失败不会替换成 mock。
 
 模型可阅读对应 TF-IDF/BM25 基线代码示例进行复刻，参考文件来源和哈希记录在每次生成上下文中。发布文件使用实际模型响应中的代码，未经人工替换；验证与测试指标由项目验证器计算。
 
@@ -69,3 +69,18 @@ FACTORY_DEMO_WORKSPACE=state/ollama-real-2 bash scripts/run_ollama_demo.sh
 `20261012T073909_2ed8189e` 已完成八次 `qwen3.5:2b` 调用，包含两次能力抽取、需求理解、规划、两个候选生成、一次审查和一次修复。TF-IDF 首版通过；BM25 首版遗漏 `re` 导入，自动修复后通过并被选定。最终独立测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；数据为小型模拟技术记忆库，不代表真实个人记忆数据的泛化表现。
 
 报告、各版代码、模型响应和知识图谱归档到 [examples/ollama-demo](../examples/ollama-demo/report.md)，离线模板演示仍单独保存在 `examples/demo`。
+
+## 插件机制演示
+
+新增 Jaccard 与 Precision@k 的真实模型通过记录见 [Jaccard 报告](../examples/plugin-jaccard-ollama-demo/report.md)，保留六次真实模型调用、Docker 执行、冻结代码与知识回写。
+三算法完整比较可使用以下命令；当前配置要求 TF-IDF、BM25、Jaccard 都出现在候选列表中：
+
+```bash
+FACTORY_PROVIDER=ollama FACTORY_DEMO_WORKSPACE=state/plugin-ollama-demo \
+OLLAMA_URL=http://127.0.0.1:11435 OLLAMA_CHAT_MODEL=qwen3.5:2b \
+bash scripts/run_plugin_demo.sh
+```
+
+保持 SSH 隧道连接直到模型流程结束。若发生模型代码失败，检查报告中所有修订与原始响应，不应将失败记录改写为成功；参见 [保留的失败例子](../examples/plugin-ollama-failure/report.md)。
+
+三算法真实模型比较已完成并归档到 [完整报告](../examples/plugin-ollama-demo/report.md)：实际规划三种算法，共 13 次调用；BM25 通过独立最终测试，TF-IDF 与 Jaccard 的错误版本耗尽修复预算后排除。此运行复用先前真实模型抽取的能力知识，抽取原始响应保留在失败运行的 llm 目录中。

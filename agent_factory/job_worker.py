@@ -11,6 +11,8 @@ from pathlib import Path
 from .jobs import JobStore
 from .knowledge import KnowledgeStore, ingest_sources
 from .llm import LLMClient
+from .models import ValidationConfig
+from .registry import load_registry
 from .runtime import MemoryRetriever
 from .workflow import Factory
 
@@ -25,10 +27,15 @@ def execute_job(workspace, job, provider, model, base_url, runner):
                 "algorithm": result["selected"]["algorithm"] if result["selected"] else None,
                 "report_url": f"/v1/runs/{result['run_id']}/report"}
     if kind == "ingest":
-        client = LLMClient(provider, model, base_url, workspace / "state" / "ingest" / job["id"])
+        config = ValidationConfig.model_validate(json.loads((workspace / "config.json").read_text(encoding="utf-8")))
+        registry = load_registry(config.plugin_packages)
+        registry.validate_config(config)
+        client = LLMClient(provider, model, base_url, workspace / "state" / "ingest" / job["id"],
+                           registry=registry)
         store = KnowledgeStore(workspace / "state" / "knowledge.sqlite")
         records = ingest_sources(store, client, workspace / "knowledge" / "sources",
-                                 workspace / "state" / "extracted_capabilities.json")
+                                 workspace / "state" / "extracted_capabilities.json",
+                                 registry=registry, algorithm_ids=config.algorithms)
         return {"status": "passed", "capabilities": len(records)}
     if kind == "search":
         if payload.get("run_id"):

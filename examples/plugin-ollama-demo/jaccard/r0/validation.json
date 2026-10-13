@@ -1,0 +1,105 @@
+{
+  "split": "validation",
+  "passed": false,
+  "errors": [
+    "v01: TypeError: 'set' object is not subscriptable",
+    "v02: TypeError: 'set' object is not subscriptable",
+    "v03: TypeError: 'set' object is not subscriptable",
+    "v04: TypeError: 'set' object is not subscriptable",
+    "v05: TypeError: 'set' object is not subscriptable",
+    "v06: TypeError: 'set' object is not subscriptable",
+    "v07: TypeError: 'set' object is not subscriptable",
+    "v08: TypeError: 'set' object is not subscriptable",
+    "v09: TypeError: 'set' object is not subscriptable",
+    "v10: TypeError: 'set' object is not subscriptable",
+    "v11: TypeError: 'set' object is not subscriptable",
+    "v12: TypeError: 'set' object is not subscriptable",
+    "contract:exact: TypeError: 'set' object is not subscriptable",
+    "contract:repeat: TypeError: 'set' object is not subscriptable",
+    "contract:large_k: TypeError: 'set' object is not subscriptable",
+    "contract:unicode: TypeError: 'set' object is not subscriptable"
+  ],
+  "metrics": {},
+  "top_k": 5,
+  "query_count": 12,
+  "memory_count": 24,
+  "execution": {
+    "wall_seconds": 0.3040500001516193,
+    "runner": "docker"
+  },
+  "gates": {
+    "task": "memory_retrieval",
+    "algorithms": [
+      "tfidf",
+      "bm25",
+      "jaccard"
+    ],
+    "plugin_packages": [],
+    "max_candidates": 3,
+    "compare_all_algorithms": true,
+    "metrics": {
+      "recall_at_k": {
+        "min": 0.75,
+        "max": null
+      },
+      "mrr_at_k": {
+        "min": 0.65,
+        "max": null
+      },
+      "precision_at_k": {
+        "min": 0.2,
+        "max": null
+      },
+      "p95_ms": {
+        "min": null,
+        "max": 1000.0
+      }
+    },
+    "selection_order": [
+      "recall_at_k",
+      "mrr_at_k",
+      "precision_at_k"
+    ],
+    "timeout_seconds": 30.0,
+    "max_repairs": 2
+  },
+  "per_query": [],
+  "metric_plugins": [
+    {
+      "id": "recall_at_k",
+      "name": "Recall@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "mrr_at_k",
+      "name": "MRR@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "precision_at_k",
+      "name": "Precision@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "p95_ms",
+      "name": "P95 ms",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "lower",
+      "minimum": 0,
+      "maximum": null
+    }
+  ]
+}

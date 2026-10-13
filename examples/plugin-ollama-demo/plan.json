@@ -1,0 +1,20 @@
+{
+  "candidates": [
+    {
+      "algorithm": "tfidf",
+      "capability_id": "char_tfidf_efd747a4fcac",
+      "rationale": "TF-IDF 利用词频与逆文档频率加权，能有效捕捉技术文档中特定组件或故障词的语义重要性，适合包含明确组件名的查询场景。"
+    },
+    {
+      "algorithm": "bm25",
+      "capability_id": "char_bm25_3819f381772f",
+      "rationale": "BM25 结合词频、逆文档频率与文档长度归一化，能更精确地处理不同长度技术笔记，对故障词和组件名的召回率通常优于纯集合算法。"
+    },
+    {
+      "algorithm": "jaccard",
+      "capability_id": "char_jaccard_d9bf825b40ee",
+      "rationale": "Jaccard 仅基于词集合交并比，计算简单且可解释，但受限于对中文大词敏感及无法区分大小写，需严格限制仅用于英文标识符匹配。"
+    }
+  ],
+  "design_explanation": "为满足用户要求，本方案同时规划 TF-IDF、BM25 和 Jaccard 三个独立候选算法。TF-IDF 侧重词频加权以捕捉特定组件信息；BM25 结合长度归一化以优化不同长度文档的匹配精度；Jaccard 作为轻量级集合算法，仅用于英文标识符的精确集合重合检索。三者均遵循各自算法插件指导，并针对中文/英文混合场景进行了针对性优化（如 Jaccard 限制仅匹配英文、TF-IDF 忽略同义改写等），确保在 Recall@k、MRR@k、Precision@k 及 P95 查询耗时指标上全面评估并沉淀验证结果。"
+}

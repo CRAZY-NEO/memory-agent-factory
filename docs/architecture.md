@@ -11,11 +11,12 @@
 | 模块 | 文件 | 工作 |
 | --- | --- | --- |
 | 输入与界面 | cli.py、models.py | CLI、参数和结构化契约校验 |
+| 插件契约 | registry.py、plugins/ | 可信包发现、版本及依赖声明、阈值预检、算法与指标注册 |
 | 模型适配 | llm.py | Ollama 原生 chat、JSON schema、一次重试、调用记录、明确的 mock 模板模式 |
 | 能力知识 | knowledge.py | 材料抽取、原文证据检查、SQLite 版本存储、词面检索及图遍历 |
 | 编排 | workflow.py | LangGraph 状态、角色交接、分支、修复预算、冻结候选与结果回写 |
 | 执行边界 | safety.py、runner.py、worker.py | AST 策略、无标注输入、限时进程、Docker 隔离选项 |
-| 可信验证 | validation.py | 输入数据检查、接口/功能/稳定性、Recall/MRR、P95、固定门槛 |
+| 可信验证 | validation.py | 输入数据检查、接口/功能/稳定性、注册指标（Recall/MRR/Precision/P95）、配置门槛 |
 | 结果交付 | reporting.py、runtime.py、visualization.py | 报告、可复用插件适配器、图谱导出 |
 | 业务接口 | api.py、jobs.py、job_worker.py | token 鉴权、输入限制、持久任务队列、租约与宿主 worker |
 
@@ -28,7 +29,7 @@ flowchart TD
   U[算法开发需求] --> I[Understander: 需求结构化]
   I --> R[可信检索: 能力、历史、失败经验]
   K --> R
-  R --> P[Planner: 最多两个候选]
+  R --> P[Planner: 配置预算内候选]
   P --> C[Coder: 生成 Python 插件]
   C --> V[可信执行与验证集评估]
   V --> D{通过或达到修复上限?}
@@ -51,7 +52,7 @@ flowchart TD
 LangGraph 递归上限提供额外终止保护。所有候选失败时出失败报告，不生成成功插件。
 最终测试失败只报告失败，不继续调参、修复或重新选候选。
 
-候选优先比较验证 Recall@k，再比较 MRR@k；完全相同时选择外部依赖更少的 BM25。
+候选按配置 selection_order 与指标 direction 比较；同分时依次考虑依赖数、配置算法顺序和修订次数。算法清单、指标计算与报告标签来自注册表，插件版本随产物与知识回写记录。详见 plugins.md。
 P95 是合格门槛，避免用单次小样本计时噪声决定候选优劣。
 所有版本和错误保留，不覆盖旧代码；报告记录代码、数据和依赖版本。
 调用记录和流程事件可审计；本版不实现中断后恢复执行的持久化检查点。

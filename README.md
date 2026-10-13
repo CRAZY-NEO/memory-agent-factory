@@ -34,7 +34,7 @@ scripts/run_tests.sh -q
 ```
 
 也可使用 `python -m agent_factory` 代替 `agent-factory`。退出状态：通过为 0，验证失败或运行错误为 1。
-全局参数 `--workspace /path/to/project` 和 `--verbose` 必须位于子命令之前。
+全局参数 `--workspace /path/to/project`、`--config /path/to/config.json` 和 `--verbose` 必须位于子命令之前。
 新机器优先使用准确版本的 `requirements.lock.txt`；`requirements.txt` 与 pyproject 为兼容范围。
 该锁文件是在 macOS ARM64 / Python 3.12 上生成的，其他平台应验证对应二进制 wheel 是否可安装。
 
@@ -49,7 +49,8 @@ scripts/run_tests.sh -q
 | SQLite | 无额外数据库服务，保存不可覆盖的能力与验证版本 |
 | NetworkX | 图遍历、能力到历史经验的关系检索、JSON/GraphML 导出 |
 | scikit-learn | 可复现 TF-IDF 基线与能力知识检索 |
-| Python 标准库 BM25 | 第二候选无外部模型依赖，适合小语料关键词检索 |
+| Python 标准库 BM25 / Jaccard | 无外部模型依赖的词面检索候选，便于复刻与解释 |
+| 插件注册表 | 自动发现可信算法/指标模块，配置预检；统一生成、验证、比较和报告 |
 | Docker | 隔离真实模型生成代码，禁网、只读、非 root 与资源限制 |
 | pytest | 检验接口、失败分支、修复预算、数据边界和插件复用 |
 | FastAPI + SQLite 任务队列 | 提供鉴权业务接口，长时间生成任务异步处理；可信 worker 串行执行 |
@@ -85,7 +86,7 @@ scripts/run_tests.sh -q
 
 ## 4. 工作流与生成算法
 
-Extractor 从材料抽取结构化能力；Understander 理解开发需求；Planner 引用检索到的能力规划最多两个候选；Coder 生成 Python；Reviewer 诊断可信错误；Repairer 返回修复后的完整代码。
+Extractor 从材料抽取结构化能力；Understander 理解开发需求；Planner 引用检索到的能力，在配置预算内规划候选（当前三个，最多八个）；Coder 生成 Python；Reviewer 诊断可信错误；Repairer 返回修复后的完整代码。
 
 统一插件接口：
 
@@ -96,8 +97,8 @@ def retrieve(query: str, memories: list[dict], top_k: int = 5) -> list[dict]:
     ...
 ```
 
-候选：字符 TF-IDF + 余弦相似度；中文单字/双字与英文词的 BM25。
-每个候选最多两次代码修复。只有通过验证者能被选中；先比较 Recall，再比较 MRR，同分优先依赖更少的 BM25。
+候选：字符 TF-IDF + 余弦相似度；中文单字/双字与英文词的 BM25、Jaccard 集合相似度。
+每个候选最多两次代码修复。只有通过验证者能被选中；按配置的指标顺序及插件声明的高低方向比较，同分优先依赖更少，再按配置算法顺序与修订次数选择。
 最终测试失败即停止，不利用测试结果修复或重新选择方案。
 
 可查看 [完整生成代码样例](examples/demo/selected_retrieval.py)、[角色调用记录](examples/demo/llm/) 与 [流程图](examples/demo/workflow.mmd)。
@@ -107,18 +108,18 @@ mock 使用仓库内可检查模板，不宣称其能够泛化理解任意需求
 
 24 条人工编写技术记忆，12 条验证查询，10 条独立测试查询；全部为模拟资料，无真实个人信息。
 通过 `scripts/create_demo_data.py` 重建。详见 [数据说明](data/README.md)。
-TF-IDF/BM25 在记忆语料上构建统计量，无须训练分类模型；验证/测试的相关文档标注用于评估检索质量。
+TF-IDF/BM25 在记忆语料上构建统计量，Jaccard 使用词集合，无须训练分类模型；验证/测试的相关文档标注用于评估检索质量。
 
 | 检查维度 | 实现 |
 | --- | --- |
 | 功能正确性 | 完整记忆文本查询应返回自身；空查询、空语料和非正 top_k 返回空列表 |
 | 接口规范 | 参数名与默认值、输出字段、ID 合法性、去重、有限非负分数、降序及同分排序 |
-| 指标表现 | Recall@k 为前 k 个结果中找到的相关文档占全部相关文档的比例；MRR@k 为首个相关结果倒数排名的平均值 |
+| 指标表现 | Recall@k 为前 k 个结果中找到的相关文档占全部相关文档的比例；MRR@k 为首个相关结果倒数排名的平均值；Precision@k 为相关命中数除以 k 的平均值 |
 | 稳定性 | 不修改输入，同一进程重复查询与新进程查询得到一致结果；超时/异常不通过 |
 | 性能 | 每次查询函数耗时的 P95，包含索引重建；解释器和依赖导入另计为 worker wall_seconds |
 | 来源与可复现性 | 材料证据、代码与数据 SHA-256、Python/依赖版本、候选修订关系、完整调用日志 |
 
-阈值及修复次数位于 `config.json`，由用户配置，Agent 不能修改。默认 Recall≥0.75、MRR≥0.65、P95≤1000ms。
+阈值及修复次数位于 `config.json`，由用户配置，Agent 不能修改。项目配置为 Recall≥0.75、MRR≥0.65、Precision≥0.2、P95≤1000ms。Precision 分母固定为 k；样例多数查询只有一个相关文档，Recall@5=1 时 Precision@5=0.2 是合理结果。
 可信父进程保留相关 ID 标注并评分，执行器只收到无标注输入。
 最终测试的文本、标注和结果不进入本次生成或修复提示，后续能力检索也排除最终测试反馈。
 管理员能访问项目数据，因此这是一项系统设计边界，不是对宿主管理员的访问隔离。
@@ -160,10 +161,27 @@ CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变�
 [示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
 
 报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
-当前 28 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
+当前 40 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
 真实模型例子见 [Ollama 完整报告](examples/ollama-demo/report.md)、[候选规划](examples/ollama-demo/plan.json)、[BM25 首版与修订](examples/ollama-demo/bm25/)、[模型调用记录](examples/ollama-demo/llm/) 和 [最终插件](examples/ollama-demo/selected_retrieval.py)。2026-10-12 的样例调用八次模型；TF-IDF 首版通过，BM25 首版因缺少 `re` 导入失败，模型根据真实错误修复后通过。选定 BM25 修订版的最终测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；这些数值只描述 24 条模拟记忆与 10 条最终测试查询。
 所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
 显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
+
+新增插件完整示例：[三算法 mock + Docker 报告](examples/plugin-demo/report.md)、[三算法真实模型报告](examples/plugin-ollama-demo/report.md)、[真实模型 Jaccard 报告](examples/plugin-jaccard-ollama-demo/report.md)。新报告自动展示 Precision@k 和插件版本，旧的两算法报告作为历史记录保留。Jaccard 真实模型样例的最终测试 Recall@5=1、MRR@5=1、Precision@5=0.22。另一次[真实模型失败记录](examples/plugin-ollama-failure/report.md)保留了候选漏项及未通过稳定性检查的修订，未发布产物。
+
+```bash
+# 查看自动发现的算法与指标
+.venv/bin/python -m agent_factory plugins
+# 三候选真实执行，显式故障触发修复（模型响应为 mock）
+bash scripts/run_plugin_demo.sh --inject-fault
+# 独立 Jaccard 能力复刻
+FACTORY_DEMO_CONFIG=examples/plugins/jaccard-only.json \
+FACTORY_DEMO_REQUEST=examples/plugins/jaccard-request.txt \
+FACTORY_DEMO_WORKSPACE=state/jaccard-demo bash scripts/run_plugin_demo.sh
+```
+
+三算法真实模型运行 `20261013T172815_22ac726c` 共调用模型 13 次，复用已由真实模型抽取的三份能力知识。TF-IDF 三版索引越界，Jaccard 三版错误地切片集合，都被可信验证器拒绝；BM25 首版通过并被选定，最终测试 Recall@5=1、MRR@5=1、Precision@5=0.22、P95=1.15 ms。真实模型的不同次运行可能产生不同质量的代码，单个 Jaccard 通过样例不代表它每次生成都能通过。
+
+三算法演示启用 `compare_all_algorithms=true`，规划及可信检查均要求覆盖全部启用算法，避免模型漏掉候选。新增算法只需材料、参考实现与注册模块；新增指标只需可信计算函数和注册模块。也可通过配置接入已安装的外部插件包，详见 [插件接入指南](docs/plugins.md)。当前支持检索任务及已审查的执行环境，其他任务或新依赖环境需要扩展契约和镜像。
 
 ## 8. 用于未来个人记忆系统
 
@@ -194,7 +212,7 @@ hits = retriever.retrieve("MySQL 连接池耗尽", memories, top_k=5)
 - 区分修复建议与事实：图谱中只有修复版本实际通过才记录 validated_fix；失败建议保持未验证标记。
 - 保持跨进程稳定：BM25 查询词排序后再累加，避免无序集合造成浮点差异；计时结果不承诺逐次完全一致。
 - 防止指标泄漏：候选只用验证集；最终测试在版本冻结后执行。多次人工查看并用于优化后，应重新建立最终测试集。
-- 一周实现范围：CLI、鉴权 API、持久任务队列、两个候选、有限修复、图检索、离线图谱、版本/经验回写；暂未实现 Web 前端、工作流中断恢复、MCTS、任意任务与插件自动发现。
+- 一周实现范围：CLI、鉴权 API、持久任务队列、三个注册候选、可配置指标与排序、有限修复、图检索、离线图谱、版本/经验回写；暂未实现 Web 前端、工作流中断恢复、MCTS、任意任务验证。
 - 后续扩展：向量与混合检索、持久化索引、多任务验证配置、更严格隔离服务、真实代码仓库函数抽取、个人事实图谱。
 
 分步学习和扩展路线见 [实现指南](docs/implementation-guide.md)。

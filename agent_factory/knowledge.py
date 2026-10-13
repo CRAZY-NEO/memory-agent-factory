@@ -11,6 +11,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from .models import Extraction
+from .registry import load_registry
 
 
 def digest(text):
@@ -69,8 +70,9 @@ class KnowledgeStore:
                 graph.add_edge(source, target, relation=relation)
         return graph
 
-    def retrieve(self, description, limit=4):
-        capabilities = self.nodes("Capability")
+    def retrieve(self, description, limit=4, algorithms=None):
+        capabilities = [cap for cap in self.nodes("Capability")
+                        if algorithms is None or cap["algorithm"] in algorithms]
         if not capabilities:
             raise ValueError("Knowledge store is empty: run ingest first")
         texts = [json.dumps(cap, ensure_ascii=False) for cap in capabilities]
@@ -78,7 +80,14 @@ class KnowledgeStore:
         matrix = vectorizer.fit_transform(texts)
         scores = cosine_similarity(vectorizer.transform([description]), matrix)[0]
         order = sorted(range(len(scores)), key=lambda i: (-scores[i], capabilities[i]["id"]))
-        selected = [capabilities[i] for i in order[:limit]]
+        selected, seen = [], set()
+        for i in order:
+            cap = capabilities[i]
+            if cap["algorithm"] not in seen:
+                selected.append(cap)
+                seen.add(cap["algorithm"])
+            if len(selected) >= limit:
+                break
         graph = self.graph()
         # Include the verified source text so generation receives actual algorithm
         # formulas and tokenization details, beyond capability labels and metadata.
@@ -118,23 +127,38 @@ class KnowledgeStore:
         nx.write_graphml(graphml, directory / "graph.graphml")
 
 
-def ingest_sources(store, client, source_dir, output):
+def ingest_sources(store, client, source_dir, output, registry=None, algorithm_ids=None):
     """Accept only source-grounded, schema-valid extraction; preserve source content hashes."""
     extracted = []
+    registry = registry or getattr(client, "registry", None) or load_registry()
+    enabled = algorithm_ids if algorithm_ids is not None else sorted(registry.algorithms)
+    # Workspace material overrides the matching packaged source. New plugin material
+    # is otherwise discovered automatically without copying files into a workspace.
+    sources = {name + ".md": registry.algorithm(name).material for name in enabled}
     for path in sorted(Path(source_dir).glob("*.md")):
+        if algorithm_ids is None or path.name in sources:
+            sources[path.name] = path
+    catalog = [registry.algorithm(name).metadata() for name in enabled]
+    for path in sources.values():
         text = path.read_text(encoding="utf-8")
         source_id = "source_" + digest(text)
-        result = client.ask("extractor", {"source_id": source_id, "text": text}, Extraction)
+        result = client.ask("extractor", {"source_id": source_id, "text": text,
+                                         "registered_algorithms": catalog,
+                                         "registered_metrics": sorted(registry.metrics)}, Extraction)
         for capability in result.capabilities:
             if capability.source_id != source_id or capability.evidence not in text:
                 raise ValueError("Unverifiable extraction evidence for " + path.name)
+            plugin = registry.algorithm(capability.algorithm)
+            if capability.algorithm not in enabled or capability.task != plugin.task:
+                raise ValueError("Extraction references a disabled or incompatible algorithm")
         store.add_node(source_id, "Source", {"path": str(path.name), "sha256": digest(text), "text": text})
         for capability in result.capabilities:
             # New extraction output is a new immutable version, even for an unchanged source.
-            capability.id += "_" + digest(capability.model_dump_json())[:12]
             record = capability.model_dump()
-            store.add_node(capability.id, "Capability", record)
-            store.add_edge(source_id, capability.id, "supports")
+            record["algorithm_plugin_version"] = registry.algorithm(capability.algorithm).version
+            record["id"] += "_" + digest(json.dumps(record, ensure_ascii=False, sort_keys=True))[:12]
+            store.add_node(record["id"], "Capability", record)
+            store.add_edge(source_id, record["id"], "supports")
             extracted.append(record)
     if not extracted:
         raise ValueError("No source markdown files found")

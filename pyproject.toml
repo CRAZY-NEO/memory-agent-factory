@@ -21,6 +21,7 @@ agent-factory = "agent_factory.cli:main"
 
 [tool.setuptools.package-data]
 agent_factory = ["templates/*.py"]
+"agent_factory.plugins.algorithms" = ["materials/*.md"]
 
 [tool.setuptools.packages.find]
 include = ["agent_factory*"]

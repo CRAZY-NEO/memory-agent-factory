@@ -8,12 +8,12 @@ SQLite 是持久化事实源，NetworkX 从表载入有向图，导出 JSON、Gr
 | kind | 标识 | 主要字段 |
 | --- | --- | --- |
 | Source | source_内容SHA256 | path、text、sha256 |
-| Capability | 算法名_抽取内容哈希 | name、task、algorithm、inputs、outputs、applicable_conditions、metrics、dependencies、limitations、source_id、evidence |
+| Capability | 算法名_抽取内容哈希 | name、task、algorithm、inputs、outputs、applicable_conditions、metrics、dependencies、limitations、source_id、evidence、algorithm_plugin_version |
 | Implementation | 运行ID+算法+修订号 | code_hash、code_path、revision、parent、capability_id、explanation |
 | Environment | environment_环境哈希 | Python、操作系统、依赖版本、执行器、Docker 镜像名 |
-| ValidationRun | 运行ID+算法+版本/最终测试 | split、passed、metrics、errors、gates、per_query、execution |
+| ValidationRun | 运行ID+算法+版本/最终测试 | split、passed、metrics、errors、gates、per_query、execution、metric_plugins |
 | Lesson | 运行ID+算法+修订/审查 | scope、algorithm、summary、validated_fix、evidence/repair_instructions |
-| FactoryRun | run_运行ID | request、plan、attempts、selected、test、status、dataset_hashes、environment |
+| FactoryRun | run_运行ID | request、plan、attempts、selected、test、status、dataset_hashes、environment、plugin_catalog |
 
 ## 关系
 
@@ -29,7 +29,7 @@ graph LR
   FactoryRun -->|generated| Implementation
 ```
 
-所有节点不可覆盖：同一个 ID 的不同属性会报错。材料变更或抽取结果变更产生新能力版本。
+所有节点不可覆盖：同一个 ID 的不同属性会报错。材料、抽取结果或算法插件版本变更产生新能力版本。执行产物 manifest 另保存 algorithm_plugin（含版本、环境及依赖）；验证节点记录指标插件元数据。
 `nodes(id, kind, payload)` 存 JSON 属性，`edges(source, target, relation)` 以三列唯一并启用外键。
 图中同一实体对只使用一种关系，因此 NetworkX DiGraph 能保留当前 schema 的全部关系。
 新增并行关系时需迁移到 MultiDiGraph，不应让导出静默丢失边。

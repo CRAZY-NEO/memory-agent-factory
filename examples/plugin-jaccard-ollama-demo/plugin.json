@@ -1,0 +1,20 @@
+{
+  "task": "memory_retrieval",
+  "entrypoint": "retrieve",
+  "interface_version": "1",
+  "runner": "docker",
+  "run_id": "20261013T094805_e9624b7c",
+  "code_hash": "e9183210434e072c9ca038778e33aceb6be2e1820c6bb20f67d5bb7b59575833",
+  "code_path": "examples/plugin-jaccard-ollama-demo/selected_retrieval.py",
+  "algorithm_plugin": {
+    "id": "jaccard",
+    "name": "集合 Jaccard",
+    "version": "1.0.0",
+    "task": "memory_retrieval",
+    "dependencies": [],
+    "environment": "retrieval-v1",
+    "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。"
+  },
+  "dependencies": [],
+  "validation_report": "examples/plugin-jaccard-ollama-demo/report.json"
+}

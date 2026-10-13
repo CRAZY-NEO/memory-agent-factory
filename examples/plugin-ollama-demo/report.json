@@ -1,0 +1,2179 @@
+{
+  "run_id": "20261013T172815_22ac726c",
+  "description": "请为个人技术记忆库复刻检索算法，分别生成 TF-IDF、BM25、Jaccard 三个独立候选并比较三者，不要只选择其中一个来生成。输入 query、memories、top_k，输出相关记忆 ID 与分数，默认前 5 条。每个候选使用自己的评分方法：TF-IDF 使用余弦相似度，BM25 使用词频与逆文档频率，Jaccard 使用词集合交并比；Jaccard 的集合规则仅约束 Jaccard 候选，不能用于排除 TF-IDF 或 BM25。三者都遵循各自的算法插件指导和参考示例。按配置评估 Recall@k、MRR@k、Precision@k 和 P95 查询耗时，同时检查接口、空输入及跨进程稳定性，选择验证通过的方案并将结果沉淀回知识库。\n",
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "mock_fault_injection": false,
+  "runner": "docker",
+  "request": {
+    "task": "memory_retrieval",
+    "description": "请为个人技术记忆库复刻检索算法，分别生成 TF-IDF、BM25、Jaccard 三个独立候选并比较三者，不要只选择其中一个来生成。输入 query、memories、top_k，输出相关记忆 ID 与分数，默认前 5 条。每个候选使用自己的评分方法：TF-IDF 使用余弦相似度，BM25 使用词频与逆文档频率，Jaccard 使用词集合交并比；Jaccard 的集合规则仅约束 Jaccard 候选，不能用于排除 TF-IDF 或 BM25。三者都遵循各自的算法插件指导和参考示例。按配置评估 Recall@k、MRR@k、Precision@k 和 P95 查询耗时，同时检查接口、空输入及跨进程稳定性，选择验证通过的方案并将结果沉淀回知识库。\n",
+    "language": "zh",
+    "top_k": 5
+  },
+  "plan": {
+    "candidates": [
+      {
+        "algorithm": "tfidf",
+        "capability_id": "char_tfidf_efd747a4fcac",
+        "rationale": "TF-IDF 利用词频与逆文档频率加权，能有效捕捉技术文档中特定组件或故障词的语义重要性，适合包含明确组件名的查询场景。"
+      },
+      {
+        "algorithm": "bm25",
+        "capability_id": "char_bm25_3819f381772f",
+        "rationale": "BM25 结合词频、逆文档频率与文档长度归一化，能更精确地处理不同长度技术笔记，对故障词和组件名的召回率通常优于纯集合算法。"
+      },
+      {
+        "algorithm": "jaccard",
+        "capability_id": "char_jaccard_d9bf825b40ee",
+        "rationale": "Jaccard 仅基于词集合交并比，计算简单且可解释，但受限于对中文大词敏感及无法区分大小写，需严格限制仅用于英文标识符匹配。"
+      }
+    ],
+    "design_explanation": "为满足用户要求，本方案同时规划 TF-IDF、BM25 和 Jaccard 三个独立候选算法。TF-IDF 侧重词频加权以捕捉特定组件信息；BM25 结合长度归一化以优化不同长度文档的匹配精度；Jaccard 作为轻量级集合算法，仅用于英文标识符的精确集合重合检索。三者均遵循各自算法插件指导，并针对中文/英文混合场景进行了针对性优化（如 Jaccard 限制仅匹配英文、TF-IDF 忽略同义改写等），确保在 Recall@k、MRR@k、Precision@k 及 P95 查询耗时指标上全面评估并沉淀验证结果。"
+  },
+  "attempts": [
+    {
+      "algorithm": "tfidf",
+      "revision": 0,
+      "implementation_id": "implementation_20261013T172815_22ac726c_tfidf_r0",
+      "capability_id": "char_tfidf_efd747a4fcac",
+      "parent": null,
+      "code_hash": "3706924caa63a765d36bf30e162eb585c1890e7317e5637f613614d91808acea",
+      "code_path": "examples/plugin-ollama-demo/tfidf/r0/retrieval.py",
+      "explanation": "该实现严格遵循 TF-IDF 算法插件指导，使用 scikit-learn 的 TfidfVectorizer 和 cosine_similarity 计算余弦相似度。代码首先处理空输入边界条件，然后从查询和记忆中提取字符级 token（保留字母、数字、下划线，去除标点），构建词汇表和 TF-IDF 矩阵。通过 fit_transform 确保语料库包含所有文档，transform 处理查询，最后计算余弦相似度并返回降序排序的 top_k 结果。所有输入均保持原样，仅进行字符级 token 转换和相似度计算。",
+      "validation": {
+        "split": "validation",
+        "passed": false,
+        "errors": [
+          "v01: IndexError: list index out of range",
+          "v02: IndexError: list index out of range",
+          "v03: IndexError: list index out of range",
+          "v04: IndexError: list index out of range",
+          "v05: IndexError: list index out of range",
+          "v06: IndexError: list index out of range",
+          "v07: IndexError: list index out of range",
+          "v08: IndexError: list index out of range",
+          "v09: IndexError: list index out of range",
+          "v10: IndexError: list index out of range",
+          "v11: IndexError: list index out of range",
+          "v12: IndexError: list index out of range",
+          "contract:exact: IndexError: list index out of range",
+          "contract:repeat: IndexError: list index out of range",
+          "contract:large_k: IndexError: list index out of range",
+          "contract:unicode: IndexError: list index out of range"
+        ],
+        "metrics": {},
+        "top_k": 5,
+        "query_count": 12,
+        "memory_count": 24,
+        "execution": {
+          "wall_seconds": 1.076013666111976,
+          "runner": "docker"
+        },
+        "gates": {
+          "task": "memory_retrieval",
+          "algorithms": [
+            "tfidf",
+            "bm25",
+            "jaccard"
+          ],
+          "plugin_packages": [],
+          "max_candidates": 3,
+          "compare_all_algorithms": true,
+          "metrics": {
+            "recall_at_k": {
+              "min": 0.75,
+              "max": null
+            },
+            "mrr_at_k": {
+              "min": 0.65,
+              "max": null
+            },
+            "precision_at_k": {
+              "min": 0.2,
+              "max": null
+            },
+            "p95_ms": {
+              "min": null,
+              "max": 1000.0
+            }
+          },
+          "selection_order": [
+            "recall_at_k",
+            "mrr_at_k",
+            "precision_at_k"
+          ],
+          "timeout_seconds": 30.0,
+          "max_repairs": 2
+        },
+        "per_query": [],
+        "metric_plugins": [
+          {
+            "id": "recall_at_k",
+            "name": "Recall@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "mrr_at_k",
+            "name": "MRR@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "precision_at_k",
+            "name": "Precision@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "p95_ms",
+            "name": "P95 ms",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "lower",
+            "minimum": 0,
+            "maximum": null
+          }
+        ]
+      }
+    },
+    {
+      "algorithm": "tfidf",
+      "revision": 1,
+      "implementation_id": "implementation_20261013T172815_22ac726c_tfidf_r1",
+      "capability_id": "char_tfidf_efd747a4fcac",
+      "parent": "implementation_20261013T172815_22ac726c_tfidf_r0",
+      "code_hash": "3706924caa63a765d36bf30e162eb585c1890e7317e5637f613614d91808acea",
+      "code_path": "examples/plugin-ollama-demo/tfidf/r1/retrieval.py",
+      "explanation": "修复后的代码严格遵循了 TF-IDF 算法插件的 guidance 和参考示例。主要改进包括：1. 在构建 TF-IDF 向量izer 之前，先对文档文本进行非空过滤，移除所有空字符串或仅包含非字母数字字符的条目，防止 fit_transform 抛出 ValueError。2. 修改异常处理机制，捕获 vectorizer 构建过程中的 ValueError，并立即返回空列表而非继续执行后续计算。3. 增加对 query 和 memories 中非空文本的预处理，确保输入向量izer 时文本不为空。4. 优化异常处理机制，捕获 vectorizer 构建过程中的 ValueError，并立即返回空列表而非继续执行后续计算。5. 增加对文档文本中特殊字符的清洗逻辑，确保在构建 vocabulary 时不会因特殊字符导致 token 解析失败。6. 保持接口约定，输入 memories 为唯一 id 的字典列表，直接读取 memory['text'] 和 memory['id']，返回格式为 [{'id': memory_id, 'score': float_score}]，支持中文和英文混合，依赖仅 Python 标准库及 sklearn。",
+      "validation": {
+        "split": "validation",
+        "passed": false,
+        "errors": [
+          "v01: IndexError: list index out of range",
+          "v02: IndexError: list index out of range",
+          "v03: IndexError: list index out of range",
+          "v04: IndexError: list index out of range",
+          "v05: IndexError: list index out of range",
+          "v06: IndexError: list index out of range",
+          "v07: IndexError: list index out of range",
+          "v08: IndexError: list index out of range",
+          "v09: IndexError: list index out of range",
+          "v10: IndexError: list index out of range",
+          "v11: IndexError: list index out of range",
+          "v12: IndexError: list index out of range",
+          "contract:exact: IndexError: list index out of range",
+          "contract:repeat: IndexError: list index out of range",
+          "contract:large_k: IndexError: list index out of range",
+          "contract:unicode: IndexError: list index out of range"
+        ],
+        "metrics": {},
+        "top_k": 5,
+        "query_count": 12,
+        "memory_count": 24,
+        "execution": {
+          "wall_seconds": 0.9959492909256369,
+          "runner": "docker"
+        },
+        "gates": {
+          "task": "memory_retrieval",
+          "algorithms": [
+            "tfidf",
+            "bm25",
+            "jaccard"
+          ],
+          "plugin_packages": [],
+          "max_candidates": 3,
+          "compare_all_algorithms": true,
+          "metrics": {
+            "recall_at_k": {
+              "min": 0.75,
+              "max": null
+            },
+            "mrr_at_k": {
+              "min": 0.65,
+              "max": null
+            },
+            "precision_at_k": {
+              "min": 0.2,
+              "max": null
+            },
+            "p95_ms": {
+              "min": null,
+              "max": 1000.0
+            }
+          },
+          "selection_order": [
+            "recall_at_k",
+            "mrr_at_k",
+            "precision_at_k"
+          ],
+          "timeout_seconds": 30.0,
+          "max_repairs": 2
+        },
+        "per_query": [],
+        "metric_plugins": [
+          {
+            "id": "recall_at_k",
+            "name": "Recall@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "mrr_at_k",
+            "name": "MRR@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "precision_at_k",
+            "name": "Precision@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "p95_ms",
+            "name": "P95 ms",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "lower",
+            "minimum": 0,
+            "maximum": null
+          }
+        ]
+      }
+    },
+    {
+      "algorithm": "tfidf",
+      "revision": 2,
+      "implementation_id": "implementation_20261013T172815_22ac726c_tfidf_r2",
+      "capability_id": "char_tfidf_efd747a4fcac",
+      "parent": "implementation_20261013T172815_22ac726c_tfidf_r1",
+      "code_hash": "3706924caa63a765d36bf30e162eb585c1890e7317e5637f613614d91808acea",
+      "code_path": "examples/plugin-ollama-demo/tfidf/r2/retrieval.py",
+      "explanation": "修复后的代码严格遵循了算法插件的指南和参考示例。主要改进包括：1. 在构建 TF-IDF 向量izer 之前，先对文档文本进行非空过滤，移除所有空字符串或仅包含非字母数字字符的条目，防止 fit_transform 抛出 ValueError。2. 修改异常处理机制，捕获 TfidfVectorizer 的 ValueError 并直接返回空列表，避免程序崩溃。3. 增加了输入验证，确保 query 和 memories 不为空且 top_k > 0。4. 保持了接口约定，输入 memories 为唯一 id 的字典列表，直接读取 memory['text'] 和 memory['id']。5. 返回格式严格符合 JSON schema，包含 id 和 score 字段，按得分降序、同分按 id 升序排序。6. 仅使用 Python 标准库及 sklearn，未引入任何外部依赖。7. 支持中文和英文混合，通过 analyzer='char' 和 lowercase=True 处理。8. 对参与浮点累加的无序查询词排序遍历，以保持跨进程结果稳定。9. 未修改输入，仅处理空查询、空列表、top_k<=0 等边界情况。10. 未修改验证器或隐藏错误，仅修复了导致空列表返回的 ValueError 异常。11. 代码字段只包含完整算法代码，不包含 Markdown。12. 入口函数严格为 retrieve(query, memories, top_k)，三个参数名字一致。13. 函数输入 memories 为唯一 id 的字典列表，包含 id/text/source；query 为字符串。14. 直接读取 memory['text'] 和 memory['id']；不得把 memories 当成预建索引或元组列表。15. 返回 [{'id': memory_id, 'score': float_score}]，不得只返回字符串列表。16. 空查询、空列表、top_k<=0 返回 []，得分有限非负、降序、无重复且来自输入；同分按 id 排序；不得修改输入；支持中文和英文混合。17. 依赖仅 Python 标准库及 sklearn。18. 实现指定候选算法，严格遵守 algorithm_plugin.guidance 和对应的参考示例，不得替换成另一个算法。19. 对参与浮点累加的无序查询词排序遍历，以保持跨进程结果稳定。20. 不使用测试查询或标注。不能使用 open/print/eval/exec/getattr 或 globals 等。21. 不附带 main、__name__ 或演示调用，只定义函数和所需导入。22. 只返回符合以下 JSON schema 的对象，不要添加 Markdown：{\"additionalProperties\": false, \"properties\": {\"code\": {\"maxLength\": 40000, \"minLength\": 30, \"title\": \"Code\", \"type\": \"string\"}, \"explanation\": {\"title\": \"Explanation\", \"type\": \"string\"}}, \"required\": [\"code\", \"explanation\"], \"title\": \"CodeArtifact\", \"type\": \"object\"}}。",
+      "validation": {
+        "split": "validation",
+        "passed": false,
+        "errors": [
+          "v01: IndexError: list index out of range",
+          "v02: IndexError: list index out of range",
+          "v03: IndexError: list index out of range",
+          "v04: IndexError: list index out of range",
+          "v05: IndexError: list index out of range",
+          "v06: IndexError: list index out of range",
+          "v07: IndexError: list index out of range",
+          "v08: IndexError: list index out of range",
+          "v09: IndexError: list index out of range",
+          "v10: IndexError: list index out of range",
+          "v11: IndexError: list index out of range",
+          "v12: IndexError: list index out of range",
+          "contract:exact: IndexError: list index out of range",
+          "contract:repeat: IndexError: list index out of range",
+          "contract:large_k: IndexError: list index out of range",
+          "contract:unicode: IndexError: list index out of range"
+        ],
+        "metrics": {},
+        "top_k": 5,
+        "query_count": 12,
+        "memory_count": 24,
+        "execution": {
+          "wall_seconds": 0.9728027500677854,
+          "runner": "docker"
+        },
+        "gates": {
+          "task": "memory_retrieval",
+          "algorithms": [
+            "tfidf",
+            "bm25",
+            "jaccard"
+          ],
+          "plugin_packages": [],
+          "max_candidates": 3,
+          "compare_all_algorithms": true,
+          "metrics": {
+            "recall_at_k": {
+              "min": 0.75,
+              "max": null
+            },
+            "mrr_at_k": {
+              "min": 0.65,
+              "max": null
+            },
+            "precision_at_k": {
+              "min": 0.2,
+              "max": null
+            },
+            "p95_ms": {
+              "min": null,
+              "max": 1000.0
+            }
+          },
+          "selection_order": [
+            "recall_at_k",
+            "mrr_at_k",
+            "precision_at_k"
+          ],
+          "timeout_seconds": 30.0,
+          "max_repairs": 2
+        },
+        "per_query": [],
+        "metric_plugins": [
+          {
+            "id": "recall_at_k",
+            "name": "Recall@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "mrr_at_k",
+            "name": "MRR@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "precision_at_k",
+            "name": "Precision@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "p95_ms",
+            "name": "P95 ms",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "lower",
+            "minimum": 0,
+            "maximum": null
+          }
+        ]
+      }
+    },
+    {
+      "algorithm": "bm25",
+      "revision": 0,
+      "implementation_id": "implementation_20261013T172815_22ac726c_bm25_r0",
+      "capability_id": "char_bm25_3819f381772f",
+      "parent": null,
+      "code_hash": "196298654b48dd0f8cc11f03254e52a60118b0f5102862f2245f350aaa66deef",
+      "code_path": "examples/plugin-ollama-demo/bm25/r0/retrieval.py",
+      "explanation": "实现字符 BM25 检索算法，包含以下核心步骤：1. 使用确定性分词器将中文单字/双字及英文单词转换为 token 列表；2. 计算文档频率统计每个 token 在文档中的出现次数；3. 对查询词进行去重排序以稳定浮点累加；4. 应用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5)) 计算词频加权得分；5. 按得分降序、ID 升序排序并截取前 top_k 结果。算法严格遵循参考示例中的参数 k1=1.5、b=0.75 及分词策略，确保跨进程结果稳定性。",
+      "validation": {
+        "split": "validation",
+        "passed": true,
+        "errors": [],
+        "metrics": {
+          "recall_at_k": 1.0,
+          "mrr_at_k": 1.0,
+          "precision_at_k": 0.20000000000000004,
+          "p95_ms": 1.128077055909671
+        },
+        "top_k": 5,
+        "query_count": 12,
+        "memory_count": 24,
+        "execution": {
+          "wall_seconds": 0.3582032499834895,
+          "runner": "docker"
+        },
+        "gates": {
+          "task": "memory_retrieval",
+          "algorithms": [
+            "tfidf",
+            "bm25",
+            "jaccard"
+          ],
+          "plugin_packages": [],
+          "max_candidates": 3,
+          "compare_all_algorithms": true,
+          "metrics": {
+            "recall_at_k": {
+              "min": 0.75,
+              "max": null
+            },
+            "mrr_at_k": {
+              "min": 0.65,
+              "max": null
+            },
+            "precision_at_k": {
+              "min": 0.2,
+              "max": null
+            },
+            "p95_ms": {
+              "min": null,
+              "max": 1000.0
+            }
+          },
+          "selection_order": [
+            "recall_at_k",
+            "mrr_at_k",
+            "precision_at_k"
+          ],
+          "timeout_seconds": 30.0,
+          "max_repairs": 2
+        },
+        "per_query": [
+          {
+            "query_id": "v01",
+            "query": "MySQL 连接池等待导致请求超时怎么排查",
+            "relevant_ids": [
+              "m01"
+            ],
+            "predictions": [
+              {
+                "id": "m01",
+                "score": 46.80145774093894
+              },
+              {
+                "id": "m09",
+                "score": 8.24913288024384
+              },
+              {
+                "id": "m18",
+                "score": 7.179968414380889
+              },
+              {
+                "id": "m19",
+                "score": 6.796614291678232
+              },
+              {
+                "id": "m17",
+                "score": 6.522395769207451
+              }
+            ]
+          },
+          {
+            "query_id": "v02",
+            "query": "Redis 不存在的 key 一直查数据库",
+            "relevant_ids": [
+              "m03"
+            ],
+            "predictions": [
+              {
+                "id": "m03",
+                "score": 28.205071940157524
+              },
+              {
+                "id": "m04",
+                "score": 13.889063869756106
+              },
+              {
+                "id": "m01",
+                "score": 8.532229604893484
+              },
+              {
+                "id": "m20",
+                "score": 7.159548622049113
+              },
+              {
+                "id": "m15",
+                "score": 6.57471579622201
+              }
+            ]
+          },
+          {
+            "query_id": "v03",
+            "query": "Docker 容器退出 137 内存不足",
+            "relevant_ids": [
+              "m05"
+            ],
+            "predictions": [
+              {
+                "id": "m05",
+                "score": 46.66178669205239
+              },
+              {
+                "id": "m06",
+                "score": 15.52765045284606
+              },
+              {
+                "id": "m14",
+                "score": 11.113881852823209
+              },
+              {
+                "id": "m03",
+                "score": 5.750324941908055
+              },
+              {
+                "id": "m15",
+                "score": 2.50709096141067
+              }
+            ]
+          },
+          {
+            "query_id": "v04",
+            "query": "Git rebase 冲突如何处理",
+            "relevant_ids": [
+              "m07"
+            ],
+            "predictions": [
+              {
+                "id": "m07",
+                "score": 25.66732179557297
+              },
+              {
+                "id": "m24",
+                "score": 6.283486786551974
+              },
+              {
+                "id": "m08",
+                "score": 3.4030528245785328
+              },
+              {
+                "id": "m14",
+                "score": 2.6747471720973164
+              },
+              {
+                "id": "m01",
+                "score": 1.7884310684076563
+              }
+            ]
+          },
+          {
+            "query_id": "v05",
+            "query": "asyncio 同步请求阻塞事件循环",
+            "relevant_ids": [
+              "m09"
+            ],
+            "predictions": [
+              {
+                "id": "m09",
+                "score": 48.43853711517394
+              },
+              {
+                "id": "m19",
+                "score": 10.007627309274504
+              },
+              {
+                "id": "m17",
+                "score": 5.763604946981274
+              },
+              {
+                "id": "m01",
+                "score": 5.365293205222969
+              },
+              {
+                "id": "m20",
+                "score": 2.9342106436239637
+              }
+            ]
+          },
+          {
+            "query_id": "v06",
+            "query": "RAG 检索效果用哪些指标评估",
+            "relevant_ids": [
+              "m11"
+            ],
+            "predictions": [
+              {
+                "id": "m11",
+                "score": 22.205473836099753
+              },
+              {
+                "id": "m21",
+                "score": 10.30208637685332
+              },
+              {
+                "id": "m23",
+                "score": 6.55134787079235
+              },
+              {
+                "id": "m02",
+                "score": 4.96532185817521
+              },
+              {
+                "id": "m06",
+                "score": 3.518832563229476
+              }
+            ]
+          },
+          {
+            "query_id": "v07",
+            "query": "Jetson Ollama 如何在局域网访问",
+            "relevant_ids": [
+              "m13"
+            ],
+            "predictions": [
+              {
+                "id": "m13",
+                "score": 34.45947612757103
+              },
+              {
+                "id": "m06",
+                "score": 10.002898550612032
+              },
+              {
+                "id": "m03",
+                "score": 6.43295197367287
+              },
+              {
+                "id": "m04",
+                "score": 5.267532405441956
+              },
+              {
+                "id": "m14",
+                "score": 3.1324920876420768
+              }
+            ]
+          },
+          {
+            "query_id": "v08",
+            "query": "文本分类类别不平衡不能只看 accuracy",
+            "relevant_ids": [
+              "m16"
+            ],
+            "predictions": [
+              {
+                "id": "m16",
+                "score": 74.61102922851633
+              },
+              {
+                "id": "m23",
+                "score": 3.591214195873523
+              },
+              {
+                "id": "m22",
+                "score": 2.686037675426817
+              },
+              {
+                "id": "m12",
+                "score": 2.6278789808735334
+              },
+              {
+                "id": "m24",
+                "score": 2.4399698639719984
+              }
+            ]
+          },
+          {
+            "query_id": "v09",
+            "query": "SQLite 并发写事务被阻塞",
+            "relevant_ids": [
+              "m19"
+            ],
+            "predictions": [
+              {
+                "id": "m19",
+                "score": 27.896889586603923
+              },
+              {
+                "id": "m09",
+                "score": 14.4644166545607
+              },
+              {
+                "id": "m20",
+                "score": 11.071423465744179
+              },
+              {
+                "id": "m23",
+                "score": 6.950850167469619
+              },
+              {
+                "id": "m05",
+                "score": 5.069352512808123
+              }
+            ]
+          },
+          {
+            "query_id": "v10",
+            "query": "BM25 和向量检索怎么融合",
+            "relevant_ids": [
+              "m21"
+            ],
+            "predictions": [
+              {
+                "id": "m21",
+                "score": 31.01435024421888
+              },
+              {
+                "id": "m02",
+                "score": 6.396551967015618
+              },
+              {
+                "id": "m11",
+                "score": 6.355159842299566
+              },
+              {
+                "id": "m06",
+                "score": 4.34355969138703
+              },
+              {
+                "id": "m08",
+                "score": 3.325566701278
+              }
+            ]
+          },
+          {
+            "query_id": "v11",
+            "query": "中文 TF-IDF 字符 ngram 余弦相似度",
+            "relevant_ids": [
+              "m22"
+            ],
+            "predictions": [
+              {
+                "id": "m22",
+                "score": 50.59862396252933
+              },
+              {
+                "id": "m11",
+                "score": 3.2511687822168227
+              },
+              {
+                "id": "m14",
+                "score": 3.055861919692875
+              },
+              {
+                "id": "m02",
+                "score": 2.4155184218057433
+              },
+              {
+                "id": "m09",
+                "score": 2.3161208642787923
+              }
+            ]
+          },
+          {
+            "query_id": "v12",
+            "query": "API 超时指数退避与幂等重试",
+            "relevant_ids": [
+              "m18"
+            ],
+            "predictions": [
+              {
+                "id": "m18",
+                "score": 41.71280519247785
+              },
+              {
+                "id": "m01",
+                "score": 8.854586668607535
+              },
+              {
+                "id": "m20",
+                "score": 6.629939826759694
+              },
+              {
+                "id": "m14",
+                "score": 4.805959441941023
+              },
+              {
+                "id": "m15",
+                "score": 4.735492106452723
+              }
+            ]
+          }
+        ],
+        "metric_plugins": [
+          {
+            "id": "recall_at_k",
+            "name": "Recall@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "mrr_at_k",
+            "name": "MRR@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "precision_at_k",
+            "name": "Precision@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "p95_ms",
+            "name": "P95 ms",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "lower",
+            "minimum": 0,
+            "maximum": null
+          }
+        ]
+      }
+    },
+    {
+      "algorithm": "jaccard",
+      "revision": 0,
+      "implementation_id": "implementation_20261013T172815_22ac726c_jaccard_r0",
+      "capability_id": "char_jaccard_d9bf825b40ee",
+      "parent": null,
+      "code_hash": "b05fe3022a50627d18773ff032b7967bd4baa25d3716c0efa03b0951e9b0168a",
+      "code_path": "examples/plugin-ollama-demo/jaccard/r0/retrieval.py",
+      "explanation": "The Jaccard retrieval algorithm implements token-based similarity matching for memory retrieval. It tokenizes both the query and each memory text into sets of characters (including English identifiers and Chinese characters with bigram expansion). The similarity score is calculated as the ratio of the intersection of tokens to the union of tokens. Results are sorted by score descending and ID ascending for stability. Edge cases like empty queries, empty memories, or invalid top_k values return empty lists. The implementation strictly follows the Jaccard guidance: no word frequency or TF-IDF weighting, only set-based intersection and union calculations, and handles Chinese characters and English identifiers separately before combining them into a single token set for comparison.",
+      "validation": {
+        "split": "validation",
+        "passed": false,
+        "errors": [
+          "v01: TypeError: 'set' object is not subscriptable",
+          "v02: TypeError: 'set' object is not subscriptable",
+          "v03: TypeError: 'set' object is not subscriptable",
+          "v04: TypeError: 'set' object is not subscriptable",
+          "v05: TypeError: 'set' object is not subscriptable",
+          "v06: TypeError: 'set' object is not subscriptable",
+          "v07: TypeError: 'set' object is not subscriptable",
+          "v08: TypeError: 'set' object is not subscriptable",
+          "v09: TypeError: 'set' object is not subscriptable",
+          "v10: TypeError: 'set' object is not subscriptable",
+          "v11: TypeError: 'set' object is not subscriptable",
+          "v12: TypeError: 'set' object is not subscriptable",
+          "contract:exact: TypeError: 'set' object is not subscriptable",
+          "contract:repeat: TypeError: 'set' object is not subscriptable",
+          "contract:large_k: TypeError: 'set' object is not subscriptable",
+          "contract:unicode: TypeError: 'set' object is not subscriptable"
+        ],
+        "metrics": {},
+        "top_k": 5,
+        "query_count": 12,
+        "memory_count": 24,
+        "execution": {
+          "wall_seconds": 0.3040500001516193,
+          "runner": "docker"
+        },
+        "gates": {
+          "task": "memory_retrieval",
+          "algorithms": [
+            "tfidf",
+            "bm25",
+            "jaccard"
+          ],
+          "plugin_packages": [],
+          "max_candidates": 3,
+          "compare_all_algorithms": true,
+          "metrics": {
+            "recall_at_k": {
+              "min": 0.75,
+              "max": null
+            },
+            "mrr_at_k": {
+              "min": 0.65,
+              "max": null
+            },
+            "precision_at_k": {
+              "min": 0.2,
+              "max": null
+            },
+            "p95_ms": {
+              "min": null,
+              "max": 1000.0
+            }
+          },
+          "selection_order": [
+            "recall_at_k",
+            "mrr_at_k",
+            "precision_at_k"
+          ],
+          "timeout_seconds": 30.0,
+          "max_repairs": 2
+        },
+        "per_query": [],
+        "metric_plugins": [
+          {
+            "id": "recall_at_k",
+            "name": "Recall@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "mrr_at_k",
+            "name": "MRR@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "precision_at_k",
+            "name": "Precision@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "p95_ms",
+            "name": "P95 ms",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "lower",
+            "minimum": 0,
+            "maximum": null
+          }
+        ]
+      }
+    },
+    {
+      "algorithm": "jaccard",
+      "revision": 1,
+      "implementation_id": "implementation_20261013T172815_22ac726c_jaccard_r1",
+      "capability_id": "char_jaccard_d9bf825b40ee",
+      "parent": "implementation_20261013T172815_22ac726c_jaccard_r0",
+      "code_hash": "ee8ee90f4f31fed1a362dd5c55799462bc4f1534dcd2b0a018b8d4a0826aef69",
+      "code_path": "examples/plugin-ollama-demo/jaccard/r1/retrieval.py",
+      "explanation": "修复后的代码严格遵循了 Jaccard 算法插件的指南和参考示例。主要修复点包括：1. 修正了集合操作，将错误的下标访问（如 `&` 和 `|`）替换为正确的集合方法（`.intersection()` 和 `.union()`），解决了 `TypeError: 'set' object is not subscriptable` 错误。2. 确保只返回正分结果（score > 0），符合插件要求。3. 保持接口约定，输入参数为 query、memories、top_k，输出为包含 id 和 score 的列表。4. 处理了空查询、空列表和非正 top_k 的情况，返回空列表。5. 支持中文单字及相邻双字与英文标识符的混合处理，通过正则表达式提取并合并为集合。6. 同分按 ID 排序以确保结果稳定性。代码仅使用 Python 标准库和集合操作，无外部依赖。",
+      "validation": {
+        "split": "validation",
+        "passed": false,
+        "errors": [
+          "v01: TypeError: 'set' object is not subscriptable",
+          "v02: TypeError: 'set' object is not subscriptable",
+          "v03: TypeError: 'set' object is not subscriptable",
+          "v04: TypeError: 'set' object is not subscriptable",
+          "v05: TypeError: 'set' object is not subscriptable",
+          "v06: TypeError: 'set' object is not subscriptable",
+          "v07: TypeError: 'set' object is not subscriptable",
+          "v08: TypeError: 'set' object is not subscriptable",
+          "v09: TypeError: 'set' object is not subscriptable",
+          "v10: TypeError: 'set' object is not subscriptable",
+          "v11: TypeError: 'set' object is not subscriptable",
+          "v12: TypeError: 'set' object is not subscriptable",
+          "contract:exact: TypeError: 'set' object is not subscriptable",
+          "contract:repeat: TypeError: 'set' object is not subscriptable",
+          "contract:large_k: TypeError: 'set' object is not subscriptable",
+          "contract:unicode: TypeError: 'set' object is not subscriptable"
+        ],
+        "metrics": {},
+        "top_k": 5,
+        "query_count": 12,
+        "memory_count": 24,
+        "execution": {
+          "wall_seconds": 0.2453924580477178,
+          "runner": "docker"
+        },
+        "gates": {
+          "task": "memory_retrieval",
+          "algorithms": [
+            "tfidf",
+            "bm25",
+            "jaccard"
+          ],
+          "plugin_packages": [],
+          "max_candidates": 3,
+          "compare_all_algorithms": true,
+          "metrics": {
+            "recall_at_k": {
+              "min": 0.75,
+              "max": null
+            },
+            "mrr_at_k": {
+              "min": 0.65,
+              "max": null
+            },
+            "precision_at_k": {
+              "min": 0.2,
+              "max": null
+            },
+            "p95_ms": {
+              "min": null,
+              "max": 1000.0
+            }
+          },
+          "selection_order": [
+            "recall_at_k",
+            "mrr_at_k",
+            "precision_at_k"
+          ],
+          "timeout_seconds": 30.0,
+          "max_repairs": 2
+        },
+        "per_query": [],
+        "metric_plugins": [
+          {
+            "id": "recall_at_k",
+            "name": "Recall@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "mrr_at_k",
+            "name": "MRR@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "precision_at_k",
+            "name": "Precision@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "p95_ms",
+            "name": "P95 ms",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "lower",
+            "minimum": 0,
+            "maximum": null
+          }
+        ]
+      }
+    },
+    {
+      "algorithm": "jaccard",
+      "revision": 2,
+      "implementation_id": "implementation_20261013T172815_22ac726c_jaccard_r2",
+      "capability_id": "char_jaccard_d9bf825b40ee",
+      "parent": "implementation_20261013T172815_22ac726c_jaccard_r1",
+      "code_hash": "34bb0f90d55712bf1d496d9d39d6f939a4b3046b822101e1e72a91d3187ac815",
+      "code_path": "examples/plugin-ollama-demo/jaccard/r2/retrieval.py",
+      "explanation": "修复后的代码严格遵循了 Jaccard 算法的约束条件：仅对英文标识符进行集合匹配，忽略中文大词干扰；统一大小写处理；移除了对集合对象的非法下标访问（如 memory[\"text\"]），改为直接读取字典值；确保空查询、空语料和非正 top_k 返回空列表；支持中文单字及相邻双字与英文单词的集合重合计算；返回格式为包含 id 和浮点分数的字典列表，按分数降序、ID 升序排序。代码未修改输入，仅处理逻辑错误。",
+      "validation": {
+        "split": "validation",
+        "passed": false,
+        "errors": [
+          "v01: TypeError: 'set' object is not subscriptable",
+          "v02: TypeError: 'set' object is not subscriptable",
+          "v03: TypeError: 'set' object is not subscriptable",
+          "v04: TypeError: 'set' object is not subscriptable",
+          "v05: TypeError: 'set' object is not subscriptable",
+          "v06: TypeError: 'set' object is not subscriptable",
+          "v07: TypeError: 'set' object is not subscriptable",
+          "v08: TypeError: 'set' object is not subscriptable",
+          "v09: TypeError: 'set' object is not subscriptable",
+          "v10: TypeError: 'set' object is not subscriptable",
+          "v11: TypeError: 'set' object is not subscriptable",
+          "v12: TypeError: 'set' object is not subscriptable",
+          "contract:exact: TypeError: 'set' object is not subscriptable",
+          "contract:repeat: TypeError: 'set' object is not subscriptable",
+          "contract:large_k: TypeError: 'set' object is not subscriptable",
+          "contract:unicode: TypeError: 'set' object is not subscriptable"
+        ],
+        "metrics": {},
+        "top_k": 5,
+        "query_count": 12,
+        "memory_count": 24,
+        "execution": {
+          "wall_seconds": 0.24799620802514255,
+          "runner": "docker"
+        },
+        "gates": {
+          "task": "memory_retrieval",
+          "algorithms": [
+            "tfidf",
+            "bm25",
+            "jaccard"
+          ],
+          "plugin_packages": [],
+          "max_candidates": 3,
+          "compare_all_algorithms": true,
+          "metrics": {
+            "recall_at_k": {
+              "min": 0.75,
+              "max": null
+            },
+            "mrr_at_k": {
+              "min": 0.65,
+              "max": null
+            },
+            "precision_at_k": {
+              "min": 0.2,
+              "max": null
+            },
+            "p95_ms": {
+              "min": null,
+              "max": 1000.0
+            }
+          },
+          "selection_order": [
+            "recall_at_k",
+            "mrr_at_k",
+            "precision_at_k"
+          ],
+          "timeout_seconds": 30.0,
+          "max_repairs": 2
+        },
+        "per_query": [],
+        "metric_plugins": [
+          {
+            "id": "recall_at_k",
+            "name": "Recall@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "mrr_at_k",
+            "name": "MRR@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "precision_at_k",
+            "name": "Precision@k",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "higher",
+            "minimum": 0,
+            "maximum": 1
+          },
+          {
+            "id": "p95_ms",
+            "name": "P95 ms",
+            "version": "1.0.0",
+            "task": "memory_retrieval",
+            "direction": "lower",
+            "minimum": 0,
+            "maximum": null
+          }
+        ]
+      }
+    }
+  ],
+  "selected": {
+    "algorithm": "bm25",
+    "revision": 0,
+    "implementation_id": "implementation_20261013T172815_22ac726c_bm25_r0",
+    "capability_id": "char_bm25_3819f381772f",
+    "parent": null,
+    "code_hash": "196298654b48dd0f8cc11f03254e52a60118b0f5102862f2245f350aaa66deef",
+    "code_path": "examples/plugin-ollama-demo/bm25/r0/retrieval.py",
+    "explanation": "实现字符 BM25 检索算法，包含以下核心步骤：1. 使用确定性分词器将中文单字/双字及英文单词转换为 token 列表；2. 计算文档频率统计每个 token 在文档中的出现次数；3. 对查询词进行去重排序以稳定浮点累加；4. 应用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5)) 计算词频加权得分；5. 按得分降序、ID 升序排序并截取前 top_k 结果。算法严格遵循参考示例中的参数 k1=1.5、b=0.75 及分词策略，确保跨进程结果稳定性。",
+    "validation": {
+      "split": "validation",
+      "passed": true,
+      "errors": [],
+      "metrics": {
+        "recall_at_k": 1.0,
+        "mrr_at_k": 1.0,
+        "precision_at_k": 0.20000000000000004,
+        "p95_ms": 1.128077055909671
+      },
+      "top_k": 5,
+      "query_count": 12,
+      "memory_count": 24,
+      "execution": {
+        "wall_seconds": 0.3582032499834895,
+        "runner": "docker"
+      },
+      "gates": {
+        "task": "memory_retrieval",
+        "algorithms": [
+          "tfidf",
+          "bm25",
+          "jaccard"
+        ],
+        "plugin_packages": [],
+        "max_candidates": 3,
+        "compare_all_algorithms": true,
+        "metrics": {
+          "recall_at_k": {
+            "min": 0.75,
+            "max": null
+          },
+          "mrr_at_k": {
+            "min": 0.65,
+            "max": null
+          },
+          "precision_at_k": {
+            "min": 0.2,
+            "max": null
+          },
+          "p95_ms": {
+            "min": null,
+            "max": 1000.0
+          }
+        },
+        "selection_order": [
+          "recall_at_k",
+          "mrr_at_k",
+          "precision_at_k"
+        ],
+        "timeout_seconds": 30.0,
+        "max_repairs": 2
+      },
+      "per_query": [
+        {
+          "query_id": "v01",
+          "query": "MySQL 连接池等待导致请求超时怎么排查",
+          "relevant_ids": [
+            "m01"
+          ],
+          "predictions": [
+            {
+              "id": "m01",
+              "score": 46.80145774093894
+            },
+            {
+              "id": "m09",
+              "score": 8.24913288024384
+            },
+            {
+              "id": "m18",
+              "score": 7.179968414380889
+            },
+            {
+              "id": "m19",
+              "score": 6.796614291678232
+            },
+            {
+              "id": "m17",
+              "score": 6.522395769207451
+            }
+          ]
+        },
+        {
+          "query_id": "v02",
+          "query": "Redis 不存在的 key 一直查数据库",
+          "relevant_ids": [
+            "m03"
+          ],
+          "predictions": [
+            {
+              "id": "m03",
+              "score": 28.205071940157524
+            },
+            {
+              "id": "m04",
+              "score": 13.889063869756106
+            },
+            {
+              "id": "m01",
+              "score": 8.532229604893484
+            },
+            {
+              "id": "m20",
+              "score": 7.159548622049113
+            },
+            {
+              "id": "m15",
+              "score": 6.57471579622201
+            }
+          ]
+        },
+        {
+          "query_id": "v03",
+          "query": "Docker 容器退出 137 内存不足",
+          "relevant_ids": [
+            "m05"
+          ],
+          "predictions": [
+            {
+              "id": "m05",
+              "score": 46.66178669205239
+            },
+            {
+              "id": "m06",
+              "score": 15.52765045284606
+            },
+            {
+              "id": "m14",
+              "score": 11.113881852823209
+            },
+            {
+              "id": "m03",
+              "score": 5.750324941908055
+            },
+            {
+              "id": "m15",
+              "score": 2.50709096141067
+            }
+          ]
+        },
+        {
+          "query_id": "v04",
+          "query": "Git rebase 冲突如何处理",
+          "relevant_ids": [
+            "m07"
+          ],
+          "predictions": [
+            {
+              "id": "m07",
+              "score": 25.66732179557297
+            },
+            {
+              "id": "m24",
+              "score": 6.283486786551974
+            },
+            {
+              "id": "m08",
+              "score": 3.4030528245785328
+            },
+            {
+              "id": "m14",
+              "score": 2.6747471720973164
+            },
+            {
+              "id": "m01",
+              "score": 1.7884310684076563
+            }
+          ]
+        },
+        {
+          "query_id": "v05",
+          "query": "asyncio 同步请求阻塞事件循环",
+          "relevant_ids": [
+            "m09"
+          ],
+          "predictions": [
+            {
+              "id": "m09",
+              "score": 48.43853711517394
+            },
+            {
+              "id": "m19",
+              "score": 10.007627309274504
+            },
+            {
+              "id": "m17",
+              "score": 5.763604946981274
+            },
+            {
+              "id": "m01",
+              "score": 5.365293205222969
+            },
+            {
+              "id": "m20",
+              "score": 2.9342106436239637
+            }
+          ]
+        },
+        {
+          "query_id": "v06",
+          "query": "RAG 检索效果用哪些指标评估",
+          "relevant_ids": [
+            "m11"
+          ],
+          "predictions": [
+            {
+              "id": "m11",
+              "score": 22.205473836099753
+            },
+            {
+              "id": "m21",
+              "score": 10.30208637685332
+            },
+            {
+              "id": "m23",
+              "score": 6.55134787079235
+            },
+            {
+              "id": "m02",
+              "score": 4.96532185817521
+            },
+            {
+              "id": "m06",
+              "score": 3.518832563229476
+            }
+          ]
+        },
+        {
+          "query_id": "v07",
+          "query": "Jetson Ollama 如何在局域网访问",
+          "relevant_ids": [
+            "m13"
+          ],
+          "predictions": [
+            {
+              "id": "m13",
+              "score": 34.45947612757103
+            },
+            {
+              "id": "m06",
+              "score": 10.002898550612032
+            },
+            {
+              "id": "m03",
+              "score": 6.43295197367287
+            },
+            {
+              "id": "m04",
+              "score": 5.267532405441956
+            },
+            {
+              "id": "m14",
+              "score": 3.1324920876420768
+            }
+          ]
+        },
+        {
+          "query_id": "v08",
+          "query": "文本分类类别不平衡不能只看 accuracy",
+          "relevant_ids": [
+            "m16"
+          ],
+          "predictions": [
+            {
+              "id": "m16",
+              "score": 74.61102922851633
+            },
+            {
+              "id": "m23",
+              "score": 3.591214195873523
+            },
+            {
+              "id": "m22",
+              "score": 2.686037675426817
+            },
+            {
+              "id": "m12",
+              "score": 2.6278789808735334
+            },
+            {
+              "id": "m24",
+              "score": 2.4399698639719984
+            }
+          ]
+        },
+        {
+          "query_id": "v09",
+          "query": "SQLite 并发写事务被阻塞",
+          "relevant_ids": [
+            "m19"
+          ],
+          "predictions": [
+            {
+              "id": "m19",
+              "score": 27.896889586603923
+            },
+            {
+              "id": "m09",
+              "score": 14.4644166545607
+            },
+            {
+              "id": "m20",
+              "score": 11.071423465744179
+            },
+            {
+              "id": "m23",
+              "score": 6.950850167469619
+            },
+            {
+              "id": "m05",
+              "score": 5.069352512808123
+            }
+          ]
+        },
+        {
+          "query_id": "v10",
+          "query": "BM25 和向量检索怎么融合",
+          "relevant_ids": [
+            "m21"
+          ],
+          "predictions": [
+            {
+              "id": "m21",
+              "score": 31.01435024421888
+            },
+            {
+              "id": "m02",
+              "score": 6.396551967015618
+            },
+            {
+              "id": "m11",
+              "score": 6.355159842299566
+            },
+            {
+              "id": "m06",
+              "score": 4.34355969138703
+            },
+            {
+              "id": "m08",
+              "score": 3.325566701278
+            }
+          ]
+        },
+        {
+          "query_id": "v11",
+          "query": "中文 TF-IDF 字符 ngram 余弦相似度",
+          "relevant_ids": [
+            "m22"
+          ],
+          "predictions": [
+            {
+              "id": "m22",
+              "score": 50.59862396252933
+            },
+            {
+              "id": "m11",
+              "score": 3.2511687822168227
+            },
+            {
+              "id": "m14",
+              "score": 3.055861919692875
+            },
+            {
+              "id": "m02",
+              "score": 2.4155184218057433
+            },
+            {
+              "id": "m09",
+              "score": 2.3161208642787923
+            }
+          ]
+        },
+        {
+          "query_id": "v12",
+          "query": "API 超时指数退避与幂等重试",
+          "relevant_ids": [
+            "m18"
+          ],
+          "predictions": [
+            {
+              "id": "m18",
+              "score": 41.71280519247785
+            },
+            {
+              "id": "m01",
+              "score": 8.854586668607535
+            },
+            {
+              "id": "m20",
+              "score": 6.629939826759694
+            },
+            {
+              "id": "m14",
+              "score": 4.805959441941023
+            },
+            {
+              "id": "m15",
+              "score": 4.735492106452723
+            }
+          ]
+        }
+      ],
+      "metric_plugins": [
+        {
+          "id": "recall_at_k",
+          "name": "Recall@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "mrr_at_k",
+          "name": "MRR@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "precision_at_k",
+          "name": "Precision@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "p95_ms",
+          "name": "P95 ms",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "lower",
+          "minimum": 0,
+          "maximum": null
+        }
+      ]
+    }
+  },
+  "test": {
+    "split": "test",
+    "passed": true,
+    "errors": [],
+    "metrics": {
+      "recall_at_k": 1.0,
+      "mrr_at_k": 1.0,
+      "precision_at_k": 0.22000000000000003,
+      "p95_ms": 1.1474291095510112
+    },
+    "top_k": 5,
+    "query_count": 10,
+    "memory_count": 24,
+    "execution": {
+      "wall_seconds": 0.21545958379283547,
+      "runner": "docker"
+    },
+    "gates": {
+      "task": "memory_retrieval",
+      "algorithms": [
+        "tfidf",
+        "bm25",
+        "jaccard"
+      ],
+      "plugin_packages": [],
+      "max_candidates": 3,
+      "compare_all_algorithms": true,
+      "metrics": {
+        "recall_at_k": {
+          "min": 0.75,
+          "max": null
+        },
+        "mrr_at_k": {
+          "min": 0.65,
+          "max": null
+        },
+        "precision_at_k": {
+          "min": 0.2,
+          "max": null
+        },
+        "p95_ms": {
+          "min": null,
+          "max": 1000.0
+        }
+      },
+      "selection_order": [
+        "recall_at_k",
+        "mrr_at_k",
+        "precision_at_k"
+      ],
+      "timeout_seconds": 30.0,
+      "max_repairs": 2
+    },
+    "per_query": [
+      {
+        "query_id": "t01",
+        "query": "SQL 慢查询 EXPLAIN 联合索引",
+        "relevant_ids": [
+          "m02"
+        ],
+        "predictions": [
+          {
+            "id": "m02",
+            "score": 36.41905877045095
+          },
+          {
+            "id": "m11",
+            "score": 10.094610596468788
+          },
+          {
+            "id": "m22",
+            "score": 5.863895893158635
+          },
+          {
+            "id": "m21",
+            "score": 5.307447478962786
+          },
+          {
+            "id": "m17",
+            "score": 2.249987971580477
+          }
+        ]
+      },
+      {
+        "query_id": "t02",
+        "query": "Redis TTL 同时过期引发雪崩",
+        "relevant_ids": [
+          "m04"
+        ],
+        "predictions": [
+          {
+            "id": "m04",
+            "score": 32.07891373786929
+          },
+          {
+            "id": "m03",
+            "score": 6.896446515066182
+          },
+          {
+            "id": "m02",
+            "score": 6.561020637008156
+          },
+          {
+            "id": "m14",
+            "score": 4.810516811299298
+          },
+          {
+            "id": "m23",
+            "score": 2.2256221098285858
+          }
+        ]
+      },
+      {
+        "query_id": "t03",
+        "query": "Docker 内 localhost 不能访问外部服务",
+        "relevant_ids": [
+          "m06"
+        ],
+        "predictions": [
+          {
+            "id": "m06",
+            "score": 20.684830643955873
+          },
+          {
+            "id": "m23",
+            "score": 11.081148103406647
+          },
+          {
+            "id": "m05",
+            "score": 8.357246444941445
+          },
+          {
+            "id": "m16",
+            "score": 7.71272468532176
+          },
+          {
+            "id": "m03",
+            "score": 6.847488014065533
+          }
+        ]
+      },
+      {
+        "query_id": "t04",
+        "query": "已经推送的 Git 提交怎样撤销",
+        "relevant_ids": [
+          "m08"
+        ],
+        "predictions": [
+          {
+            "id": "m08",
+            "score": 39.90280014598835
+          },
+          {
+            "id": "m07",
+            "score": 10.221462245057094
+          },
+          {
+            "id": "m18",
+            "score": 8.671165563735189
+          },
+          {
+            "id": "m14",
+            "score": 2.6747471720973164
+          },
+          {
+            "id": "m12",
+            "score": 2.175448492767381
+          }
+        ]
+      },
+      {
+        "query_id": "t05",
+        "query": "Python 虚拟环境出现 ModuleNotFoundError",
+        "relevant_ids": [
+          "m10"
+        ],
+        "predictions": [
+          {
+            "id": "m10",
+            "score": 28.052460803061788
+          },
+          {
+            "id": "m07",
+            "score": 7.208491305905783
+          },
+          {
+            "id": "m09",
+            "score": 4.6322417285575845
+          },
+          {
+            "id": "m05",
+            "score": 2.1277679541912597
+          },
+          {
+            "id": "m01",
+            "score": 2.0944955955173246
+          }
+        ]
+      },
+      {
+        "query_id": "t06",
+        "query": "知识库文档分块过短丢失上下文",
+        "relevant_ids": [
+          "m12"
+        ],
+        "predictions": [
+          {
+            "id": "m12",
+            "score": 44.790704358132636
+          },
+          {
+            "id": "m01",
+            "score": 9.182555867924947
+          },
+          {
+            "id": "m14",
+            "score": 7.830872272533596
+          },
+          {
+            "id": "m21",
+            "score": 7.39234279772339
+          },
+          {
+            "id": "m11",
+            "score": 6.247857630982061
+          }
+        ]
+      },
+      {
+        "query_id": "t07",
+        "query": "训练测试数据泄漏和特征拟合",
+        "relevant_ids": [
+          "m15"
+        ],
+        "predictions": [
+          {
+            "id": "m15",
+            "score": 47.98960025998951
+          },
+          {
+            "id": "m07",
+            "score": 7.0599327960316645
+          },
+          {
+            "id": "m22",
+            "score": 6.187144330087312
+          },
+          {
+            "id": "m23",
+            "score": 6.140677250253301
+          },
+          {
+            "id": "m04",
+            "score": 5.562575025057981
+          }
+        ]
+      },
+      {
+        "query_id": "t08",
+        "query": "记忆来源版本与新旧事实冲突",
+        "relevant_ids": [
+          "m24"
+        ],
+        "predictions": [
+          {
+            "id": "m24",
+            "score": 48.0565821388142
+          },
+          {
+            "id": "m07",
+            "score": 11.738770308032064
+          },
+          {
+            "id": "m20",
+            "score": 7.412272525112378
+          },
+          {
+            "id": "m12",
+            "score": 6.80471658974367
+          },
+          {
+            "id": "m22",
+            "score": 6.071585568111807
+          }
+        ]
+      },
+      {
+        "query_id": "t09",
+        "query": "如何报告服务延迟 P95 和冷启动",
+        "relevant_ids": [
+          "m23"
+        ],
+        "predictions": [
+          {
+            "id": "m23",
+            "score": 50.158691670086874
+          },
+          {
+            "id": "m06",
+            "score": 7.5369696562149535
+          },
+          {
+            "id": "m19",
+            "score": 5.055139818756584
+          },
+          {
+            "id": "m20",
+            "score": 2.9342106436239637
+          },
+          {
+            "id": "m04",
+            "score": 2.01317406836048
+          }
+        ]
+      },
+      {
+        "query_id": "t10",
+        "query": "数据库并发事务锁冲突",
+        "relevant_ids": [
+          "m19",
+          "m20"
+        ],
+        "predictions": [
+          {
+            "id": "m20",
+            "score": 18.836879966669976
+          },
+          {
+            "id": "m19",
+            "score": 13.658156316577024
+          },
+          {
+            "id": "m07",
+            "score": 11.218828827133436
+          },
+          {
+            "id": "m23",
+            "score": 10.67093188769767
+          },
+          {
+            "id": "m03",
+            "score": 10.055443500930577
+          }
+        ]
+      }
+    ],
+    "metric_plugins": [
+      {
+        "id": "recall_at_k",
+        "name": "Recall@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "mrr_at_k",
+        "name": "MRR@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "precision_at_k",
+        "name": "Precision@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "p95_ms",
+        "name": "P95 ms",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "lower",
+        "minimum": 0,
+        "maximum": null
+      }
+    ]
+  },
+  "status": "passed",
+  "environment": {
+    "python": "3.12.14 (main, Aug 25 2026, 13:50:33) [Clang 22.1.3 ]",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "dependencies": {
+      "langgraph": "1.2.14",
+      "pydantic": "2.14.1",
+      "scikit-learn": "1.9.1",
+      "networkx": "3.7"
+    },
+    "runner": "docker",
+    "docker_image": "agent-factory-runner:0.1"
+  },
+  "dataset_hashes": {
+    "memories.json": "95f29cd9ec9088a3e2e531dd5eb30417178dd8d489cf7891caebf55c376bf2bf",
+    "validation_queries.json": "88ba34d04d0e885026cd26c1ad3d778afd78282246a37147bb4c7cf6267bc9c1",
+    "test_queries.json": "3c5c674a30ac8b77037aa9767fbff88eba5f0c276e0f207a28dc68ef06a08fe2"
+  },
+  "validation_config": {
+    "task": "memory_retrieval",
+    "algorithms": [
+      "tfidf",
+      "bm25",
+      "jaccard"
+    ],
+    "plugin_packages": [],
+    "max_candidates": 3,
+    "compare_all_algorithms": true,
+    "metrics": {
+      "recall_at_k": {
+        "min": 0.75,
+        "max": null
+      },
+      "mrr_at_k": {
+        "min": 0.65,
+        "max": null
+      },
+      "precision_at_k": {
+        "min": 0.2,
+        "max": null
+      },
+      "p95_ms": {
+        "min": null,
+        "max": 1000.0
+      }
+    },
+    "selection_order": [
+      "recall_at_k",
+      "mrr_at_k",
+      "precision_at_k"
+    ],
+    "timeout_seconds": 30.0,
+    "max_repairs": 2
+  },
+  "llm_calls": 13,
+  "plugin_catalog": {
+    "algorithms": [
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "environment": "retrieval-v1",
+        "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。拟合语料仅为记忆文本，transform([query]) 后与整个语料计算相似度。"
+      },
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。"
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。中文双字必须从原文连续中文片段按相邻位置切分，不能从无序集合取字符再拼接。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。"
+      }
+    ],
+    "metrics": [
+      {
+        "id": "recall_at_k",
+        "name": "Recall@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "mrr_at_k",
+        "name": "MRR@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "precision_at_k",
+        "name": "Precision@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "p95_ms",
+        "name": "P95 ms",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "lower",
+        "minimum": 0,
+        "maximum": null
+      }
+    ],
+    "modules": [
+      "agent_factory.plugins.algorithms.bm25",
+      "agent_factory.plugins.algorithms.jaccard",
+      "agent_factory.plugins.algorithms.tfidf",
+      "agent_factory.plugins.metrics.latency",
+      "agent_factory.plugins.metrics.mrr",
+      "agent_factory.plugins.metrics.precision",
+      "agent_factory.plugins.metrics.recall"
+    ]
+  },
+  "mock_fault_algorithm": null,
+  "workflow_events": [
+    "understand",
+    "retrieve",
+    "plan",
+    "generate",
+    "validate",
+    "review",
+    "generate",
+    "validate",
+    "review",
+    "generate",
+    "validate",
+    "advance",
+    "generate",
+    "validate",
+    "advance",
+    "generate",
+    "validate",
+    "review",
+    "generate",
+    "validate",
+    "review",
+    "generate",
+    "validate",
+    "select",
+    "test",
+    "persist"
+  ]
+}

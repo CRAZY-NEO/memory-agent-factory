@@ -10,6 +10,7 @@ from pathlib import Path
 from .knowledge import KnowledgeStore, ingest_sources
 from .llm import LLMClient
 from .models import ValidationConfig
+from .registry import load_registry
 from .runtime import MemoryRetriever
 from .validation import load_dataset, validate
 from .visualization import write_graph_html
@@ -32,7 +33,9 @@ def parser():
     root = argparse.ArgumentParser(description="个人技术记忆检索算法能力工厂")
     root.add_argument("--workspace", type=Path, default=Path.cwd(), help="包含 data/config/knowledge 的项目目录")
     root.add_argument("--verbose", action="store_true")
+    root.add_argument("--config", type=Path, help="覆盖工作目录的 config.json")
     commands = root.add_subparsers(dest="command", required=True)
+    commands.add_parser("plugins", help="列出已发现的算法、指标及版本")
     ingest = commands.add_parser("ingest", help="从算法材料抽取能力并写入知识库")
     provider_options(ingest)
     run = commands.add_parser("run", help="需求 → 检索知识 → 生成 → 验证 → 修复 → 沉淀")
@@ -65,10 +68,18 @@ def main(argv=None):
                         format="%(levelname)s %(message)s")
     workspace = arguments.workspace.resolve()
     try:
+        config_path = arguments.config or workspace / "config.json"
+        config = ValidationConfig.model_validate(json.loads(config_path.read_text(encoding="utf-8")))
+        registry = load_registry(config.plugin_packages)
+        registry.validate_config(config)
+        if arguments.command == "plugins":
+            print(json.dumps(registry.catalog(), ensure_ascii=False, indent=2))
+            return 0
         if arguments.command == "run":
             description = arguments.description or arguments.request_file.read_text(encoding="utf-8")
             factory = Factory(workspace, arguments.provider, resolve_model(arguments), arguments.base_url,
-                              arguments.runner, arguments.inject_fault, arguments.allow_local)
+                              arguments.runner, arguments.inject_fault, arguments.allow_local,
+                              config=config, registry=registry)
             result = factory.run(description)
             print(json.dumps({"status": result["status"], "run_id": result["run_id"],
                               "report": str(Path(result["directory"]) / "report.md"),
@@ -78,9 +89,10 @@ def main(argv=None):
         if arguments.command == "ingest":
             store = KnowledgeStore(workspace / "state" / "knowledge.sqlite")
             client = LLMClient(arguments.provider, resolve_model(arguments), arguments.base_url,
-                               workspace / "state" / "ingest_traces")
+                               workspace / "state" / "ingest_traces", registry=registry)
             output = workspace / "knowledge" / "extracted_capabilities.json"
-            result = ingest_sources(store, client, workspace / "knowledge" / "sources", output)
+            result = ingest_sources(store, client, workspace / "knowledge" / "sources", output,
+                                    registry=registry, algorithm_ids=config.algorithms)
             print(json.dumps({"capabilities": len(result), "output": str(output)}, ensure_ascii=False))
         elif arguments.command == "export":
             store = KnowledgeStore(workspace / "state" / "knowledge.sqlite")
@@ -104,12 +116,11 @@ def main(argv=None):
             print(json.dumps([{**hit, "text": lookup[hit["id"]]["text"], "source": lookup[hit["id"]]["source"]}
                               for hit in hits], ensure_ascii=False, indent=2))
         elif arguments.command == "validate":
-            config = ValidationConfig.model_validate(json.loads((workspace / "config.json").read_text(encoding="utf-8")))
             from .runner import Runner
             memories, queries = load_dataset(workspace / "data", arguments.split)
             result = validate(arguments.code.read_text(encoding="utf-8"),
                               Runner(arguments.runner, config.timeout_seconds), memories, queries,
-                              arguments.top_k, config, arguments.split)
+                              arguments.top_k, config, arguments.split, registry=registry)
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0 if result["passed"] else 1
         return 0

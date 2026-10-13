@@ -56,7 +56,8 @@ def test_ingest_provenance_idempotence_and_immutable_store(workspace):
     ingest_sources(store, client, workspace / "knowledge" / "sources", workspace / "extracted.json")
     assert len(store.nodes("Capability")) == len(records)
     retrieved = store.retrieve("中文技术记忆检索")
-    assert len(retrieved["sources"]) == 2
+    assert {item["source_id"] for item in retrieved["sources"]} == {
+        cap["source_id"] for cap in retrieved["capabilities"]}
     assert any("log(1 + (N - df" in source["text"] for source in retrieved["sources"])
     graph = store.graph()
     for record in records:

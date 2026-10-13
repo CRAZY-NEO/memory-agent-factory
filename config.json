@@ -1,8 +1,31 @@
 {
   "task": "memory_retrieval",
-  "min_recall": 0.75,
-  "min_mrr": 0.65,
-  "max_p95_ms": 1000,
+  "algorithms": [
+    "tfidf",
+    "bm25",
+    "jaccard"
+  ],
+  "max_candidates": 3,
+  "metrics": {
+    "recall_at_k": {
+      "min": 0.75
+    },
+    "mrr_at_k": {
+      "min": 0.65
+    },
+    "precision_at_k": {
+      "min": 0.2
+    },
+    "p95_ms": {
+      "max": 1000
+    }
+  },
+  "selection_order": [
+    "recall_at_k",
+    "mrr_at_k",
+    "precision_at_k"
+  ],
   "timeout_seconds": 30,
-  "max_repairs": 2
+  "max_repairs": 2,
+  "compare_all_algorithms": true
 }

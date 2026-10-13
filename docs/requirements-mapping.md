@@ -5,8 +5,8 @@
 | 要求 | 当前实现 | 可查看证据 |
 | --- | --- | --- |
 | 理解自然语言能力描述 | Understander 结构化需求；mock 为规则，真实模式调用 Ollama | examples/demo/llm 中 understander 记录 |
-| 材料抽取与相关知识检索 | 两份算法材料、Pydantic、连续原文证据；字符检索+图关系遍历 | knowledge/extracted_capabilities.json、retrieved_knowledge.json |
-| 规划算法 | 引用知识节点的两个候选方案，来源匹配检查 | examples/demo/plan.json |
+| 材料抽取与相关知识检索 | 三份算法材料、Pydantic、连续原文证据；字符检索+图关系遍历 | knowledge/extracted_capabilities.json、retrieved_knowledge.json |
+| 规划算法 | 引用知识节点的配置预算内的候选方案，来源匹配检查 | examples/demo/plan.json |
 | 生成代码 | 独立 retrieve 插件；mock 模板、Ollama 可实际生成 | examples/demo/tfidf、bm25、selected_retrieval.py |
 | 自动执行与评估 | 可信外部标注评分，接口/功能/稳定性/性能检查 | validation.py、各版本 validation.json |
 | 代码修复 | 最多两次，修订和审查信息不可覆盖 | BM25 r0 失败与 r1 成功样例 |
@@ -25,16 +25,16 @@
 
 ## 已实现的进阶点
 
-CLI 与鉴权异步 API；多轮有限修复；两个候选比较；图谱 HTML/GraphML；自动报告；知识回写；
+CLI 与鉴权异步 API；多轮有限修复；三个算法候选比较；插件注册与自动发现；Precision@k 及可配置指标排序；图谱 HTML/GraphML；自动报告；知识回写；
 来源证据；AST 与 Docker 执行选项；失败经验；能力及代码版本；设计依据；性能计时。
 
 角色协作由同一个模型串行承担，不能将其描述成并发自治 Agent 群。
 图遍历用于知识检索，没有实现 Beam Search/MCTS 算法搜索。
-单一检索任务有配置门槛，尚不支持多任务插件自动发现。
+检索任务支持算法/指标插件和外部包发现；尚未实现跨任务验证配置。
 
 ## 提交前仍需补充
 
-1. 在 Jetson 上按提供的 qwen3.5:2b 配置完成真实 LLM 抽取/生成样例，保留真实成功或失败报告。
+1. 已由 Mac 工厂经 SSH 隧道调用 Jetson qwen3.5:2b 完成真实闭环，见 examples/ollama-demo；新插件记录见 examples/plugin-jaccard-ollama-demo。提交时保留原始调用与报告。
 2. 扩大和改写检索数据，降低简单词面重合带来的虚高指标。
 3. 配置自己的 GitHub 远端并推送；仓库公开前排除私人资料与密钥。
 

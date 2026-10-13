@@ -4,10 +4,10 @@ import json
 import math
 from pathlib import Path
 
-import numpy as np
 from pydantic import ValidationError
 
 from .models import Hit, Memory, Query
+from .registry import MetricContext, load_registry
 
 
 def load_dataset(directory, split):
@@ -30,15 +30,10 @@ def load_dataset(directory, split):
 
 
 def retrieval_metrics(predictions, queries, top_k):
-    recalls, reciprocals = [], []
-    for query in queries:
-        ranked = [hit["id"] for hit in predictions[query["id"]][:top_k]]
-        relevant = set(query["relevant_ids"])
-        recalls.append(len(set(ranked) & relevant) / len(relevant))
-        rank = next((index + 1 for index, uid in enumerate(ranked) if uid in relevant), None)
-        reciprocals.append(1 / rank if rank else 0)
-    return {"recall_at_k": sum(recalls) / len(recalls),
-            "mrr_at_k": sum(reciprocals) / len(reciprocals)}
+    """Compatibility API; the workflow evaluates all configured registry metrics."""
+    registry = load_registry()
+    context = MetricContext(predictions, queries, top_k)
+    return {name: registry.metric(name).evaluate(context) for name in ["recall_at_k", "mrr_at_k"]}
 
 
 def check_result(observation, case):
@@ -64,8 +59,13 @@ def check_result(observation, case):
     return hits
 
 
-def validate(code, runner, memories, queries, top_k, config, split="validation"):
+def validate(code, runner, memories, queries, top_k, config, split="validation", registry=None):
     """The worker never sees labels. Gates cannot be changed by reviewer/coder agents."""
+    registry = registry or load_registry(config.plugin_packages)
+    registry.validate_config(config)
+    if not isinstance(top_k, int) or isinstance(top_k, bool) or top_k <= 0:
+        raise ValueError("Evaluation top_k must be a positive integer")
+
     def case(uid, query, data=memories, k=top_k):
         return {"case_id": uid, "query": query, "memories": data, "top_k": k}
 
@@ -84,6 +84,7 @@ def validate(code, runner, memories, queries, top_k, config, split="validation")
               "top_k": top_k, "query_count": len(queries), "memory_count": len(memories),
               "execution": {key: value for key, value in raw.items() if key != "observations"},
               "gates": config.model_dump(), "per_query": []}
+    report["metric_plugins"] = [registry.metric(name).metadata() for name in config.metrics]
     if "error" in raw:
         errors.append(raw["error"])
         return report
@@ -111,18 +112,24 @@ def validate(code, runner, memories, queries, top_k, config, split="validation")
             errors.append("stability: fresh process returned different results")
     except (ValueError, KeyError, IndexError, TypeError, ValidationError) as exc:
         errors.append("stability: fresh process failed: " + str(exc)[:1000])
-    metrics = retrieval_metrics(results, queries, top_k)
-    # Timing includes per-call index construction; excludes interpreter and import startup.
-    metrics["p95_ms"] = float(np.percentile([row["duration_ms"] for row in observations[:len(queries)]], 95))
+    # Timing includes index construction; excludes interpreter/import startup.
+    context = MetricContext(results, queries, top_k,
+                            tuple(row["duration_ms"] for row in observations[:len(queries)]))
+    metrics = {}
+    for name, rule in config.metrics.items():
+        try:
+            value = registry.metric(name).evaluate(context)
+            metrics[name] = value
+            if rule.min is not None and value < rule.min:
+                errors.append(f"metric: {name}={value:.4f} below {rule.min:.4f}")
+            if rule.max is not None and value > rule.max:
+                errors.append(f"metric: {name}={value:.4f} above {rule.max:.4f}")
+        except Exception as exc:
+            errors.append(f"metric: {name} computation failed: {type(exc).__name__}: {str(exc)[:500]}")
     report["metrics"] = metrics
     for query in queries:
         report["per_query"].append({"query_id": query["id"], "query": query["query"],
                                     "relevant_ids": query["relevant_ids"],
                                     "predictions": results[query["id"]]})
-    for key, threshold in [("recall_at_k", config.min_recall), ("mrr_at_k", config.min_mrr)]:
-        if metrics[key] < threshold:
-            errors.append(f"metric: {key}={metrics[key]:.3f} below {threshold:.3f}")
-    if metrics["p95_ms"] > config.max_p95_ms:
-        errors.append("performance: p95_ms exceeds configured budget")
     report["passed"] = not errors
     return report

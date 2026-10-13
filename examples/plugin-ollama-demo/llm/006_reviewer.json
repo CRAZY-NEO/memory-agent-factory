@@ -1,0 +1,162 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "reviewer",
+  "context": {
+    "candidate": {
+      "algorithm": "tfidf",
+      "capability_id": "char_tfidf_efd747a4fcac",
+      "rationale": "TF-IDF 利用词频与逆文档频率加权，能有效捕捉技术文档中特定组件或故障词的语义重要性，适合包含明确组件名的查询场景。"
+    },
+    "code": "from sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.metrics.pairwise import cosine_similarity\nimport math\nimport re\nimport collections\n\ndef retrieve(query, memories, top_k=5):\n    \"\"\"Return unique memory IDs with finite descending similarity scores.\"\"\"\n    if not query or not memories or top_k <= 0:\n        return []\n    \n    # Normalize query to lowercase for consistent tokenization\n    query_lower = query.lower()\n    \n    # Extract unique tokens from query\n    query_tokens = set()\n    for token in query_lower.split():\n        # Keep only alphanumeric and underscore, remove punctuation\n        token_clean = re.sub(r'[^a-z0-9_]', '', token)\n        if token_clean:\n            query_tokens.add(token_clean)\n    \n    # Extract unique tokens from memories\n    doc_tokens = []\n    for memory in memories:\n        text = memory.get('text', '')\n        if not text:\n            continue\n        doc_tokens.extend(text.lower().split())\n        doc_tokens = list(set(doc_tokens))  # Remove duplicates\n    \n    # Handle empty cases\n    if not query_tokens or not doc_tokens:\n        return []\n    \n    # Build vocabulary from all documents\n    vocab = set(doc_tokens)\n    \n    # Build TF-IDF matrix\n    try:\n        vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(1, 3), lowercase=True)\n        corpus = vectorizer.fit_transform(doc_tokens)\n    except ValueError:\n        return []\n    \n    # Transform query\n    query_vec = vectorizer.transform([query_lower])\n    \n    # Calculate cosine similarity\n    scores = cosine_similarity(query_vec, corpus)[0]\n    \n    # Filter positive scores and sort descending\n    hits = []\n    for i, score in enumerate(scores):\n        if score > 0:\n            hits.append({\n                'id': memories[i]['id'],\n                'score': float(score)\n            })\n    \n    # Sort by score descending, then by id ascending for stability\n    hits.sort(key=lambda x: (-x['score'], x['id']))\n    \n    # Return top_k results\n    return hits[:top_k]\n",
+    "validation": {
+      "split": "validation",
+      "passed": false,
+      "errors": [
+        "v01: IndexError: list index out of range",
+        "v02: IndexError: list index out of range",
+        "v03: IndexError: list index out of range",
+        "v04: IndexError: list index out of range",
+        "v05: IndexError: list index out of range",
+        "v06: IndexError: list index out of range",
+        "v07: IndexError: list index out of range",
+        "v08: IndexError: list index out of range",
+        "v09: IndexError: list index out of range",
+        "v10: IndexError: list index out of range",
+        "v11: IndexError: list index out of range",
+        "v12: IndexError: list index out of range",
+        "contract:exact: IndexError: list index out of range",
+        "contract:repeat: IndexError: list index out of range",
+        "contract:large_k: IndexError: list index out of range",
+        "contract:unicode: IndexError: list index out of range"
+      ],
+      "metrics": {},
+      "top_k": 5,
+      "query_count": 12,
+      "memory_count": 24,
+      "execution": {
+        "wall_seconds": 0.9959492909256369,
+        "runner": "docker"
+      },
+      "gates": {
+        "task": "memory_retrieval",
+        "algorithms": [
+          "tfidf",
+          "bm25",
+          "jaccard"
+        ],
+        "plugin_packages": [],
+        "max_candidates": 3,
+        "compare_all_algorithms": true,
+        "metrics": {
+          "recall_at_k": {
+            "min": 0.75,
+            "max": null
+          },
+          "mrr_at_k": {
+            "min": 0.65,
+            "max": null
+          },
+          "precision_at_k": {
+            "min": 0.2,
+            "max": null
+          },
+          "p95_ms": {
+            "min": null,
+            "max": 1000.0
+          }
+        },
+        "selection_order": [
+          "recall_at_k",
+          "mrr_at_k",
+          "precision_at_k"
+        ],
+        "timeout_seconds": 30.0,
+        "max_repairs": 2
+      },
+      "per_query": [],
+      "metric_plugins": [
+        {
+          "id": "recall_at_k",
+          "name": "Recall@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "mrr_at_k",
+          "name": "MRR@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "precision_at_k",
+          "name": "Precision@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "p95_ms",
+          "name": "P95 ms",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "lower",
+          "minimum": 0,
+          "maximum": null
+        }
+      ]
+    }
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "repair_instructions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 6,
+        "minItems": 1,
+        "title": "Repair Instructions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "summary",
+      "repair_instructions"
+    ],
+    "title": "Diagnosis",
+    "type": "object"
+  },
+  "retry": 0,
+  "raw_content": "{\"summary\":\"TF-IDF 向量izer 在字符级别分析时，当文档中未包含任何字符（如空字符串或仅包含非字母数字字符）时，fit_transform 会抛出 ValueError，导致后续计算失败。\",\"repair_instructions\":[\"1. 在构建 TF-IDF 向量izer 之前，先对文档文本进行非空过滤，移除所有空字符串或仅包含非字母数字字符的条目。\",\"2. 修改 fit_transform 逻辑，在遇到 ValueError 时直接返回空列表，而不是抛出异常。\",\"3. 增加对 query 和 memories 中可能存在的空字符串或纯空白文本的预处理，确保输入向量izer 时不会触发空文档错误。\",\"4. 优化异常处理机制，捕获 TfidfVectorizer 的 ValueError 并返回空列表，避免程序崩溃。\",\"5. 在构建 vocabulary 时增加检查，如果 vocab 为空则直接返回空列表，防止后续索引错误。\",\"6. 增加对 query 和 memories 中可能存在的空字符串或纯空白文本的预处理，确保输入向量izer 时不会触发空文档错误。\"]}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 1461,
+    "eval_count": 239,
+    "total_duration": 9663626417
+  },
+  "response": {
+    "summary": "TF-IDF 向量izer 在字符级别分析时，当文档中未包含任何字符（如空字符串或仅包含非字母数字字符）时，fit_transform 会抛出 ValueError，导致后续计算失败。",
+    "repair_instructions": [
+      "1. 在构建 TF-IDF 向量izer 之前，先对文档文本进行非空过滤，移除所有空字符串或仅包含非字母数字字符的条目。",
+      "2. 修改 fit_transform 逻辑，在遇到 ValueError 时直接返回空列表，而不是抛出异常。",
+      "3. 增加对 query 和 memories 中可能存在的空字符串或纯空白文本的预处理，确保输入向量izer 时不会触发空文档错误。",
+      "4. 优化异常处理机制，捕获 TfidfVectorizer 的 ValueError 并返回空列表，避免程序崩溃。",
+      "5. 在构建 vocabulary 时增加检查，如果 vocab 为空则直接返回空列表，防止后续索引错误。",
+      "6. 增加对 query 和 memories 中可能存在的空字符串或纯空白文本的预处理，确保输入向量izer 时不会触发空文档错误。"
+    ]
+  },
+  "duration_seconds": 9.686750374967232
+}

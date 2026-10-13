@@ -1,0 +1,11 @@
+{
+  "summary": "TF-IDF 向量izer 在字符级别分析时，当文档中未包含任何字符（如空字符串或仅包含非字母数字字符）时，fit_transform 会抛出 ValueError，导致后续计算失败。",
+  "repair_instructions": [
+    "1. 在构建 TF-IDF 向量izer 之前，先对文档文本进行非空过滤，移除所有空字符串或仅包含非字母数字字符的条目。",
+    "2. 修改 fit_transform 逻辑，在遇到 ValueError 时直接返回空列表，而不是抛出异常。",
+    "3. 增加对 query 和 memories 中可能存在的空字符串或纯空白文本的预处理，确保输入向量izer 时不会触发空文档错误。",
+    "4. 优化异常处理机制，捕获 TfidfVectorizer 的 ValueError 并返回空列表，避免程序崩溃。",
+    "5. 在构建 vocabulary 时增加检查，如果 vocab 为空则直接返回空列表，防止后续索引错误。",
+    "6. 增加对 query 和 memories 中可能存在的空字符串或纯空白文本的预处理，确保输入向量izer 时不会触发空文档错误。"
+  ]
+}

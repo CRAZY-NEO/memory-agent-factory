@@ -1,0 +1,162 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "reviewer",
+  "context": {
+    "candidate": {
+      "algorithm": "jaccard",
+      "capability_id": "char_jaccard_d9bf825b40ee",
+      "rationale": "Jaccard 仅基于词集合交并比，计算简单且可解释，但受限于对中文大词敏感及无法区分大小写，需严格限制仅用于英文标识符匹配。"
+    },
+    "code": "import re\nimport math\nfrom collections import defaultdict\n\ndef tokenize(text):\n    \"\"\"Tokenize text into sets of characters for Jaccard similarity.\"\"\"\n    # Extract English identifiers (alphanumeric and underscore)\n    english_tokens = set(re.findall(r\"[a-z0-9_]+\", text.lower()))\n    # Extract Chinese characters (single and adjacent bigrams)\n    chinese_chars = set(re.findall(r\"[\\u4e00-\\u9fff]+\", text))\n    # Add adjacent bigrams for Chinese\n    for i in range(len(chinese_chars) - 1):\n        chinese_chars.add(chinese_chars[i:i+2])\n    return english_tokens | chinese_chars\n\ndef retrieve(query, memories, top_k=5):\n    \"\"\"Retrieve memories using Jaccard similarity on token sets.\"\"\"\n    # Handle edge cases\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    \n    query_tokens = tokenize(query)\n    if not query_tokens:\n        return []\n    \n    hits = []\n    for memory in memories:\n        document_tokens = tokenize(memory[\"text\"])\n        # Calculate Jaccard similarity: |Q & D| / |Q | D|\n        intersection = query_tokens & document_tokens\n        union = query_tokens | document_tokens\n        \n        if union:\n            score = len(intersection) / len(union)\n        else:\n            score = 0.0\n        \n        # Only return positive scores\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": float(score)})\n    \n    # Sort by score descending, then by id ascending for stability\n    hits.sort(key=lambda x: (-x[\"score\"], x[\"id\"]))\n    \n    return hits[:top_k]\n",
+    "validation": {
+      "split": "validation",
+      "passed": false,
+      "errors": [
+        "v01: TypeError: 'set' object is not subscriptable",
+        "v02: TypeError: 'set' object is not subscriptable",
+        "v03: TypeError: 'set' object is not subscriptable",
+        "v04: TypeError: 'set' object is not subscriptable",
+        "v05: TypeError: 'set' object is not subscriptable",
+        "v06: TypeError: 'set' object is not subscriptable",
+        "v07: TypeError: 'set' object is not subscriptable",
+        "v08: TypeError: 'set' object is not subscriptable",
+        "v09: TypeError: 'set' object is not subscriptable",
+        "v10: TypeError: 'set' object is not subscriptable",
+        "v11: TypeError: 'set' object is not subscriptable",
+        "v12: TypeError: 'set' object is not subscriptable",
+        "contract:exact: TypeError: 'set' object is not subscriptable",
+        "contract:repeat: TypeError: 'set' object is not subscriptable",
+        "contract:large_k: TypeError: 'set' object is not subscriptable",
+        "contract:unicode: TypeError: 'set' object is not subscriptable"
+      ],
+      "metrics": {},
+      "top_k": 5,
+      "query_count": 12,
+      "memory_count": 24,
+      "execution": {
+        "wall_seconds": 0.3040500001516193,
+        "runner": "docker"
+      },
+      "gates": {
+        "task": "memory_retrieval",
+        "algorithms": [
+          "tfidf",
+          "bm25",
+          "jaccard"
+        ],
+        "plugin_packages": [],
+        "max_candidates": 3,
+        "compare_all_algorithms": true,
+        "metrics": {
+          "recall_at_k": {
+            "min": 0.75,
+            "max": null
+          },
+          "mrr_at_k": {
+            "min": 0.65,
+            "max": null
+          },
+          "precision_at_k": {
+            "min": 0.2,
+            "max": null
+          },
+          "p95_ms": {
+            "min": null,
+            "max": 1000.0
+          }
+        },
+        "selection_order": [
+          "recall_at_k",
+          "mrr_at_k",
+          "precision_at_k"
+        ],
+        "timeout_seconds": 30.0,
+        "max_repairs": 2
+      },
+      "per_query": [],
+      "metric_plugins": [
+        {
+          "id": "recall_at_k",
+          "name": "Recall@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "mrr_at_k",
+          "name": "MRR@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "precision_at_k",
+          "name": "Precision@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "p95_ms",
+          "name": "P95 ms",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "lower",
+          "minimum": 0,
+          "maximum": null
+        }
+      ]
+    }
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "repair_instructions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 6,
+        "minItems": 1,
+        "title": "Repair Instructions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "summary",
+      "repair_instructions"
+    ],
+    "title": "Diagnosis",
+    "type": "object"
+  },
+  "retry": 0,
+  "raw_content": "{\"summary\":\"代码中多次尝试对集合对象使用下标访问操作，导致类型错误。\",\"repair_instructions\":[\"将 `query_tokens & document_tokens` 改为 `query_tokens.intersection(document_tokens)`\",\"将 `query_tokens | document_tokens` 改为 `query_tokens.union(document_tokens)`\",\"将 `len(intersection)` 改为 `len(intersection)`\",\"将 `len(union)` 改为 `len(union)`\",\"移除所有对集合对象的 `.items()` 或 `.keys()` 调用\",\"移除所有对集合对象的 `.values()` 或 `.items()` 调用\"]}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 1439,
+    "eval_count": 122,
+    "total_duration": 5999646497
+  },
+  "response": {
+    "summary": "代码中多次尝试对集合对象使用下标访问操作，导致类型错误。",
+    "repair_instructions": [
+      "将 `query_tokens & document_tokens` 改为 `query_tokens.intersection(document_tokens)`",
+      "将 `query_tokens | document_tokens` 改为 `query_tokens.union(document_tokens)`",
+      "将 `len(intersection)` 改为 `len(intersection)`",
+      "将 `len(union)` 改为 `len(union)`",
+      "移除所有对集合对象的 `.items()` 或 `.keys()` 调用",
+      "移除所有对集合对象的 `.values()` 或 `.items()` 调用"
+    ]
+  },
+  "duration_seconds": 6.080687667010352
+}

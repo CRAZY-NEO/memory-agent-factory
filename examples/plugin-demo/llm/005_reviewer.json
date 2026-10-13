@@ -1,0 +1,240 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "reviewer",
+  "context": {
+    "candidate": {
+      "algorithm": "bm25",
+      "capability_id": "char_bm25_0f592b104c61",
+      "rationale": "来自材料的适用条件：适用：不同长度的技术笔记、包含明确组件名或故障词的查询。"
+    },
+    "code": "\"\"\"BM25 with Chinese character bigrams and English technical identifiers.\"\"\"\n\nimport math\nimport re\nfrom collections import Counter\n\n\ndef tokenize(text):\n    \"\"\"Simple deterministic tokenization avoids a heavyweight Chinese segmenter.\"\"\"\n    english = re.findall(r\"[a-z0-9_]+\", text.lower())\n    chinese = re.findall(r\"[\\u4e00-\\u9fff]+\", text)\n    tokens = list(english)\n    for fragment in chinese:\n        tokens.extend(list(fragment))\n        tokens.extend(fragment[index:index + 2] for index in range(len(fragment) - 1))\n    return tokens\n\n\ndef retrieve(query, memories, top_k=5):\n    \"\"\"Compute nonnegative BM25 scores and break score ties by memory ID.\"\"\"\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    corpus = [tokenize(memory[\"text\"]) for memory in memories]\n    average_length = sum(map(len, corpus)) / len(corpus) or 1\n    document_frequency = Counter(token for tokens in corpus for token in set(tokens))\n    # Sorting also stabilizes floating-point accumulation across interpreter hash seeds.\n    query_tokens = sorted(set(tokenize(query)))\n    k1, b = 1.5, 0.75\n    hits = []\n    for memory, tokens in zip(memories, corpus):\n        frequencies = Counter(tokens)\n        score = 0.0\n        for token in query_tokens:\n            frequency = frequencies[token]\n            if not frequency:\n                continue\n            df = document_frequency[token]\n            idf = math.log(1 + (len(corpus) - df + 0.5) / (df + 0.5))\n            denominator = frequency + k1 * (1 - b + b * len(tokens) / average_length)\n            score += idf * frequency * (k1 + 1) / denominator\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": score})\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n\n\n_original_retrieve = retrieve\ndef retrieve(query, memories, top_k=5):\n    return _original_retrieve(query, memories, top_k)[:0]\n",
+    "validation": {
+      "split": "validation",
+      "passed": false,
+      "errors": [
+        "functional: exact memory text must retrieve its own ID first",
+        "metric: recall_at_k=0.0000 below 0.7500",
+        "metric: mrr_at_k=0.0000 below 0.6500",
+        "metric: precision_at_k=0.0000 below 0.2000"
+      ],
+      "metrics": {
+        "recall_at_k": 0.0,
+        "mrr_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "p95_ms": 0.6873312435345721
+      },
+      "top_k": 5,
+      "query_count": 12,
+      "memory_count": 24,
+      "execution": {
+        "wall_seconds": 0.22101666685193777,
+        "runner": "docker"
+      },
+      "gates": {
+        "task": "memory_retrieval",
+        "algorithms": [
+          "tfidf",
+          "bm25",
+          "jaccard"
+        ],
+        "plugin_packages": [],
+        "max_candidates": 3,
+        "compare_all_algorithms": true,
+        "metrics": {
+          "recall_at_k": {
+            "min": 0.75,
+            "max": null
+          },
+          "mrr_at_k": {
+            "min": 0.65,
+            "max": null
+          },
+          "precision_at_k": {
+            "min": 0.2,
+            "max": null
+          },
+          "p95_ms": {
+            "min": null,
+            "max": 1000.0
+          }
+        },
+        "selection_order": [
+          "recall_at_k",
+          "mrr_at_k",
+          "precision_at_k"
+        ],
+        "timeout_seconds": 30.0,
+        "max_repairs": 2
+      },
+      "per_query": [
+        {
+          "query_id": "v01",
+          "query": "MySQL 连接池等待导致请求超时怎么排查",
+          "relevant_ids": [
+            "m01"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v02",
+          "query": "Redis 不存在的 key 一直查数据库",
+          "relevant_ids": [
+            "m03"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v03",
+          "query": "Docker 容器退出 137 内存不足",
+          "relevant_ids": [
+            "m05"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v04",
+          "query": "Git rebase 冲突如何处理",
+          "relevant_ids": [
+            "m07"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v05",
+          "query": "asyncio 同步请求阻塞事件循环",
+          "relevant_ids": [
+            "m09"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v06",
+          "query": "RAG 检索效果用哪些指标评估",
+          "relevant_ids": [
+            "m11"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v07",
+          "query": "Jetson Ollama 如何在局域网访问",
+          "relevant_ids": [
+            "m13"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v08",
+          "query": "文本分类类别不平衡不能只看 accuracy",
+          "relevant_ids": [
+            "m16"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v09",
+          "query": "SQLite 并发写事务被阻塞",
+          "relevant_ids": [
+            "m19"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v10",
+          "query": "BM25 和向量检索怎么融合",
+          "relevant_ids": [
+            "m21"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v11",
+          "query": "中文 TF-IDF 字符 ngram 余弦相似度",
+          "relevant_ids": [
+            "m22"
+          ],
+          "predictions": []
+        },
+        {
+          "query_id": "v12",
+          "query": "API 超时指数退避与幂等重试",
+          "relevant_ids": [
+            "m18"
+          ],
+          "predictions": []
+        }
+      ],
+      "metric_plugins": [
+        {
+          "id": "recall_at_k",
+          "name": "Recall@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "mrr_at_k",
+          "name": "MRR@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "precision_at_k",
+          "name": "Precision@k",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "higher",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "id": "p95_ms",
+          "name": "P95 ms",
+          "version": "1.0.0",
+          "task": "memory_retrieval",
+          "direction": "lower",
+          "minimum": 0,
+          "maximum": null
+        }
+      ]
+    }
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "repair_instructions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 6,
+        "minItems": 1,
+        "title": "Repair Instructions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "summary",
+      "repair_instructions"
+    ],
+    "title": "Diagnosis",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "summary": "验证器发现：functional: exact memory text must retrieve its own ID first; metric: recall_at_k=0.0000 below 0.7500; metric: mrr_at_k=0.0000 below 0.6500; metric: precision_at_k=0.0000 below 0.2000",
+    "repair_instructions": [
+      "恢复有效命中返回，检查空输入、top_k、排序与相同输入一致性。"
+    ]
+  },
+  "duration_seconds": 3.445800393819809e-05
+}

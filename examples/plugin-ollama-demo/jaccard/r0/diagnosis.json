@@ -1,0 +1,11 @@
+{
+  "summary": "代码中多次尝试对集合对象使用下标访问操作，导致类型错误。",
+  "repair_instructions": [
+    "将 `query_tokens & document_tokens` 改为 `query_tokens.intersection(document_tokens)`",
+    "将 `query_tokens | document_tokens` 改为 `query_tokens.union(document_tokens)`",
+    "将 `len(intersection)` 改为 `len(intersection)`",
+    "将 `len(union)` 改为 `len(union)`",
+    "移除所有对集合对象的 `.items()` 或 `.keys()` 调用",
+    "移除所有对集合对象的 `.values()` 或 `.items()` 调用"
+  ]
+}

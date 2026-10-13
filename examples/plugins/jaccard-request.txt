@@ -1,0 +1,1 @@
+为个人技术记忆库复刻 Jaccard 检索算法，输入 query、memories、top_k，输出记忆 ID 与分数，默认前 5 条。按检索到的材料及 reference_example 实现中文单字及相邻双字、英文标识的词集合交并比，保留参考代码的分词、空输入处理和稳定排序。评估配置中的 Recall@k、MRR@k、Precision@k、P95 查询耗时，完成接口检查、独立最终测试和知识回写。
