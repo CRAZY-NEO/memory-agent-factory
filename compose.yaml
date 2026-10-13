@@ -12,6 +12,8 @@ services:
     volumes:
       - ./state/jobs:/workspace/state/jobs
       - ./runs:/workspace/runs:ro
+      - ./data:/workspace/data:ro
+      - ./config.json:/workspace/config.json:ro
     read_only: true
     tmpfs:
       - /tmp:size=16m

@@ -19,10 +19,13 @@ from .workflow import Factory
 LOGGER = logging.getLogger(__name__)
 
 
-def execute_job(workspace, job, provider, model, base_url, runner):
+def execute_job(workspace, job, provider, model, base_url, runner, store=None):
     kind, payload = job["kind"], job["payload"]
     if kind == "factory":
-        result = Factory(workspace, provider, model, base_url, runner).run(payload["description"])
+        factory = Factory(workspace, provider, model, base_url, runner)
+        if store:
+            store.attach_run(job['id'], factory.run_id)
+        result = factory.run(payload["description"])
         return {"status": result["status"], "run_id": result["run_id"],
                 "algorithm": result["selected"]["algorithm"] if result["selected"] else None,
                 "report_url": f"/v1/runs/{result['run_id']}/report"}
@@ -70,7 +73,7 @@ def process_one(store, workspace, provider="mock", model="mock-template-v1",
     heartbeat = threading.Thread(target=keep_lease, daemon=True)
     heartbeat.start()
     try:
-        result = execute_job(Path(workspace), job, provider, model, base_url, runner)
+        result = execute_job(Path(workspace), job, provider, model, base_url, runner, store=store)
         error = None if result["status"] == "passed" else "Factory validation did not pass"
         store.finish(job["id"], result=result, error=error)
         LOGGER.info("Job %s finished: %s", job["id"], result["status"])

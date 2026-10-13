@@ -1,0 +1,73 @@
+[
+  {
+    "id": "t01",
+    "query": "SQL 慢查询 EXPLAIN 联合索引",
+    "relevant_ids": [
+      "m02"
+    ]
+  },
+  {
+    "id": "t02",
+    "query": "Redis TTL 同时过期引发雪崩",
+    "relevant_ids": [
+      "m04"
+    ]
+  },
+  {
+    "id": "t03",
+    "query": "Docker 内 localhost 不能访问外部服务",
+    "relevant_ids": [
+      "m06"
+    ]
+  },
+  {
+    "id": "t04",
+    "query": "已经推送的 Git 提交怎样撤销",
+    "relevant_ids": [
+      "m08"
+    ]
+  },
+  {
+    "id": "t05",
+    "query": "Python 虚拟环境出现 ModuleNotFoundError",
+    "relevant_ids": [
+      "m10"
+    ]
+  },
+  {
+    "id": "t06",
+    "query": "知识库文档分块过短丢失上下文",
+    "relevant_ids": [
+      "m12"
+    ]
+  },
+  {
+    "id": "t07",
+    "query": "训练测试数据泄漏和特征拟合",
+    "relevant_ids": [
+      "m15"
+    ]
+  },
+  {
+    "id": "t08",
+    "query": "记忆来源版本与新旧事实冲突",
+    "relevant_ids": [
+      "m24"
+    ]
+  },
+  {
+    "id": "t09",
+    "query": "如何报告服务延迟 P95 和冷启动",
+    "relevant_ids": [
+      "m23"
+    ]
+  },
+  {
+    "id": "t10",
+    "query": "数据库并发事务锁冲突",
+    "relevant_ids": [
+      "m19",
+      "m20"
+    ]
+  }
+]

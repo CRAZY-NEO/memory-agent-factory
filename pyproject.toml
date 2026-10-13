@@ -20,7 +20,7 @@ api = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1"]
 agent-factory = "agent_factory.cli:main"
 
 [tool.setuptools.package-data]
-agent_factory = ["templates/*.py"]
+agent_factory = ["templates/*.py", "web/*.html", "web/*.css", "web/*.js"]
 "agent_factory.plugins.algorithms" = ["materials/*.md"]
 
 [tool.setuptools.packages.find]

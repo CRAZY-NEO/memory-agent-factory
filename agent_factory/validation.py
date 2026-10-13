@@ -26,6 +26,11 @@ def load_dataset(directory, split):
             raise ValueError("Duplicate relevance labels")
         if not set(query["relevant_ids"]) <= ids:
             raise ValueError("Relevance label references missing memory")
+        negative = query['hard_negative_ids']
+        if len(set(negative)) != len(negative) or not set(negative) <= ids:
+            raise ValueError('Hard-negative labels need unique existing memory IDs')
+        if set(negative) & set(query['relevant_ids']):
+            raise ValueError('Relevant and hard-negative labels must be disjoint')
     return memories, queries
 
 
@@ -34,6 +39,27 @@ def retrieval_metrics(predictions, queries, top_k):
     registry = load_registry()
     context = MetricContext(predictions, queries, top_k)
     return {name: registry.metric(name).evaluate(context) for name in ["recall_at_k", "mrr_at_k"]}
+
+
+def analyze_query(query, hits):
+    """Explain labelled failures in the trusted evaluator, never inside generated code."""
+    ranked = [hit['id'] for hit in hits]
+    relevant = set(query['relevant_ids'])
+    negatives = set(query.get('hard_negative_ids', []))
+    first = next((i + 1 for i, uid in enumerate(ranked) if uid in relevant), None)
+    missing = sorted(relevant - set(ranked))
+    negative_hits = [{'id': uid, 'rank': i + 1} for i, uid in enumerate(ranked) if uid in negatives]
+    confusion = [hit for hit in negative_hits if first is None or hit['rank'] < first]
+    failures = []
+    if missing:
+        failures.append('missed_relevance')
+    if first and first > 1:
+        failures.append('ranking_error')
+    if confusion:
+        failures.append('hard_negative_confusion')
+    return {'category': query.get('category', 'direct'), 'first_relevant_rank': first,
+            'missed_relevant_ids': missing, 'hard_negative_hits': negative_hits,
+            'hard_negative_confusions': confusion, 'failure_types': failures}
 
 
 def check_result(observation, case):
@@ -150,6 +176,27 @@ def validate(code, runner, memories, queries, top_k, config, split="validation",
     for query in queries:
         report["per_query"].append({"query_id": query["id"], "query": query["query"],
                                     "relevant_ids": query["relevant_ids"],
-                                    "predictions": results[query["id"]]})
+                                    "hard_negative_ids": query.get('hard_negative_ids', []),
+                                    "annotation": query.get('annotation', ''),
+                                    "predictions": results[query["id"]],
+                                    **analyze_query(query, results[query['id']])})
+    groups = {}
+    durations = context.durations_ms
+    for category in sorted({query.get('category', 'direct') for query in queries}):
+        indices = [i for i, query in enumerate(queries) if query.get('category', 'direct') == category]
+        subset = [queries[i] for i in indices]
+        group_context = MetricContext(results, subset, top_k, tuple(durations[i] for i in indices))
+        group_metrics = {}
+        for name in config.metrics:
+            try:
+                group_metrics[name] = registry.metric(name).evaluate(group_context)
+            except Exception:
+                # Group diagnostics cannot hide a failure in the aggregate metric gates above.
+                group_metrics[name] = None
+        rows = [row for row in report['per_query'] if row['category'] == category]
+        groups[category] = {'query_count': len(subset), 'metrics': group_metrics,
+                            'failure_count': sum(bool(row['failure_types']) for row in rows),
+                            'hard_negative_confusion_count': sum(bool(row['hard_negative_confusions']) for row in rows)}
+    report['by_category'] = groups
     report["passed"] = not errors
     return report

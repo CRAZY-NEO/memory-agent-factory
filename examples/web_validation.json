@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "job_id": "76dc93db060d413f9fdbf108b12f2e7a",
+  "run_id": "20261013T195942_1359d9f1",
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "runner": "docker",
+  "test_metrics": {
+    "recall_at_k": 1,
+    "mrr_at_k": 0.9527777777777777,
+    "precision_at_k": 0.25333333333333335,
+    "p95_ms": 7.221256097545844
+  },
+  "checks": [
+    "unauthorized rejected",
+    "submit and poll real HTTP task",
+    "stage events",
+    "candidate and category report",
+    "download SHA-256",
+    "untrusted HTML rendered as text",
+    "mobile no page overflow",
+    "session token not persisted",
+    "history after reload",
+    "no page JavaScript errors"
+  ]
+}

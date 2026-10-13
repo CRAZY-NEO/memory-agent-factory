@@ -45,6 +45,26 @@ def write_report(directory, summary):
                   "指标插件：" + ", ".join(f"{item['id']}@{item['version']}" for item in summary["plugin_catalog"]["metrics"]),
                   "指标比较顺序：" + ", ".join(summary["validation_config"]["selection_order"]),
                   "同分时按依赖数量、配置算法顺序、修订号选择。"]
+    evaluations = [(f"{row['algorithm']} r{row['revision']} / validation", row['validation'])
+                   for row in summary['attempts'] if row['validation'].get('by_category')]
+    if summary.get('test') and summary['test'].get('by_category'):
+        evaluations.append(('选定版本 / test', summary['test']))
+    for title, evaluation in evaluations:
+        lines += ['', f'## 查询类型分析：{title}', '',
+                  '| 类型 | 查询数 | Recall@k | MRR@k | Precision@k | 有失败的查询 | 负例优先的查询 |',
+                  '| --- | --- | --- | --- | --- | --- | --- |']
+        for category, group in evaluation['by_category'].items():
+            values = [f"{group['metrics'][key]:.4f}" if group['metrics'].get(key) is not None else '—'
+                      for key in ['recall_at_k', 'mrr_at_k', 'precision_at_k']]
+            lines.append('| ' + ' | '.join([category, str(group['query_count']), *values,
+                         str(group['failure_count']), str(group['hard_negative_confusion_count'])]) + ' |')
+        failures = [row for row in evaluation['per_query'] if row.get('failure_types')]
+        if failures:
+            lines += ['', '失败案例（排名错误、漏召回、相近负例混淆）：', '']
+            for row in failures:
+                query = row['query'].replace('\n', ' ').replace('|', '/')
+                lines.append(f"- {row['query_id']}：{query}；类型 {', '.join(row['failure_types'])}；"
+                             f"漏召回 {row['missed_relevant_ids']}；负例优先 {row['hard_negative_confusions']}")
     lines += ["", "## 可复现性与边界", "",
               "- 数据文件哈希、算法和指标插件版本、验证阈值均已记录。最终测试不参与修复和候选选择。",
               "- 所有报告指标由可信验证器计算，mock 只替代 LLM 响应。",

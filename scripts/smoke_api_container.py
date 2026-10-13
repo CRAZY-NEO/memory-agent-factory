@@ -4,6 +4,7 @@ Prerequisite: docker build -f Dockerfile.api -t agent-factory-api:0.1 .
 The temporary container and workspace are removed; no API remains exposed afterwards.
 """
 
+import hashlib
 import json
 import os
 import secrets
@@ -44,7 +45,9 @@ def main():
                    "-p", "127.0.0.1::8000", "--env", "FACTORY_API_TOKEN",
                    "--env", "FACTORY_WORKSPACE=/workspace", "--tmpfs", "/tmp:size=16m",
                    "-v", f"{workspace / 'state' / 'jobs'}:/workspace/state/jobs",
-                   "-v", f"{workspace / 'runs'}:/workspace/runs:ro", "agent-factory-api:0.1",
+                   "-v", f"{workspace / 'runs'}:/workspace/runs:ro",
+                   "-v", f"{workspace / 'data'}:/workspace/data:ro",
+                   "-v", f"{workspace / 'config.json'}:/workspace/config.json:ro", "agent-factory-api:0.1",
                    env={**os.environ, "FACTORY_API_TOKEN": token})
             address = docker("port", name, "8000").splitlines()[0]
             with httpx.Client(base_url="http://" + address, timeout=10, trust_env=False) as client:
@@ -58,6 +61,11 @@ def main():
                 else:
                     raise RuntimeError("API container failed to start: " + docker("logs", name))
                 headers = {"Authorization": "Bearer " + token}
+                assert '算法能力工厂' in client.get('/').text
+                assert client.get('/assets/app.js').status_code == 200
+                assert client.get('/v1/settings').status_code == 401
+                settings = client.get('/v1/settings', headers=headers).json()
+                assert settings['dataset']['memory_count'] == len(json.loads((workspace / 'data/memories.json').read_text()))
                 assert client.post("/v1/knowledge/ingest").status_code == 401
                 response = client.post("/v1/factory/runs", headers=headers,
                                        json={"description": "生成中文技术记忆检索算法，返回前 5 条"})
@@ -66,8 +74,13 @@ def main():
                 assert process_one(store, workspace)
                 job = client.get(response.json()["status_url"], headers=headers).json()
                 assert job["status"] == "succeeded", job
+                assert job['progress']['events'][-1]['node'] == 'persist'
                 report = client.get(job["result"]["report_url"], headers=headers)
                 assert report.status_code == 200
+                assert client.get('/v1/runs', headers=headers).json()['runs'][0]['run_id'] == job['run_id']
+                code = client.get(f"/v1/runs/{job['run_id']}/artifacts/selected_retrieval.py", headers=headers)
+                assert code.status_code == 200 and 'attachment;' in code.headers['Content-Disposition']
+                assert hashlib.sha256(code.content).hexdigest() == report.json()['selected']['code_hash']
                 response = client.post("/v1/memory/search", headers=headers,
                                        json={"query": "MySQL 连接池耗尽", "top_k": 1})
                 assert process_one(store, workspace)
@@ -78,8 +91,11 @@ def main():
                             "authentication": "unauthorized request rejected",
                             "factory_job": job["status"], "search_job": search["status"],
                             "top_result": "m01", "report_available": True,
+                            "web_assets": True, "settings_authenticated": True,
+                            "progress_events": True, "code_download_hash": True,
+                            "dataset_version": settings['dataset']['version'],
                             "jetson_tested": False}
-                (ROOT / "examples" / "api_validation.json").write_text(
+                (ROOT / "examples" / "web_container_validation.json").write_text(
                     json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
                 print(json.dumps(evidence, ensure_ascii=False, indent=2))
         finally:

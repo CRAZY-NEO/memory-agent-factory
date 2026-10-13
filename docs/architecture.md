@@ -71,3 +71,9 @@ mock 默认 local，为可查看的仓库模板提供简单复现。local 使用
 LLM 不能更改验证器、数据标注、阈值或发布条件。模型服务错误不会自动伪装成 mock 成功。
 
 新生成只传入当前算法能力；错误行及参考实现参与审查，重复实现被拒绝，最后一轮从参考示例重新复刻。公开算法契约检查具体评分公式。详情见 generation-repair.md。
+
+## Web 与分组评估
+
+web/ 的静态页面通过鉴权任务 API 提交需求；JobStore 为领取后的任务关联 run_id，网页轮询可信执行阶段。下载接口限定文件及目录范围，生成的文字只作为文本展示。serve_web.py 同时启动网关和 worker，二者使用同一 workspace。
+
+Query 新增 category、hard_negative_ids 和 annotation。负例在真实检索语料中参与检索；评分器独立检查标签，计算分组指标与漏召回/排序/负例混淆诊断。生成执行器继续只接收 query、无标注 memories 与 top_k，诊断分组不是新的验收门槛。

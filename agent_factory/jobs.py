@@ -27,6 +27,11 @@ class JobStore:
                     result TEXT, error TEXT);
                 CREATE INDEX IF NOT EXISTS jobs_status ON jobs(status, created_at);
             """)
+            # Gateway and worker can start together against an old queue schema.
+            db.execute('BEGIN IMMEDIATE')
+            columns = {row['name'] for row in db.execute('PRAGMA table_info(jobs)')}
+            if 'run_id' not in columns:
+                db.execute('ALTER TABLE jobs ADD COLUMN run_id TEXT')
 
     @contextmanager
     def connect(self):
@@ -50,7 +55,7 @@ class JobStore:
             count = db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
             if count >= max_pending:
                 raise QueueFull("Task queue is full; retry later")
-            db.execute("INSERT INTO jobs VALUES (?,?,?,?,?,?,NULL,NULL)",
+            db.execute("INSERT INTO jobs (id,kind,payload,status,created_at,updated_at,result,error) VALUES (?,?,?,?,?,?,NULL,NULL)",
                        (uid, kind, json.dumps(payload, ensure_ascii=False), "queued", now, now))
         return uid
 
@@ -66,6 +71,17 @@ class JobStore:
         else:
             record.pop("payload")
         return record
+
+    def recent(self, limit=20):
+        with self.connect() as db:
+            rows = db.execute('SELECT id FROM jobs ORDER BY created_at DESC,id DESC LIMIT ?', (limit,)).fetchall()
+        return [self.get(row['id']) for row in rows]
+
+    def attach_run(self, uid, run_id):
+        with self.connect() as db:
+            cursor = db.execute("UPDATE jobs SET run_id=? WHERE id=? AND status='running'", (run_id, uid))
+            if cursor.rowcount != 1:
+                raise RuntimeError('Cannot attach a run to an unclaimed job')
 
     def claim(self, lease_seconds=120):
         now = time.time()

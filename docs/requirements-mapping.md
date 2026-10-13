@@ -41,3 +41,5 @@ CLI 与鉴权异步 API；多轮有限修复；三个算法候选比较；插件
 题目允许 mock/规则模板演示，因此当前版本能展示核心闭环；真实 LLM 运行有助于更充分证明代码生成与修复能力。
 
 剩余缺项、容易补齐的功能及较大工作量方向见 docs/roadmap.md；生成与修复改进见 docs/generation-repair.md。
+
+新增 Web 操作界面对应进阶用户体验：见 docs/web-ui.md；扩充评估集与按类型失败分析见 data/README.md、examples/web-evaluation-demo/report.md。原有 CLI/API 保留，数据和指标阈值来源继续记录在报告中。

@@ -8,6 +8,15 @@
 
 ## 1. 快速开始
 
+网页入口现已实现，详见 [Web 启动指南](docs/web-ui.md)：
+
+```bash
+cd ~/Downloads/agent-factory
+.venv/bin/python scripts/serve_web.py
+# 打开 http://127.0.0.1:8010，输入 state/web/access-token.txt 中的访问密钥
+# 默认 mock + Docker；真实模型用 --provider ollama 并保持原 SSH 隧道
+```
+
 需要 Python 3.11 或 3.12，建议 3.12。本机项目已创建 `.venv`；已有环境可直接激活并从演示命令开始。
 
 ```bash
@@ -54,6 +63,7 @@ scripts/run_tests.sh -q
 | Docker | 隔离真实模型生成代码，禁网、只读、非 root 与资源限制 |
 | pytest | 检验接口、失败分支、修复预算、数据边界和插件复用 |
 | FastAPI + SQLite 任务队列 | 提供鉴权业务接口，长时间生成任务异步处理；可信 worker 串行执行 |
+| 原生 HTML/CSS/JavaScript | 同源 Web 操作界面，无构建步骤；任务轮询、报告比较与鉴权下载 |
 
 ```text
 算法材料 → 能力抽取及证据校验 → SQLite 能力图谱
@@ -106,8 +116,8 @@ mock 使用仓库内可检查模板，不宣称其能够泛化理解任意需求
 
 ## 5. 数据与验证机制
 
-24 条人工编写技术记忆，12 条验证查询，10 条独立测试查询；全部为模拟资料，无真实个人信息。
-通过 `scripts/create_demo_data.py` 重建。详见 [数据说明](data/README.md)。
+当前 v2 包含 48 条技术记忆、36 条验证查询、30 条全新措辞的最终测试查询；均为项目内编写的模拟资料及标注，无真实个人信息。新增同义改写、相近负例与多相关文档，并附标注理由；v1 数据和历史报告保留。
+通过 `scripts/create_demo_data.py` 确定性重建。详见 [数据说明](data/README.md)。
 TF-IDF/BM25 在记忆语料上构建统计量，Jaccard 使用词集合，无须训练分类模型；验证/测试的相关文档标注用于评估检索质量。
 
 | 检查维度 | 实现 |
@@ -118,6 +128,7 @@ TF-IDF/BM25 在记忆语料上构建统计量，Jaccard 使用词集合，无须
 | 稳定性 | 不修改输入，同一进程重复查询与新进程查询得到一致结果；超时/异常不通过 |
 | 性能 | 每次查询函数耗时的 P95，包含索引重建；解释器和依赖导入另计为 worker wall_seconds |
 | 来源与可复现性 | 材料证据、代码与数据 SHA-256、Python/依赖版本、候选修订关系、完整调用日志 |
+| 分组与失败分析 | 按查询类型统计指标；输出漏召回、首个相关排名与相近负例优先案例；这些是诊断项，总体门槛不变 |
 
 阈值及修复次数位于 `config.json`，由用户配置，Agent 不能修改。项目配置为 Recall≥0.75、MRR≥0.65、Precision≥0.2、P95≤1000ms。Precision 分母固定为 k；样例多数查询只有一个相关文档，Recall@5=1 时 Precision@5=0.2 是合理结果。
 可信父进程保留相关 ID 标注并评分，执行器只收到无标注输入。
@@ -130,7 +141,7 @@ TF-IDF/BM25 在记忆语料上构建统计量，Jaccard 使用词集合，无须
 agent-factory validate --code examples/demo/selected_retrieval.py --runner local
 ```
 
-本项目模拟查询与笔记词面重合较多，示例高分只证明闭环可执行。真实场景需要自然改写、近似负例、无答案查询及更大语料评估。
+新评估集已经包含自然改写与相近负例，但仍为小型模拟数据。真实场景还需要业务专家审核、无答案查询、更大语料及真实用户评估。
 
 ## 6. 接入 Jetson Ollama
 
@@ -161,7 +172,7 @@ CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变�
 [示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
 
 报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
-当前 50 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
+当前 59 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
 真实模型例子见 [Ollama 完整报告](examples/ollama-demo/report.md)、[候选规划](examples/ollama-demo/plan.json)、[BM25 首版与修订](examples/ollama-demo/bm25/)、[模型调用记录](examples/ollama-demo/llm/) 和 [最终插件](examples/ollama-demo/selected_retrieval.py)。2026-10-12 的样例调用八次模型；TF-IDF 首版通过，BM25 首版因缺少 `re` 导入失败，模型根据真实错误修复后通过。选定 BM25 修订版的最终测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；这些数值只描述 24 条模拟记忆与 10 条最终测试查询。
 所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
 显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
@@ -184,6 +195,8 @@ FACTORY_DEMO_WORKSPACE=state/jaccard-demo bash scripts/run_plugin_demo.sh
 针对上述失败，新增算法专属上下文、错误源码定位、无效修复检测、第二轮参考实现重新复刻及中英文公开算法契约。[改进后的真实复验](examples/repair-ollama-demo/report.md)共 12 次模型调用：重放旧失败代码后，TF-IDF/Jaccard 都在 r2 通过验证，BM25 本次新生成 r0 通过；选定 BM25 的最终测试 Recall@5=1、MRR@5=1、Precision@5=0.22、P95=0.7026 ms。历史重放明确标注，只有修复版本属于本次模型输出。首次复验曾遗漏英文拆字缺陷，记录单独保留；原因、契约补齐过程及命令见 [生成与修复说明](docs/generation-repair.md)。
 
 三算法演示启用 `compare_all_algorithms=true`，规划及可信检查均要求覆盖全部启用算法，避免模型漏掉候选。新增算法只需材料、参考实现与注册模块；新增指标只需可信计算函数和注册模块。也可通过配置接入已安装的外部插件包，详见 [插件接入指南](docs/plugins.md)。当前支持检索任务及已审查的执行环境，其他任务或新依赖环境需要扩展契约和镜像。
+
+新版网页完整运行见 [v2 评估报告](examples/web-evaluation-demo/report.md)和 [真实浏览器验证记录](examples/web_validation.json)，提供方明确为 mock，算法在 Docker 中实际执行。三候选验证 Recall/MRR 分别为 TF-IDF 1.0000/0.9537、BM25 0.9722/0.9083、Jaccard 0.9306/0.8958，按原规则选定 TF-IDF。最终测试 Recall@5=1、MRR@5=0.9528、Precision@5=0.2533；同义改写仍存在排序与负例混淆。分组和失败明细保留，不修改历史 v1 结果。另有 [新版 Docker 网关验证](examples/web_container_validation.json)，该独立测试的 worker 为 mock/local，与浏览器测试的 mock/Docker 区分。
 
 ## 8. 用于未来个人记忆系统
 
@@ -214,7 +227,7 @@ hits = retriever.retrieve("MySQL 连接池耗尽", memories, top_k=5)
 - 区分修复建议与事实：图谱中只有修复版本实际通过才记录 validated_fix；失败建议保持未验证标记。
 - 保持跨进程稳定：BM25 查询词排序后再累加，避免无序集合造成浮点差异；计时结果不承诺逐次完全一致。
 - 防止指标泄漏：候选只用验证集；最终测试在版本冻结后执行。多次人工查看并用于优化后，应重新建立最终测试集。
-- 一周实现范围：CLI、鉴权 API、持久任务队列、三个注册候选、可配置指标与排序、有限修复、图检索、离线图谱、版本/经验回写；暂未实现 Web 前端、工作流中断恢复、MCTS、任意任务验证。
+- 一周实现范围：CLI、鉴权 API 与 Web 界面、持久任务队列、三个注册候选、可配置指标与排序、有限修复、图检索、离线图谱、版本/经验回写及分组失败分析；暂未实现工作流中断恢复、MCTS、任意任务验证。
 - 后续扩展：向量与混合检索、持久化索引、多任务验证配置、更严格隔离服务、真实代码仓库函数抽取、个人事实图谱。
 
 分步学习和扩展路线见 [实现指南](docs/implementation-guide.md)。

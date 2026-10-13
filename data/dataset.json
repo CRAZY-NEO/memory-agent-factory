@@ -1,0 +1,32 @@
+{
+  "version": "2.0",
+  "source": "project-authored synthetic notes and relevance labels",
+  "created_on": "2026-10-14",
+  "memory_count": 48,
+  "splits": {
+    "validation": {
+      "query_count": 36,
+      "categories": {
+        "direct": 12,
+        "paraphrase": 8,
+        "hard_negative": 8,
+        "multi_relevance": 8
+      }
+    },
+    "test": {
+      "query_count": 30,
+      "categories": {
+        "direct": 6,
+        "paraphrase": 8,
+        "hard_negative": 8,
+        "multi_relevance": 8
+      }
+    }
+  },
+  "label_policy": "直接回答问题为相关；相同产品但不同故障/操作为相近负例；多问题标注所有直接答案。",
+  "limitations": [
+    "模拟资料，未经过外部业务专家审核",
+    "有答案、二元相关性；未覆盖无答案与相关性等级",
+    "最终查询在评估前固定；开发后续调参须另建独立测试集"
+  ]
+}

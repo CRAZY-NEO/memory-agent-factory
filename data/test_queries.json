@@ -1,73 +1,376 @@
 [
   {
     "id": "t01",
-    "query": "SQL 慢查询 EXPLAIN 联合索引",
+    "query": "MySQL 更新记录等锁，应该怎样定位没有提交的长事务",
     "relevant_ids": [
+      "m26"
+    ],
+    "category": "direct",
+    "hard_negative_ids": [
+      "m01",
       "m02"
-    ]
+    ],
+    "annotation": "写操作行锁等待，连接池和慢读索引是相近负例。"
   },
   {
     "id": "t02",
-    "query": "Redis TTL 同时过期引发雪崩",
+    "query": "Redis 未过期的热门键让单个实例负载太高，怎样合并请求",
     "relevant_ids": [
+      "m27"
+    ],
+    "category": "direct",
+    "hard_negative_ids": [
+      "m28",
       "m04"
-    ]
+    ],
+    "annotation": "未过期热键流量过高，非缓存失效。"
   },
   {
     "id": "t03",
-    "query": "Docker 内 localhost 不能访问外部服务",
+    "query": "Docker exit code 1，要先看应用日志还是 OOMKilled",
     "relevant_ids": [
-      "m06"
-    ]
+      "m30"
+    ],
+    "category": "direct",
+    "hard_negative_ids": [
+      "m05"
+    ],
+    "annotation": "码 1 的应用异常排查，码 137 的内存故障是负例。"
   },
   {
     "id": "t04",
-    "query": "已经推送的 Git 提交怎样撤销",
+    "query": "PDF 跨页表格 OCR 后列对应错乱，怎样保留表头与页码",
     "relevant_ids": [
-      "m08"
-    ]
+      "m36"
+    ],
+    "category": "direct",
+    "hard_negative_ids": [
+      "m12"
+    ],
+    "annotation": "要求恢复表格结构，不能仅调整分块长度。"
   },
   {
     "id": "t05",
-    "query": "Python 虚拟环境出现 ModuleNotFoundError",
+    "query": "Ollama 连接成功但 tokens 每秒很低，怎样检查 GPU 和冷加载",
     "relevant_ids": [
-      "m10"
-    ]
+      "m37"
+    ],
+    "category": "direct",
+    "hard_negative_ids": [
+      "m13"
+    ],
+    "annotation": "已连通，重点生成性能而非监听地址。"
   },
   {
     "id": "t06",
-    "query": "知识库文档分块过短丢失上下文",
+    "query": "embedding 模型换版本以后，旧文档向量索引能直接继续用吗",
     "relevant_ids": [
-      "m12"
-    ]
+      "m45"
+    ],
+    "category": "direct",
+    "hard_negative_ids": [
+      "m21",
+      "m22"
+    ],
+    "annotation": "要求向量空间迁移，非排名融合或字符检索。"
   },
   {
     "id": "t07",
-    "query": "训练测试数据泄漏和特征拟合",
+    "query": "SQL 读数据很慢，怎样看执行计划避免翻遍整张表",
     "relevant_ids": [
-      "m15"
-    ]
+      "m02"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m26"
+    ],
+    "annotation": "读取慢与索引，不是写事务行锁。"
   },
   {
     "id": "t08",
-    "query": "记忆来源版本与新旧事实冲突",
+    "query": "Redis 许多键约好同一时刻失效，后端瞬间被请求打满怎么办",
     "relevant_ids": [
-      "m24"
-    ]
+      "m04"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m28",
+      "m03"
+    ],
+    "annotation": "多键同时失效对应雪崩。"
   },
   {
     "id": "t09",
-    "query": "如何报告服务延迟 P95 和冷启动",
+    "query": "容器里访问 localhost 找不到宿主的服务，名称解析和映射该怎么查",
     "relevant_ids": [
-      "m23"
-    ]
+      "m06"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m13",
+      "m48"
+    ],
+    "annotation": "容器网络地址范围而非外部模型监听或迁移旧域名。"
   },
   {
     "id": "t10",
-    "query": "数据库并发事务锁冲突",
+    "query": "Python 明明装了包却说模块不存在，如何确认是不是用了另一个解释器",
+    "relevant_ids": [
+      "m10"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m34"
+    ],
+    "annotation": "模块搜索路径/解释器，非已有包版本接口差异。"
+  },
+  {
+    "id": "t11",
+    "query": "检索资料切得太碎看不懂，如何把章节上下文和来源一起保留",
+    "relevant_ids": [
+      "m12"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m36"
+    ],
+    "annotation": "分块上下文缺失；未询问表格恢复。"
+  },
+  {
+    "id": "t12",
+    "query": "模型预处理先看了所有数据，测试成绩会不会被提前的信息影响",
+    "relevant_ids": [
+      "m15"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m39"
+    ],
+    "annotation": "一般特征拟合污染；未指明未来时序窗口。"
+  },
+  {
+    "id": "t13",
+    "query": "以前记住的结论与今天的证据不同，如何保留出处而不直接抹掉旧记录",
+    "relevant_ids": [
+      "m24"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m47"
+    ],
+    "annotation": "事实冲突与溯源，而非页面刷新。"
+  },
+  {
+    "id": "t14",
+    "query": "服务平均响应快但少数请求特别慢，怎么报告尾部耗时与启动成本",
+    "relevant_ids": [
+      "m23"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m37"
+    ],
+    "annotation": "通用尾延迟和冷启动报告，非只针对 Ollama GPU。"
+  },
+  {
+    "id": "t15",
+    "query": "Git checkout 提示未跟踪文件会被覆盖，如何先把个人文件安全收起来",
+    "relevant_ids": [
+      "m31"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m07",
+      "m08"
+    ],
+    "annotation": "切分支前保护未跟踪文件，不是解合并冲突或撤销提交。"
+  },
+  {
+    "id": "t16",
+    "query": "Python 算法全在做 CPU 运算，用 asyncio HTTP 客户端能解决 GIL 并行吗",
+    "relevant_ids": [
+      "m33"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m09"
+    ],
+    "annotation": "CPU 并行需要多进程，不是等待网络。"
+  },
+  {
+    "id": "t17",
+    "query": "Jetson 模型下载到一半磁盘写满，应清理模型还是缩小上下文",
+    "relevant_ids": [
+      "m38"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m14"
+    ],
+    "annotation": "模型文件占存储，非推理共享内存不足。"
+  },
+  {
+    "id": "t18",
+    "query": "销量预测的滚动窗口把明天观测加进来了，时间划分该怎么修正",
+    "relevant_ids": [
+      "m39"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m15"
+    ],
+    "annotation": "未来时间窗口泄漏有专门时间切分约束，通用预处理不足以完整回答。"
+  },
+  {
+    "id": "t19",
+    "query": "分类概率切分点怎样按误报漏报代价选择，能用最终测试挑吗",
+    "relevant_ids": [
+      "m40"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m16"
+    ],
+    "annotation": "要求阈值选择与测试隔离，训练类别权重并非同一操作。"
+  },
+  {
+    "id": "t20",
+    "query": "HTTP 429 有 Retry-After，要降低并发还是重新获取认证凭据",
+    "relevant_ids": [
+      "m42"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m41"
+    ],
+    "annotation": "限流响应与身份认证不同。"
+  },
+  {
+    "id": "t21",
+    "query": "知识库私有笔记不能让别的租户检索，只有日志脱敏够吗",
+    "relevant_ids": [
+      "m46"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m17"
+    ],
+    "annotation": "需要检索前权限过滤，日志规则无法替代。"
+  },
+  {
+    "id": "t22",
+    "query": "知识库网页改好了浏览器还显示旧版，怎样刷新 CDN 和本地缓存",
+    "relevant_ids": [
+      "m47"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m24"
+    ],
+    "annotation": "页面缓存刷新，与事实冲突存证不同。"
+  },
+  {
+    "id": "t23",
+    "query": "Redis 一个热键刚失效和多个键一起失效，各自用锁重建还是 TTL 抖动",
+    "relevant_ids": [
+      "m28",
+      "m04"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m27"
+    ],
+    "annotation": "单键击穿与多键雪崩两种失效方案。"
+  },
+  {
+    "id": "t24",
+    "query": "Python 模块找不到和包版本不兼容各该怎样排查解释器与锁文件",
+    "relevant_ids": [
+      "m10",
+      "m34"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m33"
+    ],
+    "annotation": "两种导入失败原因，非 CPU 并行。"
+  },
+  {
+    "id": "t25",
+    "query": "RAG 既要衡量相关资料能否找回，也要检查回答有没有脱离引用",
+    "relevant_ids": [
+      "m11",
+      "m35"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m12"
+    ],
+    "annotation": "检索质量与回答忠实性两类评估。"
+  },
+  {
+    "id": "t26",
+    "query": "Jetson 存模型的磁盘不够和运行模型的共享内存不够，应分别怎样处理",
+    "relevant_ids": [
+      "m38",
+      "m14"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m13"
+    ],
+    "annotation": "存储清理与推理量化/上下文两项，未询问连通性。"
+  },
+  {
+    "id": "t27",
+    "query": "API 无效身份返回 401 和请求太多返回 429，如何分别处理",
+    "relevant_ids": [
+      "m41",
+      "m42"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m18"
+    ],
+    "annotation": "更新身份与尊重限流，单纯超时重试不足以回答。"
+  },
+  {
+    "id": "t28",
+    "query": "SQLite 写入等其他事务结束和 SELECT 慢，怎样分别缩短事务与建索引",
     "relevant_ids": [
       "m19",
+      "m43"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
       "m20"
-    ]
+    ],
+    "annotation": "同一产品的写锁等待与读索引优化，不是 PostgreSQL 死锁。"
+  },
+  {
+    "id": "t29",
+    "query": "检索怎样融合 BM25 与向量，以及换 embedding 模型后索引如何迁移",
+    "relevant_ids": [
+      "m21",
+      "m45"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m22"
+    ],
+    "annotation": "融合检索与向量版本迁移分别需要两条经验。"
+  },
+  {
+    "id": "t30",
+    "query": "应用日志避免暴露用户隐私，私人文档检索怎样按租户权限过滤",
+    "relevant_ids": [
+      "m17",
+      "m46"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m47"
+    ],
+    "annotation": "日志脱敏和检索授权是两项独立约束。"
   }
 ]

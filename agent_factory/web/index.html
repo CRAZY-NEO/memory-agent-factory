@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>算法能力工厂</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="brand"><span class="brand-mark">AF</span><div><strong>算法能力工厂</strong><span>个人技术记忆检索</span></div></div><span class="connection" id="connection">未连接</span></header>
+  <main>
+    <section class="intro"><p class="eyebrow">从需求到可验证的算法</p><h1>描述能力，生成代码，查看证据。</h1><p>比较 TF-IDF、BM25 和 Jaccard，经过自动验证与有限修复，沉淀为可复用的检索插件。</p></section>
+    <section class="card access" aria-labelledby="access-title"><div><h2 id="access-title">连接工作空间</h2><p>访问密钥仅用于本次页面会话。</p></div><form id="access-form"><label for="token">访问密钥</label><div class="inline"><input type="password" id="token" required autocomplete="off" placeholder="输入启动时生成的访问密钥"><button type="submit" id="connect">连接</button><button type="button" id="disconnect" class="secondary" hidden>断开</button></div></form></section>
+    <p id="message" class="message" role="alert" hidden></p>
+    <div class="workbench">
+      <section class="card" aria-labelledby="request-title"><p class="eyebrow">01 / 开发需求</p><h2 id="request-title">你希望算法具备什么能力？</h2><form id="factory-form"><label for="description">能力描述</label><textarea id="description" rows="9" minlength="5" maxlength="6000" required placeholder="例如：为中文技术笔记生成检索算法，输入查询和记忆列表，返回最相关的 5 条记忆……"></textarea><div class="form-meta"><button type="button" class="text-button" id="example">填入三算法比较示例</button><span id="character-count">0 / 6000</span></div><button type="submit" id="submit" disabled>提交生成任务 <span aria-hidden="true">↗</span></button></form><div class="dataset-note"><strong>当前评估数据</strong><p id="dataset">连接后查看数据规模与版本。</p><p>包括同义改写、相近负例和多相关文档。最终测试在候选选定后执行。</p></div></section>
+      <section class="card progress-card" aria-labelledby="progress-title"><div class="section-heading"><div><p class="eyebrow">02 / 执行进度</p><h2 id="progress-title">工作流</h2></div><span id="job-status" class="badge">等待提交</span></div><p id="job-caption" class="muted">提交需求后，查看实际执行阶段与修复轮次。</p><ol id="events" class="timeline"><li class="empty">理解 → 检索 → 规划 → 生成 → 验证 → 修复 → 最终测试 → 回写</li></ol><div class="recent"><h3>最近任务</h3><ul id="jobs"><li class="muted">连接后查看。</li></ul><button id="refresh" type="button" class="text-button" disabled>刷新任务与运行记录</button></div></section>
+    </div>
+    <section class="card result-card" id="result" hidden aria-labelledby="result-title"><div class="section-heading"><div><p class="eyebrow">03 / 验证证据</p><h2 id="result-title">候选比较与最终结果</h2></div><span class="badge" id="run-status"></span></div><p id="run-caption" class="muted"></p><p id="design"></p><div id="metric-cards" class="metric-cards"></div><div class="table-scroll"><table id="candidates"><caption>所有候选与修复版本 · 以下指标来自验证集</caption><thead><tr><th>算法 / 版本</th><th>通过</th><th>Recall@k</th><th>MRR@k</th><th>Precision@k</th><th>P95 ms</th><th>问题与代码</th></tr></thead><tbody></tbody></table></div><div id="category-analysis"></div><details><summary>查看逐查询失败案例</summary><div id="failures"></div></details><div class="downloads" id="downloads"></div></section>
+    <section class="card" aria-labelledby="history-title"><div class="section-heading"><div><p class="eyebrow">运行档案</p><h2 id="history-title">历史结果</h2></div><a href="/docs" target="_blank" rel="noreferrer" class="text-button">API 文档 ↗</a></div><ul id="runs" class="run-list"><li class="muted">连接后查看已归档的成功与失败运行。</li></ul></section>
+    <footer>模型输出经过真实代码执行与评分。模拟评估成绩不代表真实业务泛化能力。</footer>
+  </main>
+</body>
+</html>

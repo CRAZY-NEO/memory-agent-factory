@@ -4,83 +4,424 @@
     "query": "MySQL 连接池等待导致请求超时怎么排查",
     "relevant_ids": [
       "m01"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v02",
     "query": "Redis 不存在的 key 一直查数据库",
     "relevant_ids": [
       "m03"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v03",
     "query": "Docker 容器退出 137 内存不足",
     "relevant_ids": [
       "m05"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v04",
     "query": "Git rebase 冲突如何处理",
     "relevant_ids": [
       "m07"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v05",
     "query": "asyncio 同步请求阻塞事件循环",
     "relevant_ids": [
       "m09"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v06",
     "query": "RAG 检索效果用哪些指标评估",
     "relevant_ids": [
       "m11"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v07",
     "query": "Jetson Ollama 如何在局域网访问",
     "relevant_ids": [
       "m13"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v08",
     "query": "文本分类类别不平衡不能只看 accuracy",
     "relevant_ids": [
       "m16"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v09",
     "query": "SQLite 并发写事务被阻塞",
     "relevant_ids": [
       "m19"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v10",
     "query": "BM25 和向量检索怎么融合",
     "relevant_ids": [
       "m21"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v11",
     "query": "中文 TF-IDF 字符 ngram 余弦相似度",
     "relevant_ids": [
       "m22"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
   },
   {
     "id": "v12",
     "query": "API 超时指数退避与幂等重试",
     "relevant_ids": [
       "m18"
-    ]
+    ],
+    "category": "direct",
+    "hard_negative_ids": [],
+    "annotation": "继承 v1 的词面基线查询。"
+  },
+  {
+    "id": "v13",
+    "query": "MySQL 可借用的连接都占着，请求一直排队，怎样让资源释放",
+    "relevant_ids": [
+      "m01"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m25",
+      "m26"
+    ],
+    "annotation": "借用连接不释放对应连接池耗尽，认证和行锁不是主因。"
+  },
+  {
+    "id": "v14",
+    "query": "Redis 查一个根本没有的数据，每次又去后面的数据库，怎么挡住",
+    "relevant_ids": [
+      "m03"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m27",
+      "m28"
+    ],
+    "annotation": "不存在的数据反复回源是穿透，热门键流量和过期重建是负例。"
+  },
+  {
+    "id": "v15",
+    "query": "asyncio 里用了同步 HTTP，其他协程全停了，怎样避免等它",
+    "relevant_ids": [
+      "m09"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m33"
+    ],
+    "annotation": "等待型网络 IO 阻塞事件循环，非 CPU 并行问题。"
+  },
+  {
+    "id": "v16",
+    "query": "RAG 怎样知道该找的资料有没有被找回来，第一条是否排对了",
+    "relevant_ids": [
+      "m11"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m35"
+    ],
+    "annotation": "召回和首条排序评估属于检索质量，不是回答忠实性。"
+  },
+  {
+    "id": "v17",
+    "query": "Ollama 在 Jetson 自己能用，另一台电脑却连不进去，先查什么",
+    "relevant_ids": [
+      "m13"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m37",
+      "m38"
+    ],
+    "annotation": "跨机器连通性对应监听和防火墙，非速度或磁盘问题。"
+  },
+  {
+    "id": "v18",
+    "query": "分类样本里少数类别太少，总体命中率很好但漏掉它们怎么评估",
+    "relevant_ids": [
+      "m16"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m40"
+    ],
+    "annotation": "类别不均衡应查看各类召回与 macro F1，非单纯调概率阈值。"
+  },
+  {
+    "id": "v19",
+    "query": "SQLite 两个人同时保存，后一个一直拿不到写机会，怎样缩短等待",
+    "relevant_ids": [
+      "m19"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m43"
+    ],
+    "annotation": "并发写者等待对应事务和锁，查询索引不是主因。"
+  },
+  {
+    "id": "v20",
+    "query": "检索只看词面常漏掉换种说法的笔记，BM25 怎样配合语义向量",
+    "relevant_ids": [
+      "m21"
+    ],
+    "category": "paraphrase",
+    "hard_negative_ids": [
+      "m22",
+      "m45"
+    ],
+    "annotation": "需要融合关键词与语义排名，非单一 TF-IDF 或索引迁移。"
+  },
+  {
+    "id": "v21",
+    "query": "MySQL Access denied，密码或授权主机应该怎样核对",
+    "relevant_ids": [
+      "m25"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m01"
+    ],
+    "annotation": "明确认证失败，不是连接池耗尽。"
+  },
+  {
+    "id": "v22",
+    "query": "Redis 一个热点 key 刚过期就有大量请求回源，互斥重建怎么做",
+    "relevant_ids": [
+      "m28"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m03",
+      "m04",
+      "m27"
+    ],
+    "annotation": "单键过期击穿，区分穿透、多键雪崩与未过期热键。"
+  },
+  {
+    "id": "v23",
+    "query": "Docker 拉镜像报 no space left on device，要清理什么",
+    "relevant_ids": [
+      "m29"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m05",
+      "m30"
+    ],
+    "annotation": "存储空间与 inode 排查，非 OOM 或应用退出。"
+  },
+  {
+    "id": "v24",
+    "query": "Git 提交已经共享，我想保留历史再产生一笔反向修改",
+    "relevant_ids": [
+      "m08"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m07",
+      "m31"
+    ],
+    "annotation": "共享提交撤销用 revert，非 rebase 冲突或未跟踪文件保护。"
+  },
+  {
+    "id": "v25",
+    "query": "Python ImportError cannot import name，锁文件里的包版本不兼容",
+    "relevant_ids": [
+      "m34"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m10"
+    ],
+    "annotation": "包已存在但接口版本不符，区别模块找不到。"
+  },
+  {
+    "id": "v26",
+    "query": "RAG 回答引用了资料却编造结论，应该检查哪种质量",
+    "relevant_ids": [
+      "m35"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m11"
+    ],
+    "annotation": "检查回答忠实性；找到相关文档不证明回答正确。"
+  },
+  {
+    "id": "v27",
+    "query": "API 返回 401，Bearer token 已过期还应该一直重试吗",
+    "relevant_ids": [
+      "m41"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m18",
+      "m42"
+    ],
+    "annotation": "凭据过期需要更新身份，区别超时重试与限流。"
+  },
+  {
+    "id": "v28",
+    "query": "SQLite SELECT 扫描太多行，怎么用执行计划给 WHERE 建索引",
+    "relevant_ids": [
+      "m43"
+    ],
+    "category": "hard_negative",
+    "hard_negative_ids": [
+      "m19"
+    ],
+    "annotation": "读查询扫描和索引问题，非并发写等待。"
+  },
+  {
+    "id": "v29",
+    "query": "MySQL 请求超时，如何分别排查连接池耗尽和慢查询索引",
+    "relevant_ids": [
+      "m01",
+      "m02"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m25"
+    ],
+    "annotation": "两部分分别要求连接释放和执行计划，认证失败不直接回答。"
+  },
+  {
+    "id": "v30",
+    "query": "Redis 不存在的数据穿透和许多 TTL 同时失效，两种故障如何保护数据库",
+    "relevant_ids": [
+      "m03",
+      "m04"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m28"
+    ],
+    "annotation": "两种明确故障分别穿透与雪崩，非仅单热键击穿。"
+  },
+  {
+    "id": "v31",
+    "query": "Docker 容器既出现 OOMKilled 又无法访问外部服务，要从内存与网络两边查",
+    "relevant_ids": [
+      "m05",
+      "m06"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m29"
+    ],
+    "annotation": "同时询问内存和网络，磁盘负例仅有相同产品名。"
+  },
+  {
+    "id": "v32",
+    "query": "Git rebase 冲突解决后如何继续，以及共享的错误提交如何撤销",
+    "relevant_ids": [
+      "m07",
+      "m08"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m32"
+    ],
+    "annotation": "要求 rebase continue 和 revert，不是 merge 后提交。"
+  },
+  {
+    "id": "v33",
+    "query": "RAG 的文档怎么分块，之后怎么用 Recall 和 MRR 检查检索",
+    "relevant_ids": [
+      "m12",
+      "m11"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m35"
+    ],
+    "annotation": "需要分块和检索指标，回答忠实性是相近评估主题。"
+  },
+  {
+    "id": "v34",
+    "query": "Jetson Ollama 的局域网访问与模型共享内存不足，分别怎样配置",
+    "relevant_ids": [
+      "m13",
+      "m14"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m38"
+    ],
+    "annotation": "同时要求连通性和推理内存管理，磁盘不是共享内存。"
+  },
+  {
+    "id": "v35",
+    "query": "API 请求超时怎样做幂等退避，同时日志如何避免保存密钥",
+    "relevant_ids": [
+      "m18",
+      "m17"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m41"
+    ],
+    "annotation": "要求重试与日志隐私两项，非身份失效处理。"
+  },
+  {
+    "id": "v36",
+    "query": "个人记忆新旧事实冲突如何保留证据，检索又怎样按租户控制访问",
+    "relevant_ids": [
+      "m24",
+      "m46"
+    ],
+    "category": "multi_relevance",
+    "hard_negative_ids": [
+      "m47"
+    ],
+    "annotation": "要求事实版本与访问权限，刷新页面缓存不足以回答。"
   }
 ]

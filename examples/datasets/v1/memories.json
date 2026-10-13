@@ -1,0 +1,122 @@
+[
+  {
+    "id": "m01",
+    "text": "MySQL 连接池耗尽排查：数据库请求超时，排查发现 MySQL 连接没有归还。使用上下文管理器关闭连接，监控连接池活跃数与等待队列。",
+    "source": "synthetic://notes/m01"
+  },
+  {
+    "id": "m02",
+    "text": "慢 SQL 与索引：MySQL 查询缓慢时使用 EXPLAIN 检查执行计划，为过滤字段建立联合索引，避免 SELECT 星号和深分页。",
+    "source": "synthetic://notes/m02"
+  },
+  {
+    "id": "m03",
+    "text": "Redis 缓存穿透：Redis 缓存穿透是不存在的数据不断访问数据库。可缓存空值或增加布隆过滤器，并给空值设置短 TTL。",
+    "source": "synthetic://notes/m03"
+  },
+  {
+    "id": "m04",
+    "text": "缓存雪崩：大量 Redis 缓存同时过期造成雪崩。为 TTL 加随机抖动，热点数据预热，数据库访问增加限流保护。",
+    "source": "synthetic://notes/m04"
+  },
+  {
+    "id": "m05",
+    "text": "Docker 内存不足：Docker 容器退出码 137 通常需要检查 OOMKilled。限制 worker 并发，设置内存上限，观察容器内存峰值。",
+    "source": "synthetic://notes/m05"
+  },
+  {
+    "id": "m06",
+    "text": "Docker 网络解析：容器无法访问服务时检查 Docker 网络、DNS 解析和端口映射。localhost 在容器内指向容器自身。",
+    "source": "synthetic://notes/m06"
+  },
+  {
+    "id": "m07",
+    "text": "Git 冲突处理：Git rebase 出现合并冲突时逐文件解决标记，运行测试后 git add，再 rebase continue。共享分支避免随意强制推送。",
+    "source": "synthetic://notes/m07"
+  },
+  {
+    "id": "m08",
+    "text": "Git 撤销提交：已推送的错误提交用 git revert 生成反向提交。reset 会改写历史，适合尚未共享的本地提交。",
+    "source": "synthetic://notes/m08"
+  },
+  {
+    "id": "m09",
+    "text": "Python 异步阻塞：asyncio 事件循环被同步网络请求阻塞。使用异步 HTTP 客户端，CPU 密集工作放进进程池，避免 async 函数中 time.sleep。",
+    "source": "synthetic://notes/m09"
+  },
+  {
+    "id": "m10",
+    "text": "Python 模块路径：ModuleNotFoundError 排查虚拟环境和 Python 解释器路径。使用 python -m 运行模块，通过 pip install -e 安装项目。",
+    "source": "synthetic://notes/m10"
+  },
+  {
+    "id": "m11",
+    "text": "RAG 检索评估：RAG 需要标注查询与相关文档 ID，计算 Recall@5 和 MRR，分析漏召回与排序错误。评估查询与调参查询分开。",
+    "source": "synthetic://notes/m11"
+  },
+  {
+    "id": "m12",
+    "text": "RAG 分块决策：知识库按标题和语义边界分块，保留来源、页码与上下文。过短分块丢失语义，过长分块增加噪声和 token 开销。",
+    "source": "synthetic://notes/m12"
+  },
+  {
+    "id": "m13",
+    "text": "Ollama 局域网：Jetson Ollama 默认监听本机 11434。局域网访问检查监听地址与防火墙，用 HTTP chat 接口发送模型和消息。",
+    "source": "synthetic://notes/m13"
+  },
+  {
+    "id": "m14",
+    "text": "Jetson 推理内存：Jetson 推理模型超出共享内存时减少上下文长度，选择量化模型，测量内存与吞吐，避免同时加载多个大模型。",
+    "source": "synthetic://notes/m14"
+  },
+  {
+    "id": "m15",
+    "text": "数据泄漏：机器学习先划分训练、验证、测试集。标准化与特征选择仅在训练集拟合，最终测试集不参与调参。",
+    "source": "synthetic://notes/m15"
+  },
+  {
+    "id": "m16",
+    "text": "类别不平衡：文本分类类别不平衡时查看各类召回和 macro F1，设置 class weight，使用分层划分，不能只看 accuracy。",
+    "source": "synthetic://notes/m16"
+  },
+  {
+    "id": "m17",
+    "text": "日志隐私：应用日志不记录密钥和完整用户隐私，错误信息脱敏，使用请求 ID 关联调用链，设置日志保留时间。",
+    "source": "synthetic://notes/m17"
+  },
+  {
+    "id": "m18",
+    "text": "API 重试：远程 API 超时使用带抖动的指数退避并限制重试次数。写操作配合幂等键，避免重复扣款或重复提交。",
+    "source": "synthetic://notes/m18"
+  },
+  {
+    "id": "m19",
+    "text": "SQLite 并发：SQLite 写入是单写者模式。事务保持短小，设置 busy timeout，适当启用 WAL，避免长事务阻塞其他连接。",
+    "source": "synthetic://notes/m19"
+  },
+  {
+    "id": "m20",
+    "text": "PostgreSQL 死锁：PostgreSQL 死锁来自事务锁顺序不一致。统一更新顺序，缩短事务，并在安全边界重试整个事务。",
+    "source": "synthetic://notes/m20"
+  },
+  {
+    "id": "m21",
+    "text": "检索混合方案：技术文档检索可融合 BM25 关键词检索和向量语义检索，使用 RRF 排序融合。独立验证集选择参数，分析同义改写失败。",
+    "source": "synthetic://notes/m21"
+  },
+  {
+    "id": "m22",
+    "text": "TF-IDF 中文方案：中文 TF-IDF 可采用字符 ngram，避免依赖分词器。在语料上拟合 IDF，再对查询计算余弦相似度，按分数返回记忆 ID。",
+    "source": "synthetic://notes/m22"
+  },
+  {
+    "id": "m23",
+    "text": "服务性能指标：服务延迟报告区分 P50 P95 P99，注明数据规模、并发和冷启动时间。使用压测分析尾延迟与资源瓶颈。",
+    "source": "synthetic://notes/m23"
+  },
+  {
+    "id": "m24",
+    "text": "文档更新溯源：个人记忆保存原始来源、时间和版本。新事实与旧事实冲突时标记待核实，保留修改历史，避免直接覆盖证据。",
+    "source": "synthetic://notes/m24"
+  }
+]

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "v01",
+    "query": "MySQL 连接池等待导致请求超时怎么排查",
+    "relevant_ids": [
+      "m01"
+    ]
+  },
+  {
+    "id": "v02",
+    "query": "Redis 不存在的 key 一直查数据库",
+    "relevant_ids": [
+      "m03"
+    ]
+  },
+  {
+    "id": "v03",
+    "query": "Docker 容器退出 137 内存不足",
+    "relevant_ids": [
+      "m05"
+    ]
+  },
+  {
+    "id": "v04",
+    "query": "Git rebase 冲突如何处理",
+    "relevant_ids": [
+      "m07"
+    ]
+  },
+  {
+    "id": "v05",
+    "query": "asyncio 同步请求阻塞事件循环",
+    "relevant_ids": [
+      "m09"
+    ]
+  },
+  {
+    "id": "v06",
+    "query": "RAG 检索效果用哪些指标评估",
+    "relevant_ids": [
+      "m11"
+    ]
+  },
+  {
+    "id": "v07",
+    "query": "Jetson Ollama 如何在局域网访问",
+    "relevant_ids": [
+      "m13"
+    ]
+  },
+  {
+    "id": "v08",
+    "query": "文本分类类别不平衡不能只看 accuracy",
+    "relevant_ids": [
+      "m16"
+    ]
+  },
+  {
+    "id": "v09",
+    "query": "SQLite 并发写事务被阻塞",
+    "relevant_ids": [
+      "m19"
+    ]
+  },
+  {
+    "id": "v10",
+    "query": "BM25 和向量检索怎么融合",
+    "relevant_ids": [
+      "m21"
+    ]
+  },
+  {
+    "id": "v11",
+    "query": "中文 TF-IDF 字符 ngram 余弦相似度",
+    "relevant_ids": [
+      "m22"
+    ]
+  },
+  {
+    "id": "v12",
+    "query": "API 超时指数退避与幂等重试",
+    "relevant_ids": [
+      "m18"
+    ]
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "id": "char_jaccard_00f7e68fbdb0",
+    "name": "中文技术记忆 jaccard",
+    "task": "memory_retrieval",
+    "algorithm": "jaccard",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。"
+    ],
+    "metrics": [
+      "mrr_at_k",
+      "p95_ms",
+      "precision_at_k",
+      "recall_at_k"
+    ],
+    "dependencies": [
+      "Python stdlib"
+    ],
+    "limitations": [
+      "局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。"
+    ],
+    "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+    "evidence": "适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。",
+    "algorithm_plugin_version": "1.0.1"
+  }
+]

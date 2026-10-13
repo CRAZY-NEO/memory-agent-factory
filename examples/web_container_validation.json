@@ -1,0 +1,16 @@
+{
+  "gateway": "Docker ARM64 Linux; actual HTTP requests",
+  "worker_provider": "mock",
+  "worker_runner": "local",
+  "authentication": "unauthorized request rejected",
+  "factory_job": "succeeded",
+  "search_job": "succeeded",
+  "top_result": "m01",
+  "report_available": true,
+  "web_assets": true,
+  "settings_authenticated": true,
+  "progress_events": true,
+  "code_download_hash": true,
+  "dataset_version": "2.0",
+  "jetson_tested": false
+}

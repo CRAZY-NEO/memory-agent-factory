@@ -19,6 +19,9 @@ class Query(Contract):
     id: str
     query: str = Field(min_length=1)
     relevant_ids: list[str] = Field(min_length=1)
+    category: Literal["direct", "paraphrase", "hard_negative", "multi_relevance"] = "direct"
+    hard_negative_ids: list[str] = Field(default_factory=list)
+    annotation: str = ""
 
 
 class Capability(Contract):

@@ -118,5 +118,125 @@
     "id": "m24",
     "text": "文档更新溯源：个人记忆保存原始来源、时间和版本。新事实与旧事实冲突时标记待核实，保留修改历史，避免直接覆盖证据。",
     "source": "synthetic://notes/m24"
+  },
+  {
+    "id": "m25",
+    "text": "MySQL 认证失败：连接数据库出现 Access denied 时核对用户名、密码和授权主机。认证失败与连接池借出后未归还是不同问题。",
+    "source": "synthetic://notes/m25"
+  },
+  {
+    "id": "m26",
+    "text": "MySQL 行锁等待：MySQL 更新语句卡住时检查事务和行锁等待，定位未提交的长事务。缩短事务并统一更新顺序；扩连接池不能解除行锁。",
+    "source": "synthetic://notes/m26"
+  },
+  {
+    "id": "m27",
+    "text": "Redis 热键：Redis 单个热门 key 流量过高会压满一个实例。使用本地缓存与请求合并，评估分片；这与请求不存在数据的缓存穿透不同。",
+    "source": "synthetic://notes/m27"
+  },
+  {
+    "id": "m28",
+    "text": "Redis 缓存击穿：一个热点 key 失效后并发请求直接访问数据库是缓存击穿。可用互斥锁重建缓存或逻辑过期；大量 key 同时过期才是雪崩。",
+    "source": "synthetic://notes/m28"
+  },
+  {
+    "id": "m29",
+    "text": "Docker 磁盘不足：Docker 写日志或拉取镜像报 no space left on device 时检查磁盘容量和 inode，配置日志轮转并清理未用镜像。内存上限不会释放磁盘。",
+    "source": "synthetic://notes/m29"
+  },
+  {
+    "id": "m30",
+    "text": "Docker 应用退出：Docker 容器 exit code 1 往往来自应用异常或配置错误，先查看 stderr 与启动参数；退出码 137 和 OOMKilled 才提示内存问题。",
+    "source": "synthetic://notes/m30"
+  },
+  {
+    "id": "m31",
+    "text": "Git 未跟踪文件：Git 切换分支提示 untracked files would be overwritten 时先备份未跟踪文件，或用 git stash -u 保存后切换。不要直接删除个人文件。",
+    "source": "synthetic://notes/m31"
+  },
+  {
+    "id": "m32",
+    "text": "Git merge 冲突：Git merge 的冲突解决后需要提交合并结果。rebase 冲突则在 git add 后 rebase continue，二者后续命令不同。",
+    "source": "synthetic://notes/m32"
+  },
+  {
+    "id": "m33",
+    "text": "Python CPU 并行：Python CPU 密集计算不适合指望普通线程绕过 GIL。使用多进程并测量序列化开销；异步 HTTP 解决等待型 IO 而非 CPU 并行。",
+    "source": "synthetic://notes/m33"
+  },
+  {
+    "id": "m34",
+    "text": "Python 依赖版本冲突：ImportError cannot import name 常见于依赖版本不兼容。核对锁文件与包版本，重新安装兼容依赖；模块完全找不到时才优先排查解释器路径。",
+    "source": "synthetic://notes/m34"
+  },
+  {
+    "id": "m35",
+    "text": "RAG 回答忠实性：RAG 回答是否得到引用文档支持属于忠实性评估。检索 Recall 衡量找回相关文档，不能直接说明生成的回答是否编造事实。",
+    "source": "synthetic://notes/m35"
+  },
+  {
+    "id": "m36",
+    "text": "RAG 表格解析：PDF 表格跨页时保留列标题、行关系和页码，检查 OCR 错字。解析质量影响后续分块，但调整 chunk 大小无法恢复丢失的单元格结构。",
+    "source": "synthetic://notes/m36"
+  },
+  {
+    "id": "m37",
+    "text": "Ollama 推理慢：Ollama 能连通但生成速度慢时检查模型是否使用 GPU，观察 tokens 每秒与并发，区分模型冷加载耗时与生成耗时。",
+    "source": "synthetic://notes/m37"
+  },
+  {
+    "id": "m38",
+    "text": "Jetson 存储空间：Jetson 下载模型失败或设备写满时检查磁盘剩余空间，移除不再使用的模型。共享内存不足需要量化或缩小上下文，不靠清空磁盘解决。",
+    "source": "synthetic://notes/m38"
+  },
+  {
+    "id": "m39",
+    "text": "时序特征泄漏：预测未来销量时，滚动均值只能使用预测时刻之前的数据，不能把未来观测加入窗口。时间序列按时间切分；随机划分可能泄漏未来。",
+    "source": "synthetic://notes/m39"
+  },
+  {
+    "id": "m40",
+    "text": "分类决策阈值：二分类概率阈值影响 Precision 与 Recall。根据验证集业务代价选择阈值，阈值变化不同于训练时的 class weight；最终测试不能用于挑阈值。",
+    "source": "synthetic://notes/m40"
+  },
+  {
+    "id": "m41",
+    "text": "API 身份认证：API 返回 HTTP 401 时检查 Bearer token 是否缺失、过期或签名错误，重新获取有效凭据。无限重试无法修复无效身份。",
+    "source": "synthetic://notes/m41"
+  },
+  {
+    "id": "m42",
+    "text": "API 限流：API 返回 HTTP 429 时尊重 Retry-After，降低请求并发并退避。限流不是 HTTP 401 身份认证失败，不应反复更换密钥。",
+    "source": "synthetic://notes/m42"
+  },
+  {
+    "id": "m43",
+    "text": "SQLite 查询索引：SQLite SELECT 缓慢时使用 EXPLAIN QUERY PLAN，给 WHERE 与排序字段建索引。查询扫描过多行不同于并发写事务等待。",
+    "source": "synthetic://notes/m43"
+  },
+  {
+    "id": "m44",
+    "text": "PostgreSQL 连接空闲事务：PostgreSQL idle in transaction 会长期持有事务和锁。监控空闲事务并设置 idle_in_transaction_session_timeout，及时提交或回滚。",
+    "source": "synthetic://notes/m44"
+  },
+  {
+    "id": "m45",
+    "text": "向量检索版本：向量索引保存 embedding 模型名和版本。更换向量模型后重新生成文档向量与索引；不同模型空间的旧向量不能直接混用。",
+    "source": "synthetic://notes/m45"
+  },
+  {
+    "id": "m46",
+    "text": "敏感文档访问：知识库检索前按用户和租户过滤文档权限，避免把他人的私人笔记送入生成模型。日志脱敏无法替代文档访问控制。",
+    "source": "synthetic://notes/m46"
+  },
+  {
+    "id": "m47",
+    "text": "知识库页面缓存：知识库网页更新后仍显示旧内容时检查浏览器缓存和 CDN 缓存并清理旧资源。页面缓存刷新与事实冲突的证据版本管理不同。",
+    "source": "synthetic://notes/m47"
+  },
+  {
+    "id": "m48",
+    "text": "DNS 缓存失效：服务域名迁移后客户端仍连接旧 IP 时检查 DNS 缓存与记录 TTL，刷新解析结果。缓存不存在的业务数据与域名解析缓存不同。",
+    "source": "synthetic://notes/m48"
   }
 ]

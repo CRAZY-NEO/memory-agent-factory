@@ -1,0 +1,53 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "understander",
+  "context": {
+    "description": "为个人技术记忆库分别复刻 TF-IDF、BM25、Jaccard 三种检索算法并比较。输入 query、memories、top_k，返回前 5 条相关记忆的 ID 与分数。保留中文单字/双字及英文词的算法规则，处理空输入，按配置验证 Recall、MRR、Precision 和稳定性；修复失败版本，选择通过验证的候选并回写知识库。"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "const": "memory_retrieval",
+        "title": "Task",
+        "type": "string"
+      },
+      "description": {
+        "minLength": 1,
+        "title": "Description",
+        "type": "string"
+      },
+      "language": {
+        "enum": [
+          "zh",
+          "mixed"
+        ],
+        "title": "Language",
+        "type": "string"
+      },
+      "top_k": {
+        "maximum": 20,
+        "minimum": 1,
+        "title": "Top K",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "task",
+      "description",
+      "language",
+      "top_k"
+    ],
+    "title": "Request",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "task": "memory_retrieval",
+    "description": "为个人技术记忆库分别复刻 TF-IDF、BM25、Jaccard 三种检索算法并比较。输入 query、memories、top_k，返回前 5 条相关记忆的 ID 与分数。保留中文单字/双字及英文词的算法规则，处理空输入，按配置验证 Recall、MRR、Precision 和稳定性；修复失败版本，选择通过验证的候选并回写知识库。",
+    "language": "mixed",
+    "top_k": 5
+  },
+  "duration_seconds": 0.0002544580493122339
+}

@@ -60,6 +60,7 @@ def test_final_test_failure_never_reenters_repair_or_publishes(workspace):
     queries = json.loads((workspace / "data" / "test_queries.json").read_text())
     for query in queries:
         query["relevant_ids"] = ["m24"]  # Deliberately incorrect fixture labels exercise final gate failure.
+        query['hard_negative_ids'] = []
     (workspace / "data" / "test_queries.json").write_text(json.dumps(queries))
     factory = Factory(workspace)
     result = factory.run("生成技术记忆检索算法")
