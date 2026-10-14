@@ -79,4 +79,11 @@ def write_report(directory, summary):
                   '搜索词：' + ', '.join(discovery['search_queries']),
                   f"登记结果：{bool(discovery['release'])}；使用内置算法模板：False", '',
                   '下载仓库未导入或执行，模型根据来源片段复刻代码。验证证明当前数据与接口上的表现，不构成源码数学等价性证明。', '']
+    if summary.get('routing'):
+        routing = summary['routing']
+        lines += ['## 自动工作流选择', '', f"提交模式：{routing['requested_mode']}；执行路径：{routing['action']}",
+                  routing['reason'], '模型说明：' + routing['intent']['rationale'],
+                  '未登记的方法：' + ', '.join(routing['missing_methods']), '']
+        if routing.get('discovery_run_id'):
+            lines += ['发现与登记运行：`' + routing['discovery_run_id'] + '`；本报告为随后候选比较。', '']
     (directory / "report.md").write_text("\n".join(lines), encoding="utf-8")

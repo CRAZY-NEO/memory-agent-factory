@@ -1,0 +1,24 @@
+{
+  "requested_mode": "auto",
+  "action": "discover",
+  "intent": {
+    "task": "memory_retrieval",
+    "requested_methods": [
+      "tfidf",
+      "BM25Plus"
+    ],
+    "discover_new": false,
+    "rationale": "用户请求比较 TF-IDF 与 BM25Plus 方法，但当前支持的检索方法仅包含字符 BM25、集合 Jaccard 和字符 TF-IDF，未包含 BM25Plus。"
+  },
+  "literal_method_mentions": [
+    "tfidf",
+    "BM25Plus"
+  ],
+  "registered_methods": [
+    "tfidf"
+  ],
+  "missing_methods": [
+    "BM25Plus"
+  ],
+  "reason": "存在未登记的方法，先发现并验证。"
+}

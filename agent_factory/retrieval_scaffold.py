@@ -2,6 +2,32 @@
 
 import ast
 
+
+def adapter_from_reference(code):
+    """Read a previously approved pure-kernel adapter without importing its module.
+
+    Used only for registered source releases with public formula cases. Ordinary
+    algorithms continue through full-code generation. A missing recognizable
+    adapter returns None; generated code still undergoes all normal checks.
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return None
+    functions = {node.name: node for node in tree.body if isinstance(node, ast.FunctionDef)}
+    scorer = functions.get('score_term')
+    if scorer is None:
+        return None
+    helpers = [name for name in functions if name.startswith('source_')]
+    calls = {node.func.id for node in ast.walk(scorer)
+             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)}
+    if not helpers or not set(helpers) <= calls:
+        return None
+    return {'mode': 'term', 'source_adapter_hint': ast.get_source_segment(code, scorer),
+            'required_source_calls': helpers,
+            'kernel_helpers': 'import math\n\n' + '\n\n'.join(
+                ast.get_source_segment(code, functions[name]) for name in helpers)}
+
 # This scaffold contains no algorithm scoring formula. Models supply the scorer;
 # the final standalone module, including the scaffold, is tested in Docker.
 SCAFFOLD = '''import re

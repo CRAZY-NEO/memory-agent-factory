@@ -1,0 +1,66 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "understander",
+  "context": {
+    "description": "为中文与英文混合技术笔记复刻 BM25Plus 检索方法，输入 query、memories、top_k=5，返回相关记忆 ID 和得分，通过验证后交付可复用代码。"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "const": "memory_retrieval",
+        "title": "Task",
+        "type": "string"
+      },
+      "description": {
+        "minLength": 1,
+        "title": "Description",
+        "type": "string"
+      },
+      "language": {
+        "enum": [
+          "zh",
+          "mixed"
+        ],
+        "title": "Language",
+        "type": "string"
+      },
+      "top_k": {
+        "maximum": 20,
+        "minimum": 1,
+        "title": "Top K",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "task",
+      "description",
+      "language",
+      "top_k"
+    ],
+    "title": "Request",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "raw_content": "{\"task\": \"memory_retrieval\", \"description\": \"为中文与英文混合技术笔记复刻 BM25Plus 检索方法，输入 query、memories、top_k=5，返回相关记忆 ID 和得分，通过验证后交付可复用代码。\", \"language\": \"mixed\", \"top_k\": 5}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 252,
+    "eval_count": 71,
+    "total_duration": 2912502095
+  },
+  "response": {
+    "task": "memory_retrieval",
+    "description": "为中文与英文混合技术笔记复刻 BM25Plus 检索方法，输入 query、memories、top_k=5，返回相关记忆 ID 和得分，通过验证后交付可复用代码。",
+    "language": "mixed",
+    "top_k": 5
+  },
+  "duration_seconds": 2.9331373751629144
+}

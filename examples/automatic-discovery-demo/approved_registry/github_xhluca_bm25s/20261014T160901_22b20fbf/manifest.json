@@ -1,0 +1,96 @@
+{
+  "id": "github_xhluca_bm25s",
+  "name": "BM25Plus",
+  "version": "20261014T160901_22b20fbf",
+  "status": "approved",
+  "task": "memory_retrieval",
+  "guidance": "Reproduce BM25Plus from the pinned source scoring functions and constructor defaults. Adapt the retrieve interface and tokenizer only; do not mix in unrelated scoring methods or install dependencies.",
+  "dependencies": [],
+  "public_cases": [
+    {
+      "query": "alpha",
+      "memories": [
+        {
+          "id": "a",
+          "text": "alpha alpha beta",
+          "source": "public formula case"
+        },
+        {
+          "id": "b",
+          "text": "alpha beta",
+          "source": "public formula case"
+        },
+        {
+          "id": "c",
+          "text": "gamma",
+          "source": "public formula case"
+        }
+      ],
+      "top_k": 3,
+      "expected": [
+        {
+          "id": "a",
+          "score": 1.1996778125075978
+        },
+        {
+          "id": "b",
+          "score": 1.0397207708399179
+        },
+        {
+          "id": "c",
+          "score": 0.34657359027997264
+        }
+      ]
+    },
+    {
+      "query": "alpha alpha",
+      "memories": [
+        {
+          "id": "a",
+          "text": "alpha alpha beta",
+          "source": "public formula case"
+        },
+        {
+          "id": "b",
+          "text": "alpha beta",
+          "source": "public formula case"
+        },
+        {
+          "id": "c",
+          "text": "gamma",
+          "source": "public formula case"
+        }
+      ],
+      "top_k": 3,
+      "expected": [
+        {
+          "id": "a",
+          "score": 2.3993556250151955
+        },
+        {
+          "id": "b",
+          "score": 2.0794415416798357
+        },
+        {
+          "id": "c",
+          "score": 0.6931471805599453
+        }
+      ]
+    }
+  ],
+  "source": {
+    "repository": "xhluca/bm25s",
+    "url": "https://github.com/xhluca/bm25s",
+    "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+    "license": "MIT"
+  },
+  "run_id": "20261014T160901_22b20fbf",
+  "license_hashes": {
+    "LICENSE": "8c159b4c621a86c4695c83f42a00932b26183f6da8ab62b0865835594426c8ff"
+  },
+  "hashes": {
+    "reference.py": "cee5c30b688684a1dc315430fc60b323a102d7c56bb1ec09e317c3cbf90b48e0",
+    "material.md": "970bf85f0c24403458b8cc6eca47c2f3246919969da54217b0e351b68ea29dac",
+    "verification.json": "cbad3eb7b6e67a671b8a5df816918d77f26c57fbfd79e8e044e8d2b6945eeb83"
+  }
+}

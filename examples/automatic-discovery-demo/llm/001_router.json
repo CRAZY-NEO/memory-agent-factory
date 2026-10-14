@@ -1,0 +1,96 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "router",
+  "context": {
+    "description": "比较 TF-IDF 与 BM25Plus，用于中文与英文混合技术记忆检索。输入 query、memories、top_k=5，返回相关记忆 ID 和分数；保留各方法的评分规则与默认参数，验证接口、稳定性及检索指标，通过后沉淀为可复用插件。",
+    "algorithm_catalog": [
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "task": "memory_retrieval"
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "task": "memory_retrieval"
+      },
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "task": "memory_retrieval"
+      }
+    ],
+    "supported_tasks": [
+      "memory_retrieval"
+    ],
+    "literal_method_mentions": [
+      "tfidf",
+      "BM25Plus"
+    ]
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "enum": [
+          "memory_retrieval",
+          "unsupported"
+        ],
+        "title": "Task",
+        "type": "string"
+      },
+      "requested_methods": {
+        "items": {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        },
+        "maxItems": 8,
+        "title": "Requested Methods",
+        "type": "array"
+      },
+      "discover_new": {
+        "default": false,
+        "title": "Discover New",
+        "type": "boolean"
+      },
+      "rationale": {
+        "maxLength": 600,
+        "minLength": 1,
+        "title": "Rationale",
+        "type": "string"
+      }
+    },
+    "required": [
+      "task",
+      "rationale"
+    ],
+    "title": "RouteIntent",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "raw_content": "{\n  \"task\": \"memory_retrieval\",\n  \"rationale\": \"用户请求比较 TF-IDF 与 BM25Plus 方法，但当前支持的检索方法仅包含字符 BM25、集合 Jaccard 和字符 TF-IDF，未包含 BM25Plus。\",\n  \"requested_methods\": [\"tfidf\", \"BM25Plus\"],\n  \"discover_new\": false\n}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 541,
+    "eval_count": 91,
+    "total_duration": 11790637108
+  },
+  "response": {
+    "task": "memory_retrieval",
+    "rationale": "用户请求比较 TF-IDF 与 BM25Plus 方法，但当前支持的检索方法仅包含字符 BM25、集合 Jaccard 和字符 TF-IDF，未包含 BM25Plus。",
+    "requested_methods": [
+      "tfidf",
+      "BM25Plus"
+    ],
+    "discover_new": false
+  },
+  "duration_seconds": 11.964652791852131
+}

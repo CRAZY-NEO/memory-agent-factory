@@ -13,10 +13,10 @@ from .models import ValidationConfig
 from .registry import load_registry
 from .repair import load_failed_codes
 from .repository import ingest_repository
+from .routing import AutomaticFactory
 from .runtime import MemoryRetriever
 from .validation import load_dataset, validate
 from .visualization import write_graph_html
-from .workflow import Factory
 
 
 def provider_options(parser):
@@ -64,6 +64,8 @@ def parser():
     run.add_argument("--allow-local", action="store_true", help="明确接受本地执行边界，允许真实模型代码在本机子进程运行")
     run.add_argument("--repair-from", type=Path, help="重放该运行目录中哈希校验通过的历史失败代码并修复")
     run.add_argument("--inject-fault", action="store_true", help="仅 mock：故意破坏 BM25 首版，演示真实检测和修复")
+    run.add_argument('--mode', choices=['auto', 'reuse', 'discover'], default='auto',
+                     help='默认自动判断：已有能力优先，缺少方法时发现；可手动限制模式')
     query = commands.add_parser("query", help="调用已验证插件，供未来个人记忆应用复用")
     query.add_argument("text")
     query.add_argument("--run", default="latest", help="运行 ID，默认最近一次通过并发布插件的运行")
@@ -106,16 +108,17 @@ def main(argv=None):
             return 0 if result['status'] == 'passed' else 1
         if arguments.command == "run":
             description = arguments.description or arguments.request_file.read_text(encoding="utf-8")
-            factory = Factory(workspace, arguments.provider, resolve_model(arguments), arguments.base_url,
+            factory = AutomaticFactory(workspace, arguments.provider, resolve_model(arguments), arguments.base_url,
                               arguments.runner, arguments.inject_fault, arguments.allow_local,
-                              config=config, registry=registry)
+                              config=config, registry=registry, mode=arguments.mode)
             if arguments.repair_from and arguments.inject_fault:
                 raise ValueError('Historical replay cannot be combined with mock fault injection')
             seeds = load_failed_codes(arguments.repair_from, config.algorithms) if arguments.repair_from else None
             result = factory.run(description, initial_codes=seeds)
             print(json.dumps({"status": result["status"], "run_id": result["run_id"],
                               "report": str(Path(result["directory"]) / "report.md"),
-                              "algorithm": result["selected"]["algorithm"] if result["selected"] else None},
+                              "algorithm": result.get('algorithm') or (result.get('selected') or {}).get('algorithm'),
+                              'routing': result['routing'], 'discovery_run_id': result.get('discovery_run_id')},
                              ensure_ascii=False, indent=2))
             return 0 if result["status"] == "passed" else 1
         if arguments.command == "ingest":

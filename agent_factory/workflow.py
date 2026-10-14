@@ -19,6 +19,7 @@ from .models import CodeArtifact, Diagnosis, Plan, Request, ValidationConfig
 from .registry import load_registry
 from .repair import code_fingerprint, focused_context, static_findings, validation_feedback
 from .reporting import write_report
+from .retrieval_scaffold import adapter_from_reference, compose_retrieval
 from .runner import Runner
 from .validation import load_dataset, validate
 
@@ -139,6 +140,9 @@ class Factory:
                     'source_run': seed['source_run'], 'source_revision': seed['source_revision'],
                     'source_hash': seed['source_hash'], 'unchanged': False}}
         context = focused_context(state, self.registry)
+        plugin = self.registry.algorithm(candidate['algorithm'])
+        adapter = (adapter_from_reference(plugin.reference.read_text(encoding='utf-8'))
+                   if plugin.provenance and plugin.public_cases else None)
         repository_ids = [row['id'] for row in context.get('repository_candidates', [])]
         role = 'coder'
         strategy = 'reproduce_reference'
@@ -153,14 +157,24 @@ class Factory:
                 # Do not anchor the final repair on the repeatedly failing implementation.
                 context['failed_code_hash'] = digest(state['code'])
         context['repair_strategy'] = strategy
+        if adapter:
+            role = 'source_adapter_repairer' if state['revision'] else 'source_adapter'
+            strategy = 'reuse_source_adapter'
+            context = {'method_name': plugin.name, 'source_adapter_hint': adapter['source_adapter_hint'],
+                       'required_source_calls': adapter['required_source_calls'],
+                       'reference_version': plugin.version, 'source': plugin.provenance}
+            if state['revision']:
+                context.update(validation=validation_feedback(state['validation']),
+                               repair_strategy='rebuild_from_approved_adapter')
         try:
             artifact = self.client.ask(role, context, CodeArtifact)
-            unchanged = bool(state['revision'] and code_fingerprint(artifact.code) == code_fingerprint(state['code']))
-            return {'code': artifact.code, 'code_explanation': artifact.explanation, 'generation_error': None,
+            code = compose_retrieval(artifact.code, adapter['mode'], adapter['kernel_helpers']) if adapter else artifact.code
+            unchanged = bool(state['revision'] and code_fingerprint(code) == code_fingerprint(state['code']))
+            return {'code': code, 'code_explanation': artifact.explanation, 'generation_error': None,
                     'generation': {'strategy': strategy, 'unchanged': unchanged,
-                                   'semantic_hash': code_fingerprint(artifact.code),
+                                   'semantic_hash': code_fingerprint(code),
                                    'repository_candidate_ids': repository_ids}}
-        except LLMError as exc:
+        except (LLMError, ValueError) as exc:
             return {'code': '', 'code_explanation': '', 'generation_error': str(exc),
                     'generation': {'strategy': strategy, 'unchanged': False,
                                    'repository_candidate_ids': repository_ids}}
@@ -289,6 +303,8 @@ class Factory:
                    "mock_fault_algorithm": self.client.fault_algorithm if self.client.inject_fault else None,
                    "workflow_events": state["events"] + ["persist"]}
         summary.update(self.report_metadata(state))
+        if getattr(self, 'routing', None):
+            summary['routing'] = self.routing
         self.store.add_node("run_" + self.run_id, "FactoryRun", summary)
         for attempt in state["attempts"]:
             self.store.add_edge("run_" + self.run_id, attempt["implementation_id"], "generated")
@@ -347,7 +363,7 @@ class Factory:
                                algorithm_ids=missing)
             graph = self.graph()
             (self.directory / "workflow.mmd").write_text(graph.get_graph().draw_mermaid(), encoding="utf-8")
-            state = graph.invoke({"description": description, "attempts": [], "events": [],
+            state = graph.invoke({"description": description, "attempts": [], "events": getattr(self, 'initial_events', []),
                                   "initial_codes": initial_codes or {}},
                                  config={"recursion_limit": 10 + self.config.max_candidates *
                                          (3 + 3 * self.config.max_repairs)})

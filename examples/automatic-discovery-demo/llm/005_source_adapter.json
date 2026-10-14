@@ -1,0 +1,72 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "source_adapter",
+  "context": {
+    "method_name": "BM25Plus",
+    "scoring_hook": {
+      "signature": "def score_term(tf, df, doc_len, avg_len, N)",
+      "arguments": {
+        "tf": "integer count of this query token in this ONE document",
+        "df": "integer number of corpus documents containing this token",
+        "doc_len": "integer token count of this document",
+        "avg_len": "float mean document token count",
+        "N": "integer total document count"
+      },
+      "return": "scalar term-frequency component TIMES inverse-document-frequency component; framework sums matching terms",
+      "note": "All arguments are numbers, not lists, Counters or arrays. Preserve numeric source defaults."
+    },
+    "source_adapter_hint": "def score_term(tf, df, doc_len, avg_len, N):\n    if avg_len <= 0 or df <= 0:\n        return 0.0\n    return source_tf_component(tf, doc_len, avg_len, 1.5, 0.75, 0.5) * source_idf_component(df, N)",
+    "required_source_calls": [
+      "source_tf_component",
+      "source_idf_component"
+    ],
+    "source_numeric_defaults": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.5
+    }
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "maxLength": 6000,
+        "minLength": 30,
+        "title": "Code",
+        "type": "string"
+      },
+      "explanation": {
+        "maxLength": 400,
+        "minLength": 1,
+        "title": "Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "explanation"
+    ],
+    "title": "SourceCodeArtifact",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "raw_content": "{\"code\": \"def score_term(tf, df, doc_len, avg_len, N):\\n    if avg_len <= 0 or df <= 0:\\n        return 0.0\\n    return source_tf_component(tf, doc_len, avg_len, 1.5, 0.75, 0.5) * source_idf_component(df, N)\", \"explanation\": \"This function validates input constraints and computes the BM25Plus score by multiplying the term frequency component with the inverse document frequency component using the specified parameters.\"}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 471,
+    "eval_count": 116,
+    "total_duration": 4760578122
+  },
+  "response": {
+    "code": "def score_term(tf, df, doc_len, avg_len, N):\n    if avg_len <= 0 or df <= 0:\n        return 0.0\n    return source_tf_component(tf, doc_len, avg_len, 1.5, 0.75, 0.5) * source_idf_component(df, N)",
+    "explanation": "This function validates input constraints and computes the BM25Plus score by multiplying the term frequency component with the inverse document frequency component using the specified parameters."
+  },
+  "duration_seconds": 4.792966542067006
+}

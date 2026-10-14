@@ -1,0 +1,254 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "planner",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "为中文与英文混合技术笔记复刻 BM25Plus 检索方法，输入 query、memories、top_k=5，返回相关记忆 ID 和得分，通过验证后交付可复用代码。",
+      "language": "mixed",
+      "top_k": 5
+    },
+    "capabilities": [
+      {
+        "node_id": "cap_github_xhluca_bm25s_20261014t160901_22b20fbf",
+        "algorithm": "github_xhluca_bm25s",
+        "algorithm_plugin_version": "20261014T160901_22b20fbf",
+        "applicable_conditions": [
+          "BM25Plus is only applicable when the repository contains the _score_idf_bm25plus and _score_tfc_bm25plus functions in bm25s/scoring.py.",
+          "The method is applicable only when the corpus is in JSONL format as specified by the JsonlCorpus class in bm25s/utils/corpus.py."
+        ],
+        "dependencies": [],
+        "evidence": "def _score_idf_bm25plus(df, N):",
+        "id": "cap_github_xhluca_bm25s_20261014t160901_22b20fbf",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "The method does not support English language input as the current bm25s implementation only supports English.",
+          "The method relies on the existing bm25s library and cannot be used independently without the underlying scoring functions."
+        ],
+        "metrics": [
+          "recall_at_k",
+          "mrr_at_k",
+          "precision_at_k",
+          "p95_ms"
+        ],
+        "name": "BM25Plus",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_github_material_970bf85f0c24403458b8cc6eca47c2f3246919969da54217b0e351b68ea29dac",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_github_material_970bf85f0c24403458b8cc6eca47c2f3246919969da54217b0e351b68ea29dac",
+        "text": "# BM25Plus\n\n算法：github_xhluca_bm25s。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序 id、score。\n\nReproduce BM25Plus from the pinned source scoring functions and constructor defaults. Adapt the retrieve interface and tokenizer only; do not mix in unrelated scoring methods or install dependencies.\n\n模型归纳（未独立认证，不作为评分公式）：The BM25Plus algorithm adapts to the repository by leveraging existing scoring functions from bm25s/scoring.py. It uses the _score_idf_bm25plus function for IDF calculation and _score_tfc_bm25plus for TF calculation, ensuring compatibility with the provided interface. The method requires no additional dependencies beyond the existing bm25s library, maintaining stability and performance.\n\n适用：BM25Plus is only applicable when the repository contains the _score_idf_bm25plus and _score_tfc_bm25plus functions in bm25s/scoring.py.；The method is applicable only when the corpus is in JSONL format as specified by the JsonlCorpus class in bm25s/utils/corpus.py.\n局限：The method does not support English language input as the current bm25s implementation only supports English.；The method relies on the existing bm25s library and cannot be used independently without the underlying scoring functions.\n来源：https://github.com/xhluca/bm25s/tree/03eac5a8fb3aa4958ce37415a4cf2220d35157f7；许可：MIT\n证据 bm25s/scoring.py：def _score_idf_bm25plus(df, N):"
+      }
+    ],
+    "lessons": [],
+    "historical_validations": [
+      {
+        "node_id": "validation_20261014T160901_22b20fbf_github_xhluca_bm25s_r0",
+        "passed": true,
+        "metrics": {
+          "mrr_at_k": 0.9236111111111112,
+          "p95_ms": 1.8175832374254242,
+          "precision_at_k": 0.23333333333333334,
+          "recall_at_k": 0.9444444444444444
+        },
+        "errors": []
+      },
+      {
+        "node_id": "validation_20261014T161001_92e82969_github_xhluca_bm25s_r0",
+        "passed": true,
+        "metrics": {
+          "mrr_at_k": 0.9236111111111112,
+          "p95_ms": 1.7044690030161291,
+          "precision_at_k": 0.23333333333333334,
+          "recall_at_k": 0.9444444444444444
+        },
+        "errors": []
+      }
+    ],
+    "repository_candidates": [],
+    "algorithm_catalog": [
+      {
+        "id": "github_xhluca_bm25s",
+        "name": "BM25Plus",
+        "version": "20261014T160901_22b20fbf",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "Reproduce BM25Plus from the pinned source scoring functions and constructor defaults. Adapt the retrieve interface and tokenizer only; do not mix in unrelated scoring methods or install dependencies.",
+        "public_cases": [
+          {
+            "query": "alpha",
+            "memories": [
+              {
+                "id": "a",
+                "text": "alpha alpha beta",
+                "source": "public formula case"
+              },
+              {
+                "id": "b",
+                "text": "alpha beta",
+                "source": "public formula case"
+              },
+              {
+                "id": "c",
+                "text": "gamma",
+                "source": "public formula case"
+              }
+            ],
+            "top_k": 3,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.1996778125075978
+              },
+              {
+                "id": "b",
+                "score": 1.0397207708399179
+              },
+              {
+                "id": "c",
+                "score": 0.34657359027997264
+              }
+            ]
+          },
+          {
+            "query": "alpha alpha",
+            "memories": [
+              {
+                "id": "a",
+                "text": "alpha alpha beta",
+                "source": "public formula case"
+              },
+              {
+                "id": "b",
+                "text": "alpha beta",
+                "source": "public formula case"
+              },
+              {
+                "id": "c",
+                "text": "gamma",
+                "source": "public formula case"
+              }
+            ],
+            "top_k": 3,
+            "expected": [
+              {
+                "id": "a",
+                "score": 2.3993556250151955
+              },
+              {
+                "id": "b",
+                "score": 2.0794415416798357
+              },
+              {
+                "id": "c",
+                "score": 0.6931471805599453
+              }
+            ]
+          }
+        ],
+        "provenance": {
+          "repository": "xhluca/bm25s",
+          "url": "https://github.com/xhluca/bm25s",
+          "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+          "license": "MIT"
+        }
+      }
+    ],
+    "max_candidates": 4,
+    "required_algorithms": [
+      "github_xhluca_bm25s"
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Algorithm",
+            "type": "string",
+            "enum": [
+              "github_xhluca_bm25s"
+            ]
+          },
+          "capability_id": {
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "algorithm",
+          "capability_id",
+          "rationale"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/Candidate"
+        },
+        "maxItems": 4,
+        "minItems": 1,
+        "title": "Candidates",
+        "type": "array"
+      },
+      "design_explanation": {
+        "title": "Design Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "candidates",
+      "design_explanation"
+    ],
+    "title": "Plan",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "raw_content": "{\"candidates\":[{\"algorithm\":\"github_xhluca_bm25s\",\"capability_id\":\"cap_github_xhluca_bm25s_20261014t160901_22b20fbf\",\"rationale\":\"The BM25Plus algorithm is the only supported method for memory retrieval as specified in required_algorithms. It leverages existing _score_idf_bm25plus and _score_tfc_bm25plus functions from bm25s/scoring.py to ensure compatibility with JSONL corpora and English input, matching the task requirements.\"}],\"design_explanation\":\"Implement the retrieve interface and tokenizer from bm25s, using the pinned scoring functions to calculate IDF and TF scores for the given query against memories, returning top_k results with ordered IDs and scores.\"}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 2187,
+    "eval_count": 171,
+    "total_duration": 8257774857
+  },
+  "response": {
+    "candidates": [
+      {
+        "algorithm": "github_xhluca_bm25s",
+        "capability_id": "cap_github_xhluca_bm25s_20261014t160901_22b20fbf",
+        "rationale": "The BM25Plus algorithm is the only supported method for memory retrieval as specified in required_algorithms. It leverages existing _score_idf_bm25plus and _score_tfc_bm25plus functions from bm25s/scoring.py to ensure compatibility with JSONL corpora and English input, matching the task requirements."
+      }
+    ],
+    "design_explanation": "Implement the retrieve interface and tokenizer from bm25s, using the pinned scoring functions to calculate IDF and TF scores for the given query against memories, returning top_k results with ordered IDs and scores."
+  },
+  "duration_seconds": 8.275634709047154
+}

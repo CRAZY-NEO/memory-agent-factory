@@ -141,6 +141,40 @@ def test_public_search_download_pinning_and_no_token_forwarding(tmp_path):
         github.download('../private', tmp_path / 'bad')
 
 
+def test_scalar_kernels_without_derivable_contract_cannot_be_registered(workspace):
+    factory, _ = fixture_factory(workspace)
+    factory.github = fixture_github(DICE + '\ndef sorensen_dice_scalar_component(tf, unknown):\n    return tf + unknown\n')
+    with pytest.raises(ValueError, match='Cannot certify scalar source adaptation'):
+        factory.run('复刻 Sorensen Dice 用于技术记忆检索')
+    assert not (workspace / 'state/algorithm_registry/active.json').exists()
+
+
+def test_source_budget_preserves_constructor_defaults_for_target_variant(workspace):
+    from types import SimpleNamespace
+
+    from agent_factory.source_contracts import derive_term_contract
+
+    source = ('import math\nclass BM25:\n'
+              '    def __init__(self, k1=1.5, b=0.75, delta=0.5):\n        self.k1 = k1\n'
+              'def score_tfc_bm25plus(tf_array, l_d, l_avg, k1, b, delta):\n'
+              '    return ((k1 + 1) * tf_array) / (k1 * (1 - b + b * l_d / l_avg) + tf_array) + delta\n'
+              'def score_idf_bm25plus(df, N):\n    return math.log((N + 1) / df)\n'
+              + ''.join(f'def query_memories_tfidf_helper_{n}(query):\n    return query\n' for n in range(12)))
+    factory = DiscoveryFactory(workspace, provider='mock', github=fixture_github(source))
+    factory.source = factory.github.download('fixture/retrieval', factory.directory / 'repository')
+    factory.source_id = 'fixture_snapshot'
+    factory.store.add_node(factory.source_id, 'GitHubSnapshot', factory.source)
+    factory.search_queries = ['BM25Plus', 'BM25']
+    factory.requested_method = 'BM25Plus'
+    factory._extract({'description': '比较 TF-IDF 与 BM25Plus，输入 query、memories，检索技术笔记'})
+    factory.proposal = SimpleNamespace(name='BM25Plus', id='github_bm25plus', evidence=[])
+    factory.scoring_mode = 'term'
+    context = factory._code_context({'request': {'top_k': 5}})
+    contract = derive_term_contract(context['source_functions'], context['source_numeric_defaults'])
+    assert contract['status'] == 'derived_scalar_formula_cases'
+    assert contract['defaults']['delta'] == 0.5 and contract['defaults']['k1'] == 1.5
+
+
 @pytest.mark.parametrize('kind', ['traversal', 'symlink', 'duplicate', 'oversized'])
 def test_archive_rejects_unsafe_or_unbounded_members(tmp_path, kind):
     output = io.BytesIO()
@@ -278,7 +312,7 @@ def test_code_context_selects_method_kernels_and_numeric_defaults(workspace):
         {'qualified_name': 'Index.__init__', 'path': 'index.py', 'code': 'self.backend = numpy',
          'signature': "def __init__(self, smoothing=0.5, backend='numpy', compile=True)"}]}
     context = factory._code_context({'request': {'top_k': 5}})
-    assert context['source_numeric_defaults'] == {'smoothing': 0.5}
+    assert context['source_numeric_defaults'] == {}  # Constructor option unused by the selected scoring kernel.
     assert [row['qualified_name'] for row in context['source_functions']] == ['score_dice']
     assert 'UNRELATED_NUMPY_BACKEND' not in json.dumps(context)
     assert 'reference_example' not in context

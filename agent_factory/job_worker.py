@@ -13,8 +13,8 @@ from .knowledge import KnowledgeStore, ingest_sources
 from .llm import LLMClient
 from .models import ValidationConfig
 from .registry import load_registry
+from .routing import AutomaticFactory, RoutingError
 from .runtime import MemoryRetriever
-from .workflow import Factory
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,12 +32,14 @@ def execute_job(workspace, job, provider, model, base_url, runner, store=None):
         result.pop('directory', None)
         return {**result, 'report_url': f'/v1/runs/{factory.run_id}/report'}
     if kind == "factory":
-        factory = Factory(workspace, provider, model, base_url, runner)
-        if store:
-            store.attach_run(job['id'], factory.run_id)
+        factory = AutomaticFactory(workspace, provider, model, base_url, runner,
+                                   mode=payload.get('mode', 'auto'),
+                                   on_run=(lambda run_id: store.attach_run(job['id'], run_id)) if store else None)
         result = factory.run(payload["description"])
         return {"status": result["status"], "run_id": result["run_id"],
-                "algorithm": result["selected"]["algorithm"] if result["selected"] else None,
+                "algorithm": result.get('algorithm') or (result.get('selected') or {}).get('algorithm'),
+                'routing': result['routing'], 'discovery_run_id': result.get('discovery_run_id'),
+                'registered': result.get('registered', False),
                 "report_url": f"/v1/runs/{result['run_id']}/report"}
     if kind == "ingest":
         config = ValidationConfig.model_validate(json.loads((workspace / "config.json").read_text(encoding="utf-8")))
@@ -87,6 +89,9 @@ def process_one(store, workspace, provider="mock", model="mock-template-v1",
         error = None if result["status"] == "passed" else "Factory validation did not pass"
         store.finish(job["id"], result=result, error=error)
         LOGGER.info("Job %s finished: %s", job["id"], result["status"])
+    except RoutingError as exc:
+        LOGGER.warning('Job %s routing stopped: %s', job['id'], exc)
+        store.finish(job['id'], error=str(exc))
     except Exception as exc:
         # Full details stay on the host log; API errors do not disclose host paths or service URLs.
         LOGGER.exception("Job %s failed", job["id"])

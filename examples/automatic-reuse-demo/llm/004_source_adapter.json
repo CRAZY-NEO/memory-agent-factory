@@ -1,0 +1,60 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "source_adapter",
+  "context": {
+    "method_name": "BM25Plus",
+    "source_adapter_hint": "def score_term(tf, df, doc_len, avg_len, N):\n    if avg_len <= 0 or df <= 0:\n        return 0.0\n    return source_tf_component(tf, doc_len, avg_len, 1.5, 0.75, 0.5) * source_idf_component(df, N)",
+    "required_source_calls": [
+      "source_tf_component",
+      "source_idf_component"
+    ],
+    "reference_version": "20261014T160901_22b20fbf",
+    "source": {
+      "repository": "xhluca/bm25s",
+      "url": "https://github.com/xhluca/bm25s",
+      "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+      "license": "MIT"
+    }
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "maxLength": 40000,
+        "minLength": 30,
+        "title": "Code",
+        "type": "string"
+      },
+      "explanation": {
+        "title": "Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "explanation"
+    ],
+    "title": "CodeArtifact",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "raw_content": "{\"code\": \"def score_term(tf, df, doc_len, avg_len, N):\\n    if avg_len <= 0 or df <= 0:\\n        return 0.0\\n    return source_tf_component(tf, doc_len, avg_len, 1.5, 0.75, 0.5) * source_idf_component(df, N)\", \"explanation\": \"This function calculates BM25Plus scores by combining term frequency and inverse document frequency components with specified parameters.\"}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 404,
+    "eval_count": 107,
+    "total_duration": 4132707927
+  },
+  "response": {
+    "code": "def score_term(tf, df, doc_len, avg_len, N):\n    if avg_len <= 0 or df <= 0:\n        return 0.0\n    return source_tf_component(tf, doc_len, avg_len, 1.5, 0.75, 0.5) * source_idf_component(df, N)",
+    "explanation": "This function calculates BM25Plus scores by combining term frequency and inverse document frequency components with specified parameters."
+  },
+  "duration_seconds": 4.1548605831339955
+}

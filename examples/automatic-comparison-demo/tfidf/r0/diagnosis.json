@@ -1,0 +1,21 @@
+{
+  "summary": "代码中引用了未导入的函数 `cosine_similarity`，导致 `NameError` 异常。",
+  "repair_instructions": [
+    "在文件顶部导入 `sklearn.metrics.pairwise` 模块，并添加 `from sklearn.metrics.pairwise import cosine_similarity`。"
+  ],
+  "trusted_findings": [],
+  "execution_diagnostics": [
+    {
+      "error": "NameError: name 'cosine_similarity' is not defined",
+      "frames": [
+        {
+          "line": 14,
+          "function": "retrieve",
+          "source": "    scores = cosine_similarity(vectorizer.transform([query]), corpus)[0]"
+        }
+      ],
+      "count": 41
+    }
+  ],
+  "unchanged_previous_repair": false
+}

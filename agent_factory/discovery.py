@@ -74,6 +74,17 @@ class DiscoveryFactory(Factory):
     def __init__(self, workspace, provider='ollama', model='qwen3.5:2b',
                  base_url='http://127.0.0.1:11435', github=None, config=None, registry=None):
         super().__init__(workspace, provider, model, base_url, runner='docker', config=config, registry=registry)
+        self._initialize_discovery(github)
+
+    @classmethod
+    def from_factory(cls, factory, github=None):
+        """Continue routing's existing run, traces, registry and execution session."""
+        instance = cls.__new__(cls)
+        instance.__dict__.update(factory.__dict__)
+        instance._initialize_discovery(github)
+        return instance
+
+    def _initialize_discovery(self, github):
         self.github = github or GitHubSources()
         self.source = None
         self.proposal = None
@@ -86,6 +97,7 @@ class DiscoveryFactory(Factory):
     def _search_intent(self, state):
         intent = self.client.ask('source_search', {
             'description': state['description'], 'supported_tasks': ['memory_retrieval'],
+            'requested_method': getattr(self, 'requested_method', None),
             'existing_algorithms': self.registry.catalog()['algorithms']}, SearchIntent)
         if intent.task != 'memory_retrieval':
             raise ValueError('This discovery environment currently supports retrieval methods; classification needs its own validator')
@@ -141,7 +153,12 @@ class DiscoveryFactory(Factory):
         self.extracted = extracted
         self.store.add_edge(self.source_id, extracted['snapshot']['id'], 'statically_extracted_as')
         terms = set(re.findall(r'[a-z0-9]+', state['description'].lower() + ' ' + ' '.join(self.search_queries)))
+        target = re.sub(r'[^a-z0-9]', '', getattr(self, 'requested_method', '').lower())
         functions = sorted(extracted['candidates'], key=lambda row: (
+            # Preserve the requested scoring kernels and constructor defaults
+            # before generic query/index helpers consume the context budget.
+            not (target and target in re.sub(r'[^a-z0-9]', '', row['qualified_name'].lower())),
+            not row['qualified_name'].endswith('__init__'),
             -sum(term in row['qualified_name'].lower() for term in terms),
             row['name'] not in {'get_scores', 'retrieve', 'rank', 'search', '_calc_idf', '__init__'},
             row['path'], row['line_start']))
@@ -186,11 +203,17 @@ class DiscoveryFactory(Factory):
     def _propose(self, state):
         files = {item['path']: item for item in self.source['files']}
         context = {'description': state['description'], **self.source_context,
+                   'requested_method': getattr(self, 'requested_method', None),
                    'existing_algorithms': [{'id': item.id, 'name': item.name}
                                            for item in self.registry.algorithms.values()]}
         for attempt in range(2):
             proposal = self.client.ask('source_proposal', context, AlgorithmProposal)
             try:
+                requested = getattr(self, 'requested_method', None)
+                if requested:
+                    from .routing import canonical as method_identity
+                    if method_identity(proposal.name) != method_identity(requested):
+                        raise ValueError('Proposed method differs from the explicitly requested method: ' + requested)
                 if proposal.id in self.registry.algorithms:
                     raise ValueError('Proposed algorithm ID already exists; choose a new method')
                 def canonical(name):
@@ -222,6 +245,8 @@ class DiscoveryFactory(Factory):
             self.source_contract = derive_term_contract(context['source_functions'], context['source_numeric_defaults'])
         (self.directory / 'source_contract.json').write_text(
             json.dumps(self.source_contract, ensure_ascii=False, indent=2), encoding='utf-8')
+        if self.scoring_mode == 'term' and self.source_contract['status'] == 'unsupported':
+            raise ValueError('Cannot certify scalar source adaptation: ' + self.source_contract['reason'])
         material = self.directory / 'proposed-material.md'
         guidance = ('Reproduce ' + proposal.name + ' from the pinned source scoring functions and constructor defaults. '
                     'Adapt the retrieve interface and tokenizer only; do not mix in unrelated scoring methods or install dependencies.')
@@ -294,6 +319,15 @@ class DiscoveryFactory(Factory):
             functions.append({'path': row['path'], 'qualified_name': row['qualified_name'],
                               'code': excerpt, 'code_truncated': len(excerpt) < len(row['code'])})
             remaining -= len(excerpt)
+        needed_defaults = set()
+        for row in functions:
+            try:
+                function = ast.parse(row['code']).body[0]
+                needed_defaults.update(argument.arg for argument in function.args.args)
+            except (SyntaxError, AttributeError):
+                pass
+        # Storage precision and logging verbosity are not scoring parameters.
+        defaults = {name: value for name, value in defaults.items() if name in needed_defaults}
         hook = {'signature': 'def score_document(query_terms, document_terms, corpus_stats)',
                 'query_terms': 'Counter: token -> query count', 'document_terms': 'Counter: token -> this document count',
                 'corpus_stats': {'N': 'number of documents', 'avg_len': 'mean token count per document',
@@ -317,6 +351,8 @@ class DiscoveryFactory(Factory):
                 'public_algorithm_cases': self.source_contract['cases'],
                 'adapted_source_kernels': self.source_contract.get('kernel_helpers', ''),
                 'source_adapter_hint': self.source_contract.get('adapter_hint', ''),
+                'required_source_calls': [node.name for node in ast.parse(
+                    self.source_contract.get('kernel_helpers', '')).body if isinstance(node, ast.FunctionDef)],
                 'adaptation_rules': 'Use actual source formulas and constructor defaults. Ignore any conflicting proposal claim. '
                                     'Do not import the downloaded library. Use only math, re, collections, or allowed sklearn modules. '
                                     'Tokenize lowercase English words and Chinese single characters plus bigrams. '
@@ -325,6 +361,13 @@ class DiscoveryFactory(Factory):
     def _generate(self, state):
         context = self._code_context(state)
         role = 'source_coder' if not state['revision'] else 'source_repairer'
+        if context['source_adapter_hint']:
+            # Formula generation is unnecessary when the pinned source already
+            # yields pure arithmetic kernels. Keep the model's task to a short,
+            # deterministic wrapper, without competing formula descriptions.
+            role = 'source_adapter' if not state['revision'] else 'source_adapter_repairer'
+            context = {key: context[key] for key in ['method_name', 'scoring_hook', 'source_adapter_hint',
+                                                     'required_source_calls', 'source_numeric_defaults']}
         if state['revision']:
             context.update(validation=validation_feedback(state['validation']), diagnosis=state['diagnosis'],
                            previous_code=self.last_scorer if state['revision'] == 1 else '',
@@ -352,6 +395,7 @@ class DiscoveryFactory(Factory):
                                'unchanged': bool(state['revision'] and code_fingerprint(code) == code_fingerprint(state['code'])),
                                'semantic_hash': code_fingerprint(code), 'repository_candidate_ids': [],
                                'scaffold': 'algorithm-independent lexical interface v1', 'scoring_mode': self.scoring_mode,
+                               'source_adapter': bool(self.source_contract.get('adapter_hint')),
                                'source_commit': self.source['commit'], 'internal_template_used': False}}
 
     def _review(self, state):
@@ -424,7 +468,7 @@ class DiscoveryFactory(Factory):
             self.store.add_node(self.environment_id, 'Environment', self.environment)
             graph = self.graph()
             (self.directory / 'workflow.mmd').write_text(graph.get_graph().draw_mermaid(), encoding='utf-8')
-            state = graph.invoke({'description': description, 'attempts': [], 'events': []},
+            state = graph.invoke({'description': description, 'attempts': [], 'events': getattr(self, 'initial_events', [])},
                                  config={'recursion_limit': 35})
             return {'status': state['status'], 'run_id': self.run_id, 'directory': str(self.directory),
                     'algorithm': self.proposal.id, 'registered': self.release is not None,

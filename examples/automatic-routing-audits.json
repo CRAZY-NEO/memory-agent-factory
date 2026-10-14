@@ -1,0 +1,92 @@
+{
+  "scope": "Failed or revoked pre-fix acceptance attempts; not successful delivery evidence.",
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "runner": "docker",
+  "cases": [
+    {
+      "run_id": "20261014T145739_a19fcc97",
+      "status": "failed_validation",
+      "routing": {
+        "requested_mode": "auto",
+        "action": "reuse",
+        "intent": {
+          "task": "memory_retrieval",
+          "requested_methods": [],
+          "discover_new": false,
+          "rationale": "用户请求比较 TF-IDF 与 BM25Plus，但 BM25Plus 不在支持的算法目录中，因此无法执行该任务。"
+        },
+        "registered_methods": [],
+        "missing_methods": [],
+        "reason": "已有能力可以作为实现依据，无需联网搜索。"
+      },
+      "router_raw_content": "{\"task\": \"memory_retrieval\", \"rationale\": \"用户请求比较 TF-IDF 与 BM25Plus，但 BM25Plus 不在支持的算法目录中，因此无法执行该任务。\", \"requested_methods\": [], \"discover_new\": false}",
+      "problem": "Model omitted requested methods absent from catalog; route wrongly reused baseline candidates.",
+      "correction": "Use explicit literal method anchors alongside model extraction, preserving both in routing.json."
+    },
+    {
+      "run_id": "20261014T150841_0d7e5500",
+      "status": "revoked",
+      "audit": {
+        "status": "revoked",
+        "run_id": "20261014T150841_0d7e5500",
+        "algorithm": "github_xhluca_bm25s",
+        "reason": "Source defaults were absent from bounded context, formula cases were unsupported, and manual audit found the generated score differed from BM25Plus. Business metrics alone do not certify method identity.",
+        "correction": "Prioritize target kernels and constructor defaults; reject scalar-source registration when a numerical contract cannot be derived."
+      },
+      "source_contract": {
+        "status": "unsupported",
+        "reason": "Unsupported source parameter mapping",
+        "cases": []
+      },
+      "generated_scoring_hook": "tf, df, doc_len, avg_len, N):\n    result = float((N + 1) / (float(df))) * tf\n    return result",
+      "problem": "Missing constructor defaults prevented formula checks; generated weighted term count was not BM25Plus.",
+      "correction": "Prioritize target kernels and constructor defaults, and block scalar-source approval without source-derived numerical checks."
+    },
+    {
+      "run_id": "20261014T153253_0ddeb009",
+      "status": "failed_validation",
+      "registered": false,
+      "problem": "Model rewrote and rounded source formulas despite a supplied adapter; all numerical checks rejected it.",
+      "correction": "Only scoring parameters enter the prompt; source-adapter response contract requires supplied kernel calls and permits a bounded corrective retry.",
+      "llm_calls": 9,
+      "attempt_errors": [
+        {
+          "revision": 0,
+          "errors": [
+            "algorithm contract: github_xhluca_bm25s public example 0 scores or ranking mismatch",
+            "algorithm contract: github_xhluca_bm25s public example 1 scores or ranking mismatch"
+          ]
+        },
+        {
+          "revision": 1,
+          "errors": [
+            "algorithm contract: github_xhluca_bm25s public example 0 scores or ranking mismatch",
+            "algorithm contract: github_xhluca_bm25s public example 1 scores or ranking mismatch"
+          ]
+        },
+        {
+          "revision": 2,
+          "errors": [
+            "algorithm contract: github_xhluca_bm25s public example 0 scores or ranking mismatch",
+            "algorithm contract: github_xhluca_bm25s public example 1 scores or ranking mismatch"
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": "20261014T153946_9d2708e1",
+      "status": "failed_validation",
+      "llm_calls": 12,
+      "problem": "Model ignored required kernel calls; bounded retries and formula gates rejected all revisions.",
+      "correction": "Use a compact deterministic source_adapter role rather than a free-form scoring prompt."
+    },
+    {
+      "run_id": "20261014T155519_7d9f8da8",
+      "status": "failed_validation",
+      "llm_calls": 15,
+      "problem": "Discovery succeeded but subsequent full-code generation failed interface and execution checks.",
+      "correction": "Reuse approved source kernels and regenerate only the checked adapter; keep full validation."
+    }
+  ]
+}

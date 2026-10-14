@@ -1,0 +1,15 @@
+{
+  "candidates": [
+    {
+      "algorithm": "tfidf",
+      "capability_id": "char_tfidf_795a7ce4c36d",
+      "rationale": "适用于小规模中文与英文混合笔记，能解决同义改写和缺少词面重合的查询问题，依赖 scikit-learn 库。"
+    },
+    {
+      "algorithm": "github_xhluca_bm25s",
+      "capability_id": "cap_github_xhluca_bm25s_20261014t160901_22b20fbf",
+      "rationale": "适用于 JSONL 格式语料库，依赖现有 bm25s 库中的 _score_idf_bm25plus 和 _score_tfc_bm25plus 函数，支持英文输入。"
+    }
+  ],
+  "design_explanation": "根据需求，同时启用 tfidf 和 github_xhluca_bm25s 两种算法以覆盖中文与英文混合场景，确保检索精度与稳定性。"
+}

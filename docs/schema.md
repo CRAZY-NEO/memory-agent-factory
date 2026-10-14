@@ -62,3 +62,7 @@ graph LR
 `discover` 自动下载公开仓库后调用同一 AST 抽取器，提议新的 Capability 并记录来源证据。评分函数源码与模型归纳分开，后者不是公式认证。生成版本经过实际执行后，只有验证集和最终测试通过才产生 AlgorithmRelease。其 `version` 使用运行 ID，来源固定为不可变提交；活动版本写入 `state/algorithm_registry/active.json`。参考代码、材料、验证记录和许可均进行文件哈希校验，注册表不导入模型生成的注册脚本。详见 [发现指南](github-discovery.md)。
 
 抽取结果见 `knowledge/extracted_capabilities.json`；带验证历史的图见 `examples/demo/knowledge/graph.json`。
+
+## 自动路由记录
+
+FactoryRun 新增 routing 属性：requested_mode、action、intent、literal_method_mentions、registered_methods、missing_methods、reason。混合请求的比较记录还含 discovery_run_id、discovered_algorithm，关联独立发现证据。模型原始意图和确定性原文方法名同时保留，路由信息不作为验证成功证据。详见 [自动路由](automatic-routing.md)。

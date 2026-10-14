@@ -1,0 +1,10 @@
+{
+  "candidates": [
+    {
+      "algorithm": "github_xhluca_bm25s",
+      "capability_id": "cap_github_xhluca_bm25s_20261014t160901_22b20fbf",
+      "rationale": "该仓库专为 Python 设计，使用 NumPy 和 Numba 实现高性能 BM25 搜索，完全符合用户要求的独立算法库。相比其他仓库，它提供了更简洁的 API 和更快的执行速度，适合中文与英文混合场景下的 TF-IDF 与 BM25Plus 对比验证。其开源许可（MIT）和可复刻性使其成为首选。"
+    }
+  ],
+  "design_explanation": "从实际 GitHub 搜索结果下载固定提交，依据来源证据复刻新方法：The BM25Plus algorithm adapts to the repository by leveraging existing scoring functions from bm25s/scoring.py. It uses the _score_idf_bm25plus function for IDF calculation and _score_tfc_bm25plus for TF calculation, ensuring compatibility with the provided interface. The method requires no additional dependencies beyond the existing bm25s library, maintaining stability and performance."
+}

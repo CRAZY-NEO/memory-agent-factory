@@ -1,0 +1,98 @@
+{
+  "task": "memory_retrieval",
+  "entrypoint": "retrieve",
+  "interface_version": "1",
+  "runner": "docker",
+  "run_id": "20261014T161126_0568ab6e",
+  "code_hash": "cee5c30b688684a1dc315430fc60b323a102d7c56bb1ec09e317c3cbf90b48e0",
+  "code_path": "examples/automatic-reuse-demo/selected_retrieval.py",
+  "algorithm_plugin": {
+    "id": "github_xhluca_bm25s",
+    "name": "BM25Plus",
+    "version": "20261014T160901_22b20fbf",
+    "task": "memory_retrieval",
+    "dependencies": [],
+    "environment": "retrieval-v1",
+    "guidance": "Reproduce BM25Plus from the pinned source scoring functions and constructor defaults. Adapt the retrieve interface and tokenizer only; do not mix in unrelated scoring methods or install dependencies.",
+    "public_cases": [
+      {
+        "query": "alpha",
+        "memories": [
+          {
+            "id": "a",
+            "text": "alpha alpha beta",
+            "source": "public formula case"
+          },
+          {
+            "id": "b",
+            "text": "alpha beta",
+            "source": "public formula case"
+          },
+          {
+            "id": "c",
+            "text": "gamma",
+            "source": "public formula case"
+          }
+        ],
+        "top_k": 3,
+        "expected": [
+          {
+            "id": "a",
+            "score": 1.1996778125075978
+          },
+          {
+            "id": "b",
+            "score": 1.0397207708399179
+          },
+          {
+            "id": "c",
+            "score": 0.34657359027997264
+          }
+        ]
+      },
+      {
+        "query": "alpha alpha",
+        "memories": [
+          {
+            "id": "a",
+            "text": "alpha alpha beta",
+            "source": "public formula case"
+          },
+          {
+            "id": "b",
+            "text": "alpha beta",
+            "source": "public formula case"
+          },
+          {
+            "id": "c",
+            "text": "gamma",
+            "source": "public formula case"
+          }
+        ],
+        "top_k": 3,
+        "expected": [
+          {
+            "id": "a",
+            "score": 2.3993556250151955
+          },
+          {
+            "id": "b",
+            "score": 2.0794415416798357
+          },
+          {
+            "id": "c",
+            "score": 0.6931471805599453
+          }
+        ]
+      }
+    ],
+    "provenance": {
+      "repository": "xhluca/bm25s",
+      "url": "https://github.com/xhluca/bm25s",
+      "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+      "license": "MIT"
+    }
+  },
+  "dependencies": [],
+  "validation_report": "examples/automatic-reuse-demo/report.json"
+}

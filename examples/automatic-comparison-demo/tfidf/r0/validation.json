@@ -1,0 +1,142 @@
+{
+  "split": "validation",
+  "passed": false,
+  "errors": [
+    "v01: NameError: name 'cosine_similarity' is not defined",
+    "v02: NameError: name 'cosine_similarity' is not defined",
+    "v03: NameError: name 'cosine_similarity' is not defined",
+    "v04: NameError: name 'cosine_similarity' is not defined",
+    "v05: NameError: name 'cosine_similarity' is not defined",
+    "v06: NameError: name 'cosine_similarity' is not defined",
+    "v07: NameError: name 'cosine_similarity' is not defined",
+    "v08: NameError: name 'cosine_similarity' is not defined",
+    "v09: NameError: name 'cosine_similarity' is not defined",
+    "v10: NameError: name 'cosine_similarity' is not defined",
+    "v11: NameError: name 'cosine_similarity' is not defined",
+    "v12: NameError: name 'cosine_similarity' is not defined",
+    "v13: NameError: name 'cosine_similarity' is not defined",
+    "v14: NameError: name 'cosine_similarity' is not defined",
+    "v15: NameError: name 'cosine_similarity' is not defined",
+    "v16: NameError: name 'cosine_similarity' is not defined",
+    "v17: NameError: name 'cosine_similarity' is not defined",
+    "v18: NameError: name 'cosine_similarity' is not defined",
+    "v19: NameError: name 'cosine_similarity' is not defined",
+    "v20: NameError: name 'cosine_similarity' is not defined",
+    "v21: NameError: name 'cosine_similarity' is not defined",
+    "v22: NameError: name 'cosine_similarity' is not defined",
+    "v23: NameError: name 'cosine_similarity' is not defined",
+    "v24: NameError: name 'cosine_similarity' is not defined",
+    "v25: NameError: name 'cosine_similarity' is not defined",
+    "v26: NameError: name 'cosine_similarity' is not defined",
+    "v27: NameError: name 'cosine_similarity' is not defined",
+    "v28: NameError: name 'cosine_similarity' is not defined",
+    "v29: NameError: name 'cosine_similarity' is not defined",
+    "v30: NameError: name 'cosine_similarity' is not defined",
+    "v31: NameError: name 'cosine_similarity' is not defined",
+    "v32: NameError: name 'cosine_similarity' is not defined",
+    "v33: NameError: name 'cosine_similarity' is not defined",
+    "v34: NameError: name 'cosine_similarity' is not defined",
+    "v35: NameError: name 'cosine_similarity' is not defined",
+    "v36: NameError: name 'cosine_similarity' is not defined",
+    "contract:exact: NameError: name 'cosine_similarity' is not defined",
+    "contract:repeat: NameError: name 'cosine_similarity' is not defined",
+    "contract:large_k: NameError: name 'cosine_similarity' is not defined",
+    "contract:unicode: NameError: name 'cosine_similarity' is not defined",
+    "contract:algorithm:0: NameError: name 'cosine_similarity' is not defined"
+  ],
+  "metrics": {},
+  "top_k": 5,
+  "query_count": 36,
+  "memory_count": 48,
+  "execution": {
+    "wall_seconds": 1.2698842498939484,
+    "runner": "docker"
+  },
+  "gates": {
+    "task": "memory_retrieval",
+    "algorithms": [
+      "tfidf",
+      "github_xhluca_bm25s"
+    ],
+    "plugin_packages": [],
+    "max_candidates": 2,
+    "compare_all_algorithms": true,
+    "metrics": {
+      "recall_at_k": {
+        "min": 0.75,
+        "max": null
+      },
+      "mrr_at_k": {
+        "min": 0.65,
+        "max": null
+      },
+      "precision_at_k": {
+        "min": 0.2,
+        "max": null
+      },
+      "p95_ms": {
+        "min": null,
+        "max": 1000.0
+      }
+    },
+    "selection_order": [
+      "recall_at_k",
+      "mrr_at_k",
+      "precision_at_k"
+    ],
+    "timeout_seconds": 30.0,
+    "max_repairs": 2
+  },
+  "per_query": [],
+  "metric_plugins": [
+    {
+      "id": "recall_at_k",
+      "name": "Recall@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "mrr_at_k",
+      "name": "MRR@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "precision_at_k",
+      "name": "Precision@k",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "p95_ms",
+      "name": "P95 ms",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "direction": "lower",
+      "minimum": 0,
+      "maximum": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "error": "NameError: name 'cosine_similarity' is not defined",
+      "frames": [
+        {
+          "line": 14,
+          "function": "retrieve",
+          "source": "    scores = cosine_similarity(vectorizer.transform([query]), corpus)[0]"
+        }
+      ],
+      "count": 41
+    }
+  ]
+}

@@ -11,6 +11,7 @@
 | 模块 | 文件 | 工作 |
 | --- | --- | --- |
 | 输入与界面 | cli.py、models.py | CLI、参数和结构化契约校验 |
+| 自动路由 | routing.py | 模型意图与原文名称检查、注册表匹配、复用/发现选择及发现后的候选比较 |
 | 插件契约 | registry.py、plugins/ | 可信包发现、版本及依赖声明、阈值预检、算法与指标注册 |
 | 模型适配 | llm.py | Ollama 原生 chat、JSON schema、一次重试、调用记录、明确的 mock 模板模式 |
 | 能力知识 | knowledge.py | 材料抽取、原文证据检查、SQLite 版本存储、词面检索及图遍历 |
@@ -32,7 +33,11 @@ flowchart TD
   B --> K[(SQLite 能力知识库)]
   Repo[本地 Python 仓库] --> AST[AST 静态抽取: 未验证候选及来源]
   AST --> K
-  U[算法开发需求] --> I[Understander: 需求结构化]
+  U[算法开发需求] --> Router{Router: 注册表与需求判断}
+  Router -->|已有能力| I[Understander: 需求结构化]
+  Router -->|未登记方法| Discovery[GitHub 发现、源码适配、验证及登记]
+  Discovery -->|还需比较已有方法| I
+  Discovery -->|单一新方法| O
   I --> R[可信检索: 能力、历史、失败经验]
   K --> R
   R --> P[Planner: 配置预算内候选]
@@ -59,6 +64,7 @@ flowchart TD
 另有 `discover` 来源工作流：搜索规划 → 实际 GitHub 搜索 → 选库/固定提交下载 → AST → 方法提议 → 源码适配生成 → 原统一验证及有限修复 → 冻结最终测试 → 登记 → 回写。该路径不需要已有算法 ID，不传入内置模板，不直接安装下载库；已登记的方法随后回到普通 `run` 的候选目录。详见 [发现与登记](github-discovery.md)。
 
 每个候选默认初版+最多两次修复；每次模型调用最多两次尝试。
+Web、CLI `run` 与工厂 API 默认自动选择路径。混合请求保存独立的发现和比较报告，通过 `discovery_run_id` 关联；比较保留本次验证策略。详见 [自动路由](automatic-routing.md)。
 LangGraph 递归上限提供额外终止保护。所有候选失败时出失败报告，不生成成功插件。
 最终测试失败只报告失败，不继续调参、修复或重新选候选。
 

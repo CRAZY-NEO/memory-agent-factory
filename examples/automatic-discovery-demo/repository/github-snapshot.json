@@ -1,0 +1,440 @@
+{
+  "repository": "xhluca/bm25s",
+  "url": "https://github.com/xhluca/bm25s",
+  "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+  "license": "MIT",
+  "license_files": [
+    "LICENSE"
+  ],
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "8c159b4c621a86c4695c83f42a00932b26183f6da8ab62b0865835594426c8ff",
+      "bytes": 1068
+    },
+    {
+      "path": "README.md",
+      "sha256": "9166cd1c822856652c92526802670a1d73976bcc4141e3eb0940af611389a319",
+      "bytes": 27840
+    },
+    {
+      "path": "bm25s/__init__.py",
+      "sha256": "acfe408d3cafec38b061d055743a4081ab7ce38c93b300815bfbf9a399b7d6eb",
+      "bytes": 55809
+    },
+    {
+      "path": "bm25s/cli.py",
+      "sha256": "95a3cd789fd374086f5dbb6639c0433ceb62f21d237a8bf301cede533bb26714",
+      "bytes": 3261
+    },
+    {
+      "path": "bm25s/hf.py",
+      "sha256": "ef53c4775b6f6fde4a3a4fa5f687268b5f70562a82e11bd0f59c1757b1eed21b",
+      "bytes": 19767
+    },
+    {
+      "path": "bm25s/high_level/README.md",
+      "sha256": "2d0dc0f168bf1ffb362b067a0cc7b764e994829a6ac127b106c0d9fc382652d7",
+      "bytes": 3911
+    },
+    {
+      "path": "bm25s/high_level/__init__.py",
+      "sha256": "946e755ab1ea7890870f58c12cc72022dac540c52d09c0cb0be179acbe05acb8",
+      "bytes": 9472
+    },
+    {
+      "path": "bm25s/high_level/setup.py",
+      "sha256": "ab9e5cf80de785d9b6fe576a61255ad29aa9ef65eff5f576514fdcd90c99ffcf",
+      "bytes": 3565
+    },
+    {
+      "path": "bm25s/mcp/__init__.py",
+      "sha256": "d5cbed8b1cc1591135c812f4d2497bbe0d2eb451f1ec74f065c453c81f7a09fa",
+      "bytes": 247
+    },
+    {
+      "path": "bm25s/mcp/server.py",
+      "sha256": "fbe92cfa6aec5cb6f48c5716eead8ed447900e7a323144b83f7801aa9df13322",
+      "bytes": 1813
+    },
+    {
+      "path": "bm25s/numba/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "bm25s/numba/retrieve_utils.py",
+      "sha256": "cf2db4431c60b1d4929722e8d5a50b0db99e2128d8c4dede3f03e5c6c05d3648",
+      "bytes": 5685
+    },
+    {
+      "path": "bm25s/numba/selection.py",
+      "sha256": "25e18ba3d11e9ee1c087bed5cbca6a30d490f9abfe18f8eed498b38e727d6ed8",
+      "bytes": 4663
+    },
+    {
+      "path": "bm25s/scoring.py",
+      "sha256": "859c13bd8e346d0d585b6743aad010b9e9fcbe163b1b3d6f1d67a72e369e2318",
+      "bytes": 14538
+    },
+    {
+      "path": "bm25s/selection.py",
+      "sha256": "fc6d6e68870a83c13fdd3cfd8fdcbfeb3f200cb7eb65e77b1e9c969214816481",
+      "bytes": 2611
+    },
+    {
+      "path": "bm25s/stopwords.py",
+      "sha256": "4e5ba5a865e918970a32678ffc3c9bdd862fd53b91f20789bef6e79e9d9b7bb0",
+      "bytes": 48476
+    },
+    {
+      "path": "bm25s/terminal/__init__.py",
+      "sha256": "494e56b9ebbe6dbee99d7037fdad57f53423edd7135b51252c8f65ce514a9a38",
+      "bytes": 12381
+    },
+    {
+      "path": "bm25s/tokenization.py",
+      "sha256": "647f463ad0b83e9f6dd19802e2c6e51996e64b5f6fa420e46f33097be1112871",
+      "bytes": 29323
+    },
+    {
+      "path": "bm25s/utils/__init__.py",
+      "sha256": "119fd23172ebc58186a9a52c8929aac3387bf361fd7d7d525d348e65aa459865",
+      "bytes": 53
+    },
+    {
+      "path": "bm25s/utils/beir.py",
+      "sha256": "e55bdbe5978ef2884aedc5ce246e8f8fb41c4e15ca153b4f9b580e1110d87c63",
+      "bytes": 13756
+    },
+    {
+      "path": "bm25s/utils/benchmark.py",
+      "sha256": "e6a7c4a36aa6b8a1c22c85ad1a7a146c992ccdf3d93d107ffdb826f53bdc62b4",
+      "bytes": 4069
+    },
+    {
+      "path": "bm25s/utils/corpus.py",
+      "sha256": "6e766e407c789db38b8ae4f56fbd0b9f3bf84e410ffad595493603de9179c007",
+      "bytes": 7841
+    },
+    {
+      "path": "bm25s/utils/json_functions.py",
+      "sha256": "8c3ebfc1efe2024a36692729d1eea6a8c49676966b96ce4c347fbdc338034450",
+      "bytes": 812
+    },
+    {
+      "path": "bm25s/version.py",
+      "sha256": "21d6a693bae11195957f6574e9255aca5239709c1dc0c2e2aadd12cd8ecb17f4",
+      "bytes": 307
+    },
+    {
+      "path": "examples/evaluate_on_beir.py",
+      "sha256": "c2948559a9978b5b510e2d12e6910f357f69444184a712393bcbcca83efe0152",
+      "bytes": 2877
+    },
+    {
+      "path": "examples/index_and_retrieve_with_numba.py",
+      "sha256": "6ca07bb5a981791c43c086cf742492004aa4bd1f19be32ed7dc4510011b7c0e3",
+      "bytes": 1672
+    },
+    {
+      "path": "examples/index_nq.py",
+      "sha256": "96935b66b97dee909514f8874e1d0588755d6ab6641526a88b9bcc44a9507a53",
+      "bytes": 1536
+    },
+    {
+      "path": "examples/index_to_hf.py",
+      "sha256": "cbdd6ae770173717c2a24a0b8a44d778f7a4c10088ffb69f2513cd9aad6fa6c8",
+      "bytes": 2797
+    },
+    {
+      "path": "examples/index_with_metadata.py",
+      "sha256": "2114ac30bcca2ed483ebc783e66e201eff2f885f742dc369abbb80fd4b0b9f45",
+      "bytes": 2104
+    },
+    {
+      "path": "examples/mcp/create_index.py",
+      "sha256": "3fc3f494f8c2071905f5178b426d852d6088ade1acb37d991c7d0db19e263d3b",
+      "bytes": 565
+    },
+    {
+      "path": "examples/mcp/verify_server.py",
+      "sha256": "0c54995b006bd4668cfe21fe5de40aefac65a8f8df31e21f46f42cbec1270086",
+      "bytes": 528
+    },
+    {
+      "path": "examples/nltk_stemmer.py",
+      "sha256": "c817d2e2a1759dc8373bed500ecb20c84bf1b9d2c5af0d6034e9e700bc05e3cf",
+      "bytes": 2880
+    },
+    {
+      "path": "examples/retrieve_from_hf.py",
+      "sha256": "109bb65fd32b0b2b695dac8e47a2100de768f818064d1fbf911191702a2b698c",
+      "bytes": 1698
+    },
+    {
+      "path": "examples/retrieve_nq.py",
+      "sha256": "ca9dec55cf3f01b97d3f32595bb1acbb6c44f9157668622e24cd62485a289ad1",
+      "bytes": 2914
+    },
+    {
+      "path": "examples/retrieve_nq_with_batching.py",
+      "sha256": "5ce81fd4c49ba2bd2564b29109fe82b7ed54fd3f550443ca13fe9100e43bcf9b",
+      "bytes": 2960
+    },
+    {
+      "path": "examples/retrieve_with_numba_advanced.py",
+      "sha256": "e8716a45d4ab967aee563f7a39064e0e01222ef9403b43ae32d1e831225193e6",
+      "bytes": 1125
+    },
+    {
+      "path": "examples/retrieve_with_numba_hf.py",
+      "sha256": "6c3bbc2c72465a84effc44cee7b247fabb31c9889ca3ad1b99307948482ccefa",
+      "bytes": 1209
+    },
+    {
+      "path": "examples/save_and_reload_end_to_end.py",
+      "sha256": "410da1a15ddba324c428e8bf2141f541935d364142e7fbb8a3c7148b8ebf5d46",
+      "bytes": 2586
+    },
+    {
+      "path": "examples/simple_load.py",
+      "sha256": "57c72b1152e679c3b898ae4bb10e526f8581d7a3a727dc6454aa1cf41291f893",
+      "bytes": 1648
+    },
+    {
+      "path": "examples/tokenize_multiprocess.py",
+      "sha256": "b3c3f4cb4763b2918bfc153e36e6e31970a23a7e6ae57c587215bb3a89e338e4",
+      "bytes": 2347
+    },
+    {
+      "path": "examples/tokenizer_class.py",
+      "sha256": "a1f35c37fccfc2beff6702b9ec7482d4edb79ba18ed21f83c2be1e03edb14576",
+      "bytes": 4246
+    },
+    {
+      "path": "setup.py",
+      "sha256": "a9a92f87da3e8d01d37b7b7afb5b78b335e4f9b85932a1a120079e6e9b2a47ca",
+      "bytes": 3941
+    },
+    {
+      "path": "tests/README.md",
+      "sha256": "8bbf6e6021ae3667333647190b634a9978cf59355a45b9334b716518f77fbf64",
+      "bytes": 1900
+    },
+    {
+      "path": "tests/__init__.py",
+      "sha256": "5eab360363855dfda1b9fad0cbb21a6ca4e4382b4d1941c60051391c74aa6e70",
+      "bytes": 11106
+    },
+    {
+      "path": "tests/comparison/test_bm25_pt.py",
+      "sha256": "8c4f5c696cecb849137c5d17508f03f650e78c4356a503a76a715c2b03aa355f",
+      "bytes": 904
+    },
+    {
+      "path": "tests/comparison/test_bm25s_indexing.py",
+      "sha256": "b3a35fa2253aa69d19b46cf9b34657d45a1f54cac4d7cf5d538e784c48448e37",
+      "bytes": 3148
+    },
+    {
+      "path": "tests/comparison/test_jsonl_corpus.py",
+      "sha256": "bbb3236b4829bed8f8796738fce67aa072edfd7c23b116451fc7b3a2af1dd5fc",
+      "bytes": 1875
+    },
+    {
+      "path": "tests/comparison/test_rank_bm25.py",
+      "sha256": "d7e87ce66f7e48313c49f1ce89ab8e2a368f185c2e6d71bacb3ec2a8af419f74",
+      "bytes": 911
+    },
+    {
+      "path": "tests/comparison/test_rank_bm25l.py",
+      "sha256": "27ae1952d7fa5511d32a0520afa03f12e87c4db9156487b4ba0766571a6ea1f1",
+      "bytes": 1095
+    },
+    {
+      "path": "tests/comparison/test_rank_bm25plus.py",
+      "sha256": "7e98a35f4b9b86fd1124463fd0a024e273151e10a2fa9726076cf5053b8d8ddd",
+      "bytes": 1095
+    },
+    {
+      "path": "tests/comparison/test_utils_corpus.py",
+      "sha256": "fe21cccbd001968adb447b8c015cbe15aa7ec565ef380c4242d1606861744c8e",
+      "bytes": 1685
+    },
+    {
+      "path": "tests/comparison_full/test_bm25_pt.py",
+      "sha256": "90d80cd9485020b5d94e816e7c6c6a7b7eb0b7e6d0173404c1caf7d1adc76069",
+      "bytes": 669
+    },
+    {
+      "path": "tests/comparison_full/test_rank_bm25.py",
+      "sha256": "0bd58b64fdd7f743c4f9624ac4adaf87fca9dc3bf780e69f33572fc546936b41",
+      "bytes": 680
+    },
+    {
+      "path": "tests/core/test_allow_empty.py",
+      "sha256": "27ff15507828a002c33d97ab0dd94d9920a384f7f3b97fe9fbbd0bd72462f5e6",
+      "bytes": 1430
+    },
+    {
+      "path": "tests/core/test_benchmark_utils.py",
+      "sha256": "5e8ff442c2db17d417a49af3808c90a045f29f6a43a552937873e523862de0b1",
+      "bytes": 1348
+    },
+    {
+      "path": "tests/core/test_core_coverage.py",
+      "sha256": "95d2516736423343fc897271fbc7ecb19d76000c34f2953efffaf45057ad9dd4",
+      "bytes": 17666
+    },
+    {
+      "path": "tests/core/test_corpus.py",
+      "sha256": "4dac517c5ff4f5b46d0f9038e04f3b1eb91c4264925b6d3b5060caac84d0f0a6",
+      "bytes": 12188
+    },
+    {
+      "path": "tests/core/test_corpus_truncation.py",
+      "sha256": "89148d421a705bf1e74fea0181523df8aa3f52c4b7aa048dbc71814b6de92aba",
+      "bytes": 2402
+    },
+    {
+      "path": "tests/core/test_hf_utils.py",
+      "sha256": "28e6fa925022fe2389bec7b19a3d2b1bd8637d9c789a30cbf321af111dcbe48e",
+      "bytes": 2927
+    },
+    {
+      "path": "tests/core/test_init_utils.py",
+      "sha256": "e3931e4316271c69f108b1b84deeda9b0db9b6b572aabb8cdf9a72c919e42678",
+      "bytes": 4039
+    },
+    {
+      "path": "tests/core/test_json_functions.py",
+      "sha256": "387f9868dbab9855a91522dfbfc5b5a082685f88b2737a312a8855bf82b17e8b",
+      "bytes": 3030
+    },
+    {
+      "path": "tests/core/test_retrieve.py",
+      "sha256": "5718fb93b60a5492163f5d29f31e473256f4b83dc609b998383a179f58528a5b",
+      "bytes": 8818
+    },
+    {
+      "path": "tests/core/test_save_load.py",
+      "sha256": "5c821b6a5a4313298a2dd6cf0c18ca5a42d4e9ce84bab16a261cfb3edb01562b",
+      "bytes": 9404
+    },
+    {
+      "path": "tests/core/test_scoring.py",
+      "sha256": "12dde22d99c544ae01ed2fce528c6a05ab27be8a781de28a699c38a8397797a8",
+      "bytes": 4180
+    },
+    {
+      "path": "tests/core/test_selection.py",
+      "sha256": "be02b7eba6b2282301debea9e55562bab8c1f19e6e32357894ed53a9d8f09aeb",
+      "bytes": 4435
+    },
+    {
+      "path": "tests/core/test_tokenization_extended.py",
+      "sha256": "80baffa6e6ad702b1e2ad32e0d642402f6691fce41a978a523ccda2413129066",
+      "bytes": 6238
+    },
+    {
+      "path": "tests/core/test_tokenizer.py",
+      "sha256": "6106a244c483e95035d2242a76957b5f9717fab1005210a6724a274131b1e4ae",
+      "bytes": 10982
+    },
+    {
+      "path": "tests/core/test_tokenizer_misc.py",
+      "sha256": "ac95bd4c28ce75b68b4d363c942a7255e4776bfdbcaa6f2487e4ad2551c79d7f",
+      "bytes": 6332
+    },
+    {
+      "path": "tests/core/test_topk.py",
+      "sha256": "4e6fe4c42ffcc02b2eba717ac7e1ebacb1d7f64f561ecd9bad0fa3e71b47f4fb",
+      "bytes": 2904
+    },
+    {
+      "path": "tests/core/test_utils_corpus.py",
+      "sha256": "48c282942a3b7bcef2d80831cae74609ace88762a0a192c05508e36deafde792",
+      "bytes": 1850
+    },
+    {
+      "path": "tests/core/test_version.py",
+      "sha256": "5740d7367d93e8b5e592954f3c78a89571733349f91682289d3f90ff54f96748",
+      "bytes": 530
+    },
+    {
+      "path": "tests/core/test_vocab_dict.py",
+      "sha256": "73bf3b43607cfbf35e764a222307876d1467944542f1c244900b79ca6a8eec84",
+      "bytes": 3230
+    },
+    {
+      "path": "tests/high_level/test_high_level.py",
+      "sha256": "f2daa5e229dd85f66a35367fe63f1cd17e43e18b4276f4497845cbb313d18617",
+      "bytes": 4456
+    },
+    {
+      "path": "tests/high_level/test_terminal.py",
+      "sha256": "5a4dced834c7622105997d5c1b1f67ddf32f394afb260cb40e27ae97a9171caa",
+      "bytes": 20470
+    },
+    {
+      "path": "tests/numba/test_numba_backend_retrieve.py",
+      "sha256": "73298969a0628fccdf9af5cde6e7a7c3335a4d3b93692e5f372b8270867b78e9",
+      "bytes": 9395
+    },
+    {
+      "path": "tests/numba/test_topk_numba.py",
+      "sha256": "d3edf322f0f6a98845031102b759253f4a38ea8f7bced4d14206cd4b498500ed",
+      "bytes": 1656
+    },
+    {
+      "path": "tests/stopwords/test_stopwords.py",
+      "sha256": "f6b187de4976fbb4c0db6e378380015fc628732452a1fbb57b043b6d3f7d696c",
+      "bytes": 49
+    }
+  ],
+  "skipped_count": 18,
+  "snapshot_kind": "bounded_source_archive",
+  "archive_sha256": "a5174a6d5ade233b0c6db77e9b78c96d64b69936c10b7a1f6aa93780d01e2ac4",
+  "download_trace": [
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "BM25Plus Chinese English hybrid retrieval in:readme language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    },
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "BM25Plus memory retrieval plugin in:readme language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    },
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "BM25 in:name language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/xhluca/bm25s",
+      "params": {}
+    },
+    {
+      "url": "https://api.github.com/repos/xhluca/bm25s/commits",
+      "params": {
+        "per_page": 1
+      }
+    },
+    {
+      "url": "https://codeload.github.com/xhluca/bm25s/tar.gz/03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+      "params": {}
+    }
+  ],
+  "executed_repository_code": false
+}

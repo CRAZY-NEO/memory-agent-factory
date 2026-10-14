@@ -1,0 +1,10 @@
+{
+  "candidates": [
+    {
+      "algorithm": "github_xhluca_bm25s",
+      "capability_id": "cap_github_xhluca_bm25s_20261014t160901_22b20fbf",
+      "rationale": "The BM25Plus algorithm is the only supported method for memory retrieval as specified in required_algorithms. It leverages existing _score_idf_bm25plus and _score_tfc_bm25plus functions from bm25s/scoring.py to ensure compatibility with JSONL corpora and English input, matching the task requirements."
+    }
+  ],
+  "design_explanation": "Implement the retrieve interface and tokenizer from bm25s, using the pinned scoring functions to calculate IDF and TF scores for the given query against memories, returning top_k results with ordered IDs and scores."
+}

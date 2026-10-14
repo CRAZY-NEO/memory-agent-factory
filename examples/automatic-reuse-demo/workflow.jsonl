@@ -1,0 +1,9 @@
+{"node": "route", "time": "2026-10-14T16:11:26.820197+00:00", "candidate_index": null, "revision": null}
+{"node": "understand", "time": "2026-10-14T16:11:30.486122+00:00", "candidate_index": null, "revision": null}
+{"node": "retrieve", "time": "2026-10-14T16:11:33.422710+00:00", "candidate_index": null, "revision": null}
+{"node": "plan", "time": "2026-10-14T16:11:33.485077+00:00", "candidate_index": null, "revision": null}
+{"node": "generate", "time": "2026-10-14T16:11:41.765662+00:00", "candidate_index": 0, "revision": 0}
+{"node": "validate", "time": "2026-10-14T16:11:45.938810+00:00", "candidate_index": 0, "revision": 0}
+{"node": "select", "time": "2026-10-14T16:11:47.202355+00:00", "candidate_index": 0, "revision": 0}
+{"node": "test", "time": "2026-10-14T16:11:47.203163+00:00", "candidate_index": 0, "revision": 0}
+{"node": "persist", "time": "2026-10-14T16:11:48.569820+00:00", "candidate_index": 0, "revision": 0}

@@ -1,0 +1,130 @@
+{
+  "status": "passed",
+  "started_at": "2026-10-14T16:09:00.500Z",
+  "jobs": [
+    {
+      "job_id": "89ec7a22555843daacaa5e9a0274b990",
+      "description": "比较 TF-IDF 与 BM25Plus，用于中文与英文混合技术记忆检索。输入 query、memories、top_k=5，返回相关记忆 ID 和分数；保留各方法的评分规则与默认参数，验证接口、稳定性及检索指标，通过后沉淀为可复用插件。",
+      "submitted_mode": "auto",
+      "status": "succeeded",
+      "run_id": "20261014T161001_92e82969",
+      "result": {
+        "status": "passed",
+        "run_id": "20261014T161001_92e82969",
+        "algorithm": "tfidf",
+        "routing": {
+          "requested_mode": "auto",
+          "action": "compare_after_discovery",
+          "intent": {
+            "task": "memory_retrieval",
+            "requested_methods": [
+              "tfidf",
+              "BM25Plus"
+            ],
+            "discover_new": false,
+            "rationale": "用户请求比较 TF-IDF 与 BM25Plus 方法，但当前支持的检索方法仅包含字符 BM25、集合 Jaccard 和字符 TF-IDF，未包含 BM25Plus。"
+          },
+          "literal_method_mentions": [
+            "tfidf",
+            "BM25Plus"
+          ],
+          "registered_methods": [
+            "tfidf"
+          ],
+          "missing_methods": [
+            "BM25Plus"
+          ],
+          "reason": "存在未登记的方法，先发现并验证。",
+          "discovery_run_id": "20261014T160901_22b20fbf",
+          "discovered_algorithm": "github_xhluca_bm25s"
+        },
+        "discovery_run_id": "20261014T160901_22b20fbf",
+        "registered": true,
+        "report_url": "/v1/runs/20261014T161001_92e82969/report"
+      },
+      "test_metrics": {
+        "recall_at_k": 1,
+        "mrr_at_k": 0.9527777777777777,
+        "precision_at_k": 0.25333333333333335,
+        "p95_ms": 6.545862345956265
+      }
+    },
+    {
+      "job_id": "4075236740164d6594015882cac2a8b9",
+      "description": "为中文与英文混合技术笔记复刻 BM25Plus 检索方法，输入 query、memories、top_k=5，返回相关记忆 ID 和得分，通过验证后交付可复用代码。",
+      "submitted_mode": "auto",
+      "status": "succeeded",
+      "run_id": "20261014T161126_0568ab6e",
+      "result": {
+        "status": "passed",
+        "run_id": "20261014T161126_0568ab6e",
+        "algorithm": "github_xhluca_bm25s",
+        "routing": {
+          "requested_mode": "auto",
+          "action": "reuse",
+          "intent": {
+            "task": "memory_retrieval",
+            "requested_methods": [
+              "github_xhluca_bm25s"
+            ],
+            "discover_new": false,
+            "rationale": "用户明确要求复刻 BM25Plus 检索方法，该 ID 在算法目录中已存在，因此 requested_methods 应包含 github_xhluca_bm25s。"
+          },
+          "literal_method_mentions": [
+            "github_xhluca_bm25s"
+          ],
+          "registered_methods": [
+            "github_xhluca_bm25s"
+          ],
+          "missing_methods": [],
+          "reason": "已有能力可以作为实现依据，无需联网搜索。"
+        },
+        "discovery_run_id": null,
+        "registered": false,
+        "report_url": "/v1/runs/20261014T161126_0568ab6e/report"
+      },
+      "test_metrics": {
+        "recall_at_k": 0.9666666666666667,
+        "mrr_at_k": 0.925,
+        "precision_at_k": 0.24666666666666667,
+        "p95_ms": 10.084216709947187
+      }
+    }
+  ],
+  "discovery": {
+    "run_id": "20261014T160901_22b20fbf",
+    "algorithm": "github_xhluca_bm25s",
+    "source": {
+      "repository": "xhluca/bm25s",
+      "url": "https://github.com/xhluca/bm25s",
+      "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+      "license": "MIT"
+    },
+    "test_metrics": {
+      "recall_at_k": 0.9666666666666667,
+      "mrr_at_k": 0.925,
+      "precision_at_k": 0.24666666666666667,
+      "p95_ms": 3.106776898493988
+    },
+    "code_hash": "cee5c30b688684a1dc315430fc60b323a102d7c56bb1ec09e317c3cbf90b48e0"
+  },
+  "completed_at": "2026-10-14T16:11:52.239Z",
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "runner": "docker",
+  "scope": "Actual Chrome submits two auto-mode jobs; real Ollama generates, repairs if needed, and Docker validates discovery, comparison and subsequent reuse. No SSH connection is created by this check.",
+  "checks": [
+    "default automatic mode without checkbox",
+    "actual Web submission and polling",
+    "new method discovery and registration",
+    "source formula checks",
+    "requested existing and new method comparison",
+    "linked source report",
+    "AST artifact download",
+    "downloaded code SHA-256",
+    "subsequent registered method reuse without GitHub search",
+    "mobile layout",
+    "history after reload",
+    "no JavaScript errors"
+  ]
+}

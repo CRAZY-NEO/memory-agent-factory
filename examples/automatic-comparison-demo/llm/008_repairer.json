@@ -1,0 +1,177 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "repairer",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "比较 TF-IDF 与 BM25Plus，用于中文与英文混合技术记忆检索。输入 query、memories、top_k=5，返回相关记忆 ID 和分数；保留各方法的评分规则与默认参数，验证接口、稳定性及检索指标，通过后沉淀为可复用插件。",
+      "language": "mixed",
+      "top_k": 5
+    },
+    "candidate": {
+      "algorithm": "tfidf",
+      "capability_id": "char_tfidf_795a7ce4c36d",
+      "rationale": "适用于小规模中文与英文混合笔记，能解决同义改写和缺少词面重合的查询问题，依赖 scikit-learn 库。"
+    },
+    "algorithm_plugin": {
+      "id": "tfidf",
+      "name": "字符 TF-IDF",
+      "version": "1.0.1",
+      "task": "memory_retrieval",
+      "dependencies": [
+        "scikit-learn"
+      ],
+      "environment": "retrieval-v1",
+      "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。必须对 texts=[memory[\"text\"] for memory in memories] 拟合，每条完整记忆对应矩阵一行，行数必须等于 len(memories)。禁止把拆分去重的词当成多篇文档，禁止移除中文或过滤行后仍用原列表索引；transform([query]) 后与整个语料计算相似度。",
+      "public_cases": [
+        {
+          "query": "甲乙 alpha beta",
+          "memories": [
+            {
+              "id": "a",
+              "text": "甲乙 alpha beta",
+              "source": "public://a"
+            },
+            {
+              "id": "b",
+              "text": "乙丙 alpha gamma",
+              "source": "public://b"
+            }
+          ],
+          "top_k": 5,
+          "expected": [
+            {
+              "id": "a",
+              "score": 1.0000000000000016
+            },
+            {
+              "id": "b",
+              "score": 0.46518071501565006
+            }
+          ]
+        }
+      ]
+    },
+    "capabilities": [
+      {
+        "node_id": "char_tfidf_795a7ce4c36d",
+        "algorithm": "tfidf",
+        "algorithm_plugin_version": "1.0.1",
+        "applicable_conditions": [
+          "小规模中文与英文混合笔记",
+          "词面相近的排错记录",
+          "项目决策"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "evidence": "能力标识：char_tfidf。算法：tfidf。任务：memory_retrieval。",
+        "id": "char_tfidf_795a7ce4c36d",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "难以解决同义改写",
+          "缺少词面重合的查询",
+          "原型每次查询重建索引"
+        ],
+        "metrics": [
+          "Recall@k",
+          "MRR@k",
+          "P95 查询耗时"
+        ],
+        "name": "字符 TF-IDF",
+        "outputs": [
+          "memory id",
+          "score"
+        ],
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "text": "# 中文技术记忆检索：TF-IDF\n\n能力标识：char_tfidf。算法：tfidf。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文技术笔记可以使用字符一至三元组 TF-IDF 与余弦相似度进行检索，无须额外标注训练数据。先在记忆文本上拟合向量器，再转换查询；不要把查询加入拟合语料。保留英文技术词并统一大小写。检索分数相同按 ID 排序，空查询、空语料和非正 top_k 返回空列表。\n\n适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：scikit-learn。\n局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。\n来源为本项目编写的演示算法说明，算法接口参考 scikit-learn 官方文档：\nhttps://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html\n"
+      }
+    ],
+    "validated_lessons": [],
+    "reference_example": {
+      "algorithm": "tfidf",
+      "source": "plugin:tfidf@1.0.1",
+      "sha256": "84fbe993c241919f3a551f0f81a7be700dfa09e16c23ae1a37b746ca7b432d6a",
+      "code": "\"\"\"Character TF-IDF cosine retrieval; usable directly by a future memory application.\"\"\"\n\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.metrics.pairwise import cosine_similarity\n\n\ndef retrieve(query, memories, top_k=5):\n    \"\"\"Return unique memory IDs with finite descending similarity scores.\"\"\"\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    # No fitting on query text: the corpus defines vocabulary and IDF statistics.\n    texts = [memory[\"text\"] for memory in memories]\n    vectorizer = TfidfVectorizer(analyzer=\"char\", ngram_range=(1, 3), lowercase=True)\n    try:\n        corpus = vectorizer.fit_transform(texts)\n    except ValueError:\n        return []\n    scores = cosine_similarity(vectorizer.transform([query]), corpus)[0]\n    hits = [{\"id\": memory[\"id\"], \"score\": float(score)}\n            for memory, score in zip(memories, scores) if score > 0]\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n"
+    },
+    "repair_strategy": "rebuild_from_reference",
+    "diagnosis": {
+      "summary": "代码中未定义 retrieve 函数，导致接口调用失败。",
+      "repair_instructions": [
+        "在代码文件中添加 retrieve 函数，实现 TF-IDF 检索逻辑。",
+        "确保函数接收 query、memories 和 top_k 参数。",
+        "实现 TF-IDF 向量化和余弦相似度计算。",
+        "返回包含 id 和 score 的排序结果。"
+      ],
+      "trusted_findings": [],
+      "execution_diagnostics": [],
+      "unchanged_previous_repair": false
+    },
+    "validation": {
+      "passed": false,
+      "split": "validation",
+      "errors": [
+        "interface: missing top-level retrieve function"
+      ],
+      "diagnostics": [],
+      "metrics": {}
+    },
+    "failed_code_hash": "92f570ea8a280f83e3225d29cbd16c675333fa43c899717da709481b6f44e044"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "maxLength": 40000,
+        "minLength": 30,
+        "title": "Code",
+        "type": "string"
+      },
+      "explanation": {
+        "title": "Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "explanation"
+    ],
+    "title": "CodeArtifact",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 1.0,
+    "presence_penalty": 2.0,
+    "num_ctx": 8192,
+    "num_predict": 4096,
+    "top_p": 1.0,
+    "top_k": 20,
+    "min_p": 0.0,
+    "repeat_penalty": 1.0,
+    "seed": 42
+  },
+  "raw_content": "{\"code\": \"from sklearn.feature_extraction.text import TfidfVectorizer\\nfrom sklearn.metrics.pairwise import cosine_similarity\\n\\ndef retrieve(query, memories, top_k=5):\\n    if not query.strip() or not memories or top_k <= 0:\\n        return []\\n    # No fitting on query text: the corpus defines vocabulary and IDF statistics.\\n    texts = [memory[\\\"text\\\"] for memory in memories]\\n    vectorizer = TfidfVectorizer(analyzer=\\\"char\\\", ngram_range=(1, 3), lowercase=True)\\n    try:\\n        corpus = vectorizer.fit_transform(texts)\\n    except ValueError:\\n        return []\\n    scores = cosine_similarity(vectorizer.transform([query]), corpus)[0]\\n    hits = [{\\\"id\\\": memory[\\\"id\\\"], \\\"score\\\": float(score)} for memory, score in zip(memories, scores) if score > 0]\\n    return sorted(hits, key=lambda hit: (-hit[\\\"score\\\"], hit[\\\"id\\\"]))[:top_k]\", \"explanation\": \"实现了针对中文与英文混合笔记的字符级 TF-IDF  cosine retrieval。使用 TfidfVectorizer(analyzer=\\\\'char\\\\', ngram_range=(1,3), lowercase=True) 对输入 memories 进行向量化拟合，通过余弦相似度计算与 query 的匹配分数。函数接收 query、memories 和 top_k（默认5），返回包含 id 和得分的排序列表，支持空查询/列表或非法 top_k 时立即返回空列表。\"}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 2177,
+    "eval_count": 330,
+    "total_duration": 14563885047
+  },
+  "response": {
+    "code": "from sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.metrics.pairwise import cosine_similarity\n\ndef retrieve(query, memories, top_k=5):\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    # No fitting on query text: the corpus defines vocabulary and IDF statistics.\n    texts = [memory[\"text\"] for memory in memories]\n    vectorizer = TfidfVectorizer(analyzer=\"char\", ngram_range=(1, 3), lowercase=True)\n    try:\n        corpus = vectorizer.fit_transform(texts)\n    except ValueError:\n        return []\n    scores = cosine_similarity(vectorizer.transform([query]), corpus)[0]\n    hits = [{\"id\": memory[\"id\"], \"score\": float(score)} for memory, score in zip(memories, scores) if score > 0]\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]",
+    "explanation": "实现了针对中文与英文混合笔记的字符级 TF-IDF  cosine retrieval。使用 TfidfVectorizer(analyzer=\\'char\\', ngram_range=(1,3), lowercase=True) 对输入 memories 进行向量化拟合，通过余弦相似度计算与 query 的匹配分数。函数接收 query、memories 和 top_k（默认5），返回包含 id 和得分的排序列表，支持空查询/列表或非法 top_k 时立即返回空列表。"
+  },
+  "duration_seconds": 14.596193541074172
+}

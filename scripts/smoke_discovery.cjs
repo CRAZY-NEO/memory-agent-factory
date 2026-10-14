@@ -22,9 +22,8 @@ async function main() {
     await page.locator("#token").fill(token);
     await page.locator("#connect").click();
     await page.locator("#submit:enabled").waitFor();
-    assert(await page.locator("#discover").isEnabled());
-    await page.locator("#discover").check();
-    await page.locator("#example").click();
+    assert.equal(await page.locator("#mode").inputValue(), "auto");
+    await page.locator("#new-example").click();
     assert((await page.locator("#description").inputValue()).includes("BM25Plus"));
     const headers = { Authorization: "Bearer " + token };
     const report = await (await page.request.get(`/v1/runs/${runId}/report`, { headers })).json();

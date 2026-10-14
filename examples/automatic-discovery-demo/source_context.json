@@ -1,0 +1,116 @@
+{
+  "repository": {
+    "repository": "xhluca/bm25s",
+    "url": "https://github.com/xhluca/bm25s",
+    "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+    "license": "MIT"
+  },
+  "source_functions": [
+    {
+      "path": "bm25s/scoring.py",
+      "qualified_name": "_score_idf_bm25plus",
+      "signature": "def _score_idf_bm25plus(df, N)",
+      "code": "def _score_idf_bm25plus(df, N):\n    return math.log((N + 1) / df)",
+      "exact_quote_options": [
+        "def _score_idf_bm25plus(df, N):",
+        "return math.log((N + 1) / df)"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "859c13bd8e346d0d585b6743aad010b9e9fcbe163b1b3d6f1d67a72e369e2318"
+    },
+    {
+      "path": "bm25s/scoring.py",
+      "qualified_name": "_score_tfc_bm25plus",
+      "signature": "def _score_tfc_bm25plus(tf_array, l_d, l_avg, k1, b, delta)",
+      "code": "def _score_tfc_bm25plus(tf_array, l_d, l_avg, k1, b, delta):\n    num = (k1 + 1) * tf_array\n    den = k1 * (1 - b + b * l_d / l_avg) + tf_array\n    return (num / den) + delta",
+      "exact_quote_options": [
+        "def _score_tfc_bm25plus(tf_array, l_d, l_avg, k1, b, delta):",
+        "return (num / den) + delta"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "859c13bd8e346d0d585b6743aad010b9e9fcbe163b1b3d6f1d67a72e369e2318"
+    },
+    {
+      "path": "bm25s/__init__.py",
+      "qualified_name": "BM25.__init__",
+      "signature": "def __init__(self, k1=1.5, b=0.75, delta=0.5, method='lucene', idf_method=None, dtype='float32', int_dtype='int32', corpus=None, backend='numpy', csc_backend='numpy', auto_compile=True)",
+      "code": "def __init__(\n    self,\n    k1=1.5,\n    b=0.75,\n    delta=0.5,\n    method=\"lucene\",\n    idf_method=None,\n    dtype=\"float32\",\n    int_dtype=\"int32\",\n    corpus=None,\n    backend=\"numpy\",\n    csc_backend=\"numpy\",\n    auto_compile=True,\n):\n    self.k1 = k1\n    self.b = b\n    self.delta = delta\n    self.dtype = dtype\n    self.int_dtype = int_dtype\n    self.method = method\n    self.idf_method = idf_method if idf_method is not None else method\n    self.methods_requiring_nonoccurrence = (\"bm25l\", \"bm25+\")\n    self.corpus = corpus\n    self._original_version = __version__\n    self.csc_backend = csc_backend\n\n    if backend == \"auto\":\n        self.backend = \"numba\" if NUMBA_AVAILABLE else \"numpy\"\n    else:\n        self.backend = backend\n\n    if csc_backend == \"auto\":\n        self.csc_backend = \"scipy\" if SCIPY_AVAILABLE else \"numpy\"\n\n    if self.backend == \"numba\" and not NUMBA_AVAILABLE:\n        raise ImportError(\n            \"Numba is not installed. Please install numba with `pip install numba` to use the numba backend.\"\n        )\n\n    if csc_backend == \"scipy\" and not SCIPY_AVAILABLE:\n        raise ImportError(\n            \"scipy is not installed. Please install scipy to use the scipy csc",
+      "exact_quote_options": [
+        "def __init__("
+      ],
+      "docstrings_removed": true,
+      "code_truncated": true,
+      "file_sha256": "acfe408d3cafec38b061d055743a4081ab7ce38c93b300815bfbf9a399b7d6eb"
+    },
+    {
+      "path": "bm25s/high_level/__init__.py",
+      "qualified_name": "BM25Search.__init__",
+      "signature": "def __init__(self, corpus: List[str], language: str='english', bm25_kwargs: dict=None, tokenizer_kwargs: dict=None, tokenizer_cls: Tokenizer=Tokenizer)",
+      "code": "def __init__(\n    self,\n    corpus: List[str],\n    language: str = \"english\",\n    bm25_kwargs: dict = None,\n    tokenizer_kwargs: dict = None,\n    tokenizer_cls: Tokenizer = Tokenizer,\n):\n    if bm25_kwargs is not None and \"corpus\" in bm25_kwargs:\n        raise ValueError(\n            \"The 'corpus' argument in bm25_kwargs is reserved and cannot be set manually.\"\n        )\n    if language != \"english\":\n        raise NotImplementedError(\"Currently only English language is supported.\")\n\n    self.leave_progress = leave_progress = False\n    self.show_progress = show_progress = True\n    self.corpus = corpus\n\n    stemmer = Stemmer.Stemmer(\"english\")\n    bm25_kwargs_default = dict(\n        backend=\"numba\", csc_backend=\"numpy\", auto_compile=False\n    )\n    tokenizer_kwargs_default = dict(\n        stemmer=stemmer, stopwords=\"english\", lower=True\n    )\n\n    if isinstance(bm25_kwargs, dict):\n        bm25_kwargs_default.update(bm25_kwargs)\n    elif bm25_kwargs is not None:\n        raise ValueError(\"bm25_kwargs must be a dict or None.\")\n\n    if isinstance(tokenizer_kwargs, dict):\n        tokenizer_kwargs_default.update(tokenizer_kwargs)\n    elif tokenizer_kwargs is not None:\n        raise ValueE",
+      "exact_quote_options": [
+        "def __init__("
+      ],
+      "docstrings_removed": true,
+      "code_truncated": true,
+      "file_sha256": "946e755ab1ea7890870f58c12cc72022dac540c52d09c0cb0be179acbe05acb8"
+    },
+    {
+      "path": "bm25s/tokenization.py",
+      "qualified_name": "Tokenizer.__init__",
+      "signature": "def __init__(self, lower: bool=True, splitter: Union[str, Callable]='(?u)\\\\b\\\\w\\\\w+\\\\b', stopwords: Union[str, List[str]]='english', stemmer: Callable=None)",
+      "code": "def __init__(\n    self,\n    lower: bool = True,\n    splitter: Union[str, Callable] = r\"(?u)\\b\\w\\w+\\b\",\n    stopwords: Union[str, List[str]] = \"english\",\n    stemmer: Callable = None,  # type: ignore\n):\n    self.lower = lower\n    if isinstance(splitter, str):\n        splitter = re.compile(splitter).findall\n    if not callable(splitter):\n        raise ValueError(\"splitter must be a callable or a regex pattern.\")\n\n    # Exception handling for stemmer when we are using PyStemmer, which has a stemWords method\n    if hasattr(stemmer, \"stemWord\"):\n        stemmer = stemmer.stemWord\n    if not callable(stemmer) and stemmer is not None:\n        raise ValueError(\"stemmer must be callable or have a `stemWord` method.\")\n\n    self.stopwords = _infer_stopwords(stopwords)\n    self.splitter = splitter\n    self.stemmer = stemmer\n\n    self.reset_vocab()",
+      "exact_quote_options": [
+        "def __init__("
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "647f463ad0b83e9f6dd19802e2c6e51996e64b5f6fa420e46f33097be1112871"
+    },
+    {
+      "path": "bm25s/utils/benchmark.py",
+      "qualified_name": "Timer.__init__",
+      "signature": "def __init__(self, prefix='', precision=4)",
+      "code": "def __init__(self, prefix=\"\", precision=4):\n    self.results = {}\n    self.prefix = prefix\n    self.precision = precision",
+      "exact_quote_options": [
+        "def __init__(self, prefix=\"\", precision=4):"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "e6a7c4a36aa6b8a1c22c85ad1a7a146c992ccdf3d93d107ffdb826f53bdc62b4"
+    },
+    {
+      "path": "bm25s/utils/corpus.py",
+      "qualified_name": "JsonlCorpus.__init__",
+      "signature": "def __init__(self, path, show_progress=True, leave_progress=True, save_index=True, verbosity=1, encoding='utf-8')",
+      "code": "def __init__(self, path, show_progress=True, leave_progress=True, save_index=True, verbosity=1, encoding='utf-8'):\n    self.path = path\n    self.verbosity = verbosity\n    self.encoding = encoding\n\n    # if the index file does not exist, create it\n    if os.path.exists(change_extension(path, \".mmindex.json\")):\n        self.mmindex = load_mmindex(path, encoding=self.encoding)\n    else:\n        logging.info(\"Creating index file for jsonl corpus\")\n        mmindex = find_newline_positions(\n            path, show_progress=show_progress, leave_progress=leave_progress, encoding=self.encoding\n        )\n        if save_index:\n            save_mmindex(mmindex, path, encoding=self.encoding)\n\n        self.mmindex = mmindex\n\n    # Finally, open the file and mmap objects\n    self.load()",
+      "exact_quote_options": [
+        "def __init__(self, path, show_progress=True, leave_progress=True, save_index=True, verbosity=1, encoding='utf-8'):"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "6e766e407c789db38b8ae4f56fbd0b9f3bf84e410ffad595493603de9179c007"
+    },
+    {
+      "path": "bm25s/__init__.py",
+      "qualified_name": "BM25.get_tokens_ids",
+      "signature": "def get_tokens_ids(self, query_tokens: List[str]) -> List[int]",
+      "code": "def get_tokens_ids(self, query_tokens: List[str]) -> List[int]:\n    return [\n        self.vocab_dict[token] for token in query_tokens if token in self.vocab_dict\n    ]",
+      "exact_quote_options": [
+        "def get_tokens_ids(self, query_tokens: List[str]) -> List[int]:"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "acfe408d3cafec38b061d055743a4081ab7ce38c93b300815bfbf9a399b7d6eb"
+    }
+  ],
+  "source_documents": [
+    {
+      "path": "README.md",
+      "text": "Welcome to `bm25s`, a library that implements BM25 in Python, allowing you to rank documents based on a query. BM25 is a widely used ranking function used for text retrieval tasks, and is a core component of search services like Elasticsearch.\n\nIt is designed to be:\n* **Fast**: `bm25s` is implemented in pure Python and leverage sparse matrices to store eagerly computed scores for all document tokens. This allows extremely fast scoring at query time, improving performance over popular libraries by orders of magnitude (see benchmarks below).\n* **Simple**: `bm25s` is designed to be easy to use and understand. You can install it with pip and start using it in minutes. There is no dependencies on Java or Pytorch - all you need is Numpy, and optional lightweight dependencies for stemming and speedup via `numba` compilation.\n\nBelow, we compare `bm25s` with Elasticsearch in terms of speedup over `rank-bm25`, the most popular Python implementation of BM25. We measure the throughput in queries p",
+      "sha256": "9166cd1c822856652c92526802670a1d73976bcc4141e3eb0940af611389a319"
+    }
+  ],
+  "trust": "untrusted_repository_evidence"
+}

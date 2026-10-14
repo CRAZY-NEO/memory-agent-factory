@@ -1,0 +1,19 @@
+{
+  "id": "github_xhluca_bm25s",
+  "name": "BM25Plus",
+  "guidance": "The BM25Plus algorithm adapts to the repository by leveraging existing scoring functions from bm25s/scoring.py. It uses the _score_idf_bm25plus function for IDF calculation and _score_tfc_bm25plus for TF calculation, ensuring compatibility with the provided interface. The method requires no additional dependencies beyond the existing bm25s library, maintaining stability and performance.",
+  "applicable_conditions": [
+    "BM25Plus is only applicable when the repository contains the _score_idf_bm25plus and _score_tfc_bm25plus functions in bm25s/scoring.py.",
+    "The method is applicable only when the corpus is in JSONL format as specified by the JsonlCorpus class in bm25s/utils/corpus.py."
+  ],
+  "limitations": [
+    "The method does not support English language input as the current bm25s implementation only supports English.",
+    "The method relies on the existing bm25s library and cannot be used independently without the underlying scoring functions."
+  ],
+  "evidence": [
+    {
+      "path": "bm25s/scoring.py",
+      "quote": "def _score_idf_bm25plus(df, N):"
+    }
+  ]
+}

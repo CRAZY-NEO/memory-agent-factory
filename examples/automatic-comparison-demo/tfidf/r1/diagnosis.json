@@ -1,0 +1,12 @@
+{
+  "summary": "代码中未定义 retrieve 函数，导致接口调用失败。",
+  "repair_instructions": [
+    "在代码文件中添加 retrieve 函数，实现 TF-IDF 检索逻辑。",
+    "确保函数接收 query、memories 和 top_k 参数。",
+    "实现 TF-IDF 向量化和余弦相似度计算。",
+    "返回包含 id 和 score 的排序结果。"
+  ],
+  "trusted_findings": [],
+  "execution_diagnostics": [],
+  "unchanged_previous_repair": false
+}

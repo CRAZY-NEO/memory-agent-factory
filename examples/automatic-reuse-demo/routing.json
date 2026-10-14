@@ -1,0 +1,20 @@
+{
+  "requested_mode": "auto",
+  "action": "reuse",
+  "intent": {
+    "task": "memory_retrieval",
+    "requested_methods": [
+      "github_xhluca_bm25s"
+    ],
+    "discover_new": false,
+    "rationale": "用户明确要求复刻 BM25Plus 检索方法，该 ID 在算法目录中已存在，因此 requested_methods 应包含 github_xhluca_bm25s。"
+  },
+  "literal_method_mentions": [
+    "github_xhluca_bm25s"
+  ],
+  "registered_methods": [
+    "github_xhluca_bm25s"
+  ],
+  "missing_methods": [],
+  "reason": "已有能力可以作为实现依据，无需联网搜索。"
+}

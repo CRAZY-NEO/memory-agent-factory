@@ -1,51 +1,110 @@
-# 笔试要求与交付对应
+# 笔试要求实现情况清单
 
-## 核心闭环
+核对日期：2026-10-15。按笔试原文逐项对照现有代码、文档和归档运行证据。
 
-| 要求 | 当前实现 | 可查看证据 |
-| --- | --- | --- |
-| 理解自然语言能力描述 | Understander 结构化需求；mock 为规则，真实模式调用 Ollama | examples/demo/llm 中 understander 记录 |
-| 材料抽取与相关知识检索 | 三份算法材料、Pydantic、连续原文证据；字符检索+图关系遍历 | knowledge/extracted_capabilities.json、retrieved_knowledge.json |
-| 规划算法 | 引用知识节点的配置预算内的候选方案，来源匹配检查 | examples/demo/plan.json |
-| 生成代码 | 独立 retrieve 插件；mock 模板、Ollama 可实际生成 | examples/demo/tfidf、bm25、selected_retrieval.py |
-| 自动执行与评估 | 可信外部标注评分，接口/功能/稳定性/性能检查 | validation.py、各版本 validation.json |
-| 代码修复 | 最多两次，修订和审查信息不可覆盖 | BM25 r0 失败与 r1 成功样例 |
-| 验证结果沉淀 | 实现、环境、验证、未验证建议与已验证修复经验回写 | examples/demo/knowledge/graph.json |
+状态说明：勾选 `[x]` 表示已实现并有对应证据；未勾选 `[ ]` 配合“部分实现”或“未实现”说明缺口。这里的“已实现”指原型范围内完成，不代表生产级能力或任意输入下的正确性保证。进阶要求、加分项与基础要求分开统计。
 
-## 基础交付
+当前业务场景是**软件研发与运维技术记忆检索**，任务类型为 `memory_retrieval`。工厂产出 `retrieve(query, memories, top_k=5)` 检索插件；目前没有实现此前讨论过的技术笔记分类任务，也没有实现任意功能代码的通用验证。
 
-- 代码库：agent_factory；Git 历史已推送至 https://github.com/CRAZY-NEO/memory-agent-factory。
-- 模拟行业数据：data，软件研发与运维技术记忆。
-- 算法材料及抽取文件：knowledge/sources、knowledge/extracted_capabilities.json。
-- 图谱 schema：docs/schema.md。
-- Agent 工作流：workflow.py、examples/demo/workflow.mmd。
-- 完整生成例子与报告：examples/demo。
-- 独立验证脚本：CLI validate、validation.py；自动测试 scripts/run_tests.sh。
-- 配置与运行文档：README、config.json、requirements.txt、requirements.lock.txt、pyproject.toml。
+本次核对包含自动路由的完整验收：真实模型发现、候选比较和再次复用均通过；模型记录、报告及浏览器证据在 `examples/automatic-*-demo/` 与 `examples/automatic_web_validation.json`。
 
-## 已实现的进阶点
+## 1. 任务要求
 
-Web、CLI 与鉴权异步 API；多轮有限修复；三个算法候选比较；插件注册与自动发现；Precision@k 及可配置指标排序；图谱 HTML/GraphML；自动报告；知识回写；
-来源证据；AST 安全检查与 Docker 执行选项；失败经验；能力及代码版本；设计依据；性能计时。
+- [x] **1. 使用开源模型或 LLM 接口完成理解、抽取、生成或修复。** 接入 Ollama `qwen3.5:2b`，保留实际模型调用与运行报告；另有离线 mock 演示。证据：[LLM 接入](../agent_factory/llm.py)、[真实模型三候选报告](../examples/ollama-v2-demo/report.md)、[真实模型发现与修复报告](../examples/github-discovery-demo/report.md)。
+- [x] **2. 选择一个具体行业场景。** 选择软件研发与运维知识管理，使用故障排查、工具经验和项目决策笔记作为模拟材料。题目中的场景是举例，并非必须从列举的六种任务中选择。证据：[项目说明](../README.md)、[数据说明](../data/README.md)。
+- [x] **3. 构建算法能力知识库或知识图谱。** SQLite 保存能力与历史，NetworkX 表达图关系；包含输入输出、适用条件、指标、依赖、代码版本、验证与失败经验。证据：[schema](schema.md)、[知识存储与检索](../agent_factory/knowledge.py)、[抽取结果](../knowledge/extracted_capabilities.json)。
+- [x] **4. 从自然语言描述复刻可运行算法代码。** 已登记方法通过知识与参考模板生成；新方法可通过 GitHub 源码发现路径适配生成，无须预先添加该方法的模板。范围仍限于检索任务。证据：[标准工作流](../agent_factory/workflow.py)、[发现工作流](../agent_factory/discovery.py)、[生成代码样例](../examples/github-discovery-demo/selected_retrieval.py)。
+- [x] **5. 统一验证功能、指标、稳定性和接口规范。** 可信验证器执行生成代码，检查接口、边界输入、输出规范、一致性与指标门槛；最终测试前冻结选定代码。证据：[验证器](../agent_factory/validation.py)、[执行器](../agent_factory/runner.py)、[验证测试](../tests/test_validation.py)。
+- [x] **6. 提供 UI、CLI 或 API。** 三者均有：Web 提交与结果展示、命令行生成与验证、FastAPI 异步任务接口。证据：[Web 指南](web-ui.md)、[CLI](../agent_factory/cli.py)、[API](../agent_factory/api.py)。
 
-真实 Python 仓库的 AST 能力候选抽取：`ingest-repo` 提取函数/方法、签名、注释、import、代码行号、Git HEAD 与内容哈希；扫描结果写回图谱，并作为未验证证据进入规划和当前算法的生成/修复上下文。见 [仓库指南](repository-extraction.md)、[实际抽取 JSON](../examples/repository-demo/extracted_repository.json)及 [AST + Docker 完整报告](../examples/repository-demo/report.md)。不自动执行仓库代码，不把注释或人工算法关联当成正确性证明。
+## 2. 完整工作流 a–g
 
-角色协作由同一个模型串行承担，不能将其描述成并发自治 Agent 群。
-图遍历用于知识检索，没有实现 Beam Search/MCTS 算法搜索。
-检索任务支持算法/指标插件和外部包发现；尚未实现跨任务验证配置。
+- [x] **a. 理解用户输入的算法能力描述。** Understander 将描述转换为受 Pydantic 契约约束的需求。证据：[工作流](../agent_factory/workflow.py)、[真实调用记录目录](../examples/ollama-v2-demo/llm/)。
+- [x] **b. 从文档、代码示例或图谱检索相关能力知识。** 检索能力材料、历史经验和关联节点；已抽取的仓库函数也可作为未验证参考证据。证据：[知识检索](../agent_factory/knowledge.py)、[仓库抽取指南](repository-extraction.md)。
+- [x] **c. 规划算法实现方案。** Planner 根据能力来源和候选预算形成方案，并校验来源关联。证据：[示例方案](../examples/ollama-v2-demo/plan.json)。
+- [x] **d. 生成可运行代码。** Coder 输出完整 Python 插件，保存各修订与最终选定代码。证据：[真实生成的 TF-IDF](../examples/ollama-v2-demo/selected_retrieval.py)、[外部源码适配的 BM25Plus](../examples/github-discovery-demo/selected_retrieval.py)。
+- [x] **e. 自动执行测试与指标评估。** 评分在可信父进程计算，相关性标注不交给执行代码；输出 Recall@k、MRR@k、Precision@k、P95 等结果。证据：[验证器](../agent_factory/validation.py)、[报告样例](../examples/ollama-v2-demo/report.md)。
+- [x] **f. 根据错误修复或优化。** Reviewer 分析验证错误，Repairer 在预算内修复，最多两次；已有真实模型修复成功与失败记录。并不保证每次都能修复成功。证据：[修复机制说明](generation-repair.md)、[真实修复记录](../examples/repair-ollama-demo/report.md)、[来源公式修复记录](../examples/github-discovery-demo/report.md)。
+- [x] **g. 将验证结果沉淀回知识库或图谱。** 保存实现、环境、验证与经验节点，区分未验证建议和已验证修复；新方法通过验收后可登记复用。证据：[工作流回写](../agent_factory/workflow.py)、[发布与登记](../agent_factory/releases.py)、[示例图谱](../examples/github-discovery-demo/knowledge/graph.json)。
 
-新增 `discover` 支持自动 GitHub 搜索、固定提交源码下载、AST 能力证据抽取、新方法适配生成和验证后自动登记。新路径不依赖该方法的内置模板，注册采用文件哈希校验的数据清单，并保留来源许可。详见 [发现指南](github-discovery.md)。这拓展了检索任务的算法来源，未把系统扩大为任意任务的通用验证工厂。
+## 3. 开发要求 a–g
 
-实际证据：[qwen3.5:2b 发现 BM25Plus](../examples/github-discovery-demo/report.md)，通过来源公式检查及修复、验证和冻结最终测试后自动登记；[后续四候选复用](../examples/github-reuse-demo/report.md)为 mock + Docker。采样参数、原始响应、来源文件哈希和批准清单均保留。
+- [x] **a. Git 版本控制，提交信息清晰。** 已保留多次功能提交并推送至 [GitHub 仓库](https://github.com/CRAZY-NEO/memory-agent-factory)。本地未提交改动不代表已交付到远端。
+- [x] **b. 完整项目文档。** 有项目说明、环境配置、运行指南、架构、schema、插件、Web、仓库抽取与发现指南。入口：[README](../README.md)。
+- [x] **c. 模块化结构与注释。** 理解/生成编排、知识管理、插件注册、验证、执行、报告及接口分模块实现，关键边界有注释与说明。证据：[架构说明](architecture.md)、[代码目录](../agent_factory/)。
+- [x] **d. 可在本地复现运行。** 提供 Python 环境、锁定依赖、离线 mock、Docker 执行与固定数据；真实模式另需可访问的 Ollama。证据：[快速开始](../README.md#1-快速开始)、[依赖锁文件](../requirements.lock.txt)。
+- [x] **e. 建议使用 Python。** 核心编排、算法、验证与服务均使用 Python，Web 页面使用原生 HTML/CSS/JavaScript。证据：[项目配置](../pyproject.toml)。
+- [x] **f. 工具选择须说明理由。** README 解释 LangGraph、Ollama、Pydantic、SQLite、NetworkX、FastAPI、Docker 等用途与选择理由；题目列出的框架不要求全部使用。证据：[技术选择](../README.md#2-系统架构与技术选择)。
+- [x] **g. 无法部署模型时允许 mock、模板或 API 演示。** 已提供 mock/规则模板模式，代码执行、评分、修复循环与回写真实运行；也已完成真实模型运行。证据：[离线演示报告](../examples/demo/report.md)、[真实模型报告](../examples/ollama-v2-demo/report.md)。
 
-## 新数据、真实模型与自动检查
+## 4. 基础交付内容
 
-1. 已由 Mac 工厂经 SSH 隧道调用 Jetson qwen3.5:2b 完成真实闭环，历史记录保留。最新 [v2 真实报告](../examples/ollama-v2-demo/report.md)使用 48 条记忆、36 条验证查询与 30 条最终测试，共 8 次真实模型调用，三候选首版通过，选定 TF-IDF；本次无修复，历史修复证据仍见 examples/repair-ollama-demo。
-2. 数据已增加同义改写、相近负例、多相关文档及分组失败分析，仍为小型模拟集；真实业务专家审核、更大语料和无答案查询是后续方向。
-3. 新增 [GitHub Actions](../.github/workflows/ci.yml)：锁定依赖安装、代码检查、全量测试、wheel 资源及独立安装、AST + mock/Docker 闭环，保存诊断产物。该检查无须连接 Jetson；真实模型报告单独归档。远端状态以仓库 Actions 页面为准。
+- [x] **完整项目代码库。** [代码目录](../agent_factory/)、[GitHub 仓库](https://github.com/CRAZY-NEO/memory-agent-factory)。
+- [x] **示例行业数据、文档或模拟业务材料。** 48 条模拟技术笔记、36 条验证查询、30 条最终测试查询，以及算法能力材料。证据：[数据目录](../data/)、[算法材料](../knowledge/sources/)。
+- [x] **知识图谱 schema 设计说明。** 包含实体、关系、版本与验证状态边界。证据：[schema 文档](schema.md)。
+- [x] **知识抽取结果文件。** 包含能力 JSON、仓库 AST JSON、图谱 JSON/GraphML。证据：[能力抽取 JSON](../knowledge/extracted_capabilities.json)、[仓库抽取 JSON](../examples/repository-demo/extracted_repository.json)。
+- [x] **Agent 工作流代码或配置。** LangGraph 状态图、条件修复循环与运行轨迹。证据：[工作流代码](../agent_factory/workflow.py)、[示例流程图](../examples/demo/workflow.mmd)。
+- [x] **至少一个描述到算法代码生成的完整示例。** 已归档离线、真实模型、仓库抽取与外部方法发现案例。证据：[真实三候选案例](../examples/ollama-v2-demo/)、[BM25Plus 发现案例](../examples/github-discovery-demo/)。
+- [x] **自动验证脚本。** CLI `validate` 可独立验证；测试入口统一为 `bash scripts/run_tests.sh`。证据：[CLI](../agent_factory/cli.py)、[测试脚本](../scripts/run_tests.sh)。
+- [x] **验证报告样例。** 保存通过/失败状态、候选比较、修订、最终测试、分组指标与失败案例。证据：[真实报告](../examples/ollama-v2-demo/report.md)、[历史失败报告](../examples/plugin-ollama-failure/report.md)。
+- [x] **README.md。** [README](../README.md)。
+- [x] **requirements.txt 或 environment.yml。** 提供兼容范围及准确版本锁文件。证据：[requirements.txt](../requirements.txt)、[requirements.lock.txt](../requirements.lock.txt)。
+- [x] **使用示例和测试用例。** 有命令、请求文件、结果归档与接口/验证/修复/插件/仓库抽取测试。证据：[示例请求](../examples/request.txt)、[测试目录](../tests/)。
 
-题目允许 mock/规则模板演示，因此当前版本能展示核心闭环；真实 LLM 运行有助于更充分证明代码生成与修复能力。
+## 5. 进阶要求
 
-剩余缺项、容易补齐的功能及较大工作量方向见 docs/roadmap.md；生成与修复改进见 docs/generation-repair.md。
+- [x] **Web 界面、CLI 或 API。** 已提供全部三种入口，Web 支持进度、报告、候选比较和产物下载。证据：[Web 指南](web-ui.md)、[API](../agent_factory/api.py)。
+- [x] **多轮代码修复。** 配置默认最多两次修复，保留各版代码与验证结果，并检测重复修改。证据：[配置](../config.json)、[修复代码](../agent_factory/repair.py)。
+- [x] **多个候选算法自动比较。** 当前比较 TF-IDF、BM25、Jaccard；验收登记的新方法也能参加后续比较。证据：[三候选真实报告](../examples/ollama-v2-demo/report.md)、[四候选复用报告](../examples/github-reuse-demo/report.md)。后者是 mock + Docker，不能表述为四候选真实模型运行。
+- [x] **知识图谱可视化。** 导出可离线打开的 HTML 和 GraphML。证据：[可视化代码](../agent_factory/visualization.py)、[示例图谱](../examples/graph/graph.html)。
+- [x] **自动生成验证报告。** 运行时输出结构化结果与 Markdown 报告。证据：[报告模块](../agent_factory/reporting.py)。
+- [x] **验证结果回写知识库或图谱。** 代码版本、执行环境、验证与经验均保留。证据：[知识模块](../agent_factory/knowledge.py)、[schema](schema.md)。
+- [ ] **未实现：支持不同任务类型的验证配置。** 目前只支持 `memory_retrieval`。指标阈值、候选与预算可配置，但尚未提供文本分类、表格分类、预测等任务的数据契约和验证器；这不能算跨任务支持。
+- [x] **插件式接入算法模板或评估指标。** `AlgorithmSpec` / `MetricSpec` 支持注册与发现，已新增 Jaccard 和 Precision@k；外部源码方法可通过验证后登记。证据：[注册表](../agent_factory/registry.py)、[插件指南](plugins.md)、[发布模块](../agent_factory/releases.py)。
 
-新增 Web 操作界面对应进阶用户体验：见 docs/web-ui.md；扩充评估集与按类型失败分析见 data/README.md、examples/web-evaluation-demo/report.md。原有 CLI/API 保留，数据和指标阈值来源继续记录在报告中。
+## 6. 加分项
+
+- [ ] **未实现：图搜索、Beam Search 或 MCTS 用于算法方案搜索。** 当前图遍历用于检索知识，候选方案按配置预算比较；尚无基于方案状态、动作和搜索预算的算法搜索。知识图谱遍历不能代替这项。
+- [ ] **部分实现：多智能体协作，而非单次 prompt。** 已有 Extractor、Understander、Planner、Coder、Reviewer、Repairer 的多轮交接，但由同一模型串行承担角色。尚无独立自治 Agent 的工具协商、消息协调或冲突解决。证据：[架构说明](architecture.md)、[工作流](../agent_factory/workflow.py)。
+- [x] **从真实仓库抽取函数、依赖和能力描述。** `ingest-repo` 静态提取 Python 函数/方法、签名、注释、import、行号、Git 提交与哈希。import 是依赖线索，不代表已解析所有传递依赖；抽取候选仍为未验证证据。证据：[AST 抽取器](../agent_factory/repository.py)、[指南](repository-extraction.md)、[实际结果](../examples/repository-demo/extracted_repository.json)。
+- [x] **代码安全检查与沙箱执行。** AST 检查限制危险行为，真实模型代码使用禁网、只读、非 root、资源受限的 Docker 执行。隔离机制不是绝对安全证明，local 执行器也不是安全沙箱。证据：[安全检查](../agent_factory/safety.py)、[执行器](../agent_factory/runner.py)。
+- [x] **自动分析失败并形成可复用经验。** 记录漏召回、排名错误、相近负例混淆和代码错误；经验进入知识图谱并可检索，区分建议与已验证修复。证据：[验证分析](../agent_factory/validation.py)、[真实失败分析样例](../examples/ollama-v2-demo/report.md)。
+- [x] **算法能力版本管理。** 能力抽取与实现不可覆盖，保存来源/代码哈希、修订关系、验证与发布版本；尚无专门的版本差异 UI。证据：[知识存储](../agent_factory/knowledge.py)、[发布清单](../agent_factory/releases.py)、[schema](schema.md)。
+- [x] **自然语言解释方案设计依据。** 方案与报告保存依据和来源关联；模型解释用于说明选择，不作为算法正确性证据。证据：[方案](../examples/ollama-v2-demo/plan.json)、[报告](../examples/ollama-v2-demo/report.md)。
+- [ ] **未实现：跨场景迁移。** 尚未用同一框架跑通表格分类、文本分类等不同任务。新检索方法的登记仍发生在同一任务类型内。
+- [x] **自动接口文档或部署配置。** FastAPI 提供 `/docs`、`/openapi.json`；已有 Dockerfile、Compose 与部署指南。尚无一键导出选定插件部署包的功能。证据：[API](../agent_factory/api.py)、[Compose](../compose.yaml)、[部署指南](jetson-deployment.md)。
+- [ ] **部分实现：性能优化与资源消耗分析。** 已测查询 P95、执行耗时，并设置容器 CPU/内存限制；尚无 CPU/内存峰值采样、性能剖析、持久索引优化或优化前后基准比较。资源限制不等于资源消耗分析。证据：[性能指标](../agent_factory/plugins/metrics/latency.py)、[执行器](../agent_factory/runner.py)。
+
+## 7. 提交要求：README 中的十项说明
+
+- [x] **1. 项目背景和目标。** README 开头说明行业场景、工厂输入与插件产物。
+- [x] **2. 系统架构和模块设计。** README 第 2 节，另有 [架构文档](architecture.md)。
+- [x] **3. 图谱 schema 和示例。** README 第 3 节，链接 schema、抽取结果与图谱。
+- [x] **4. Agent 工作流设计。** README 第 4 节，说明角色、修复预算与选定规则。
+- [x] **5. 环境配置和运行方法。** README 第 1、6 节，说明本地、Docker 与 Ollama 配置。
+- [x] **6. 示例数据和测试任务。** README 第 5 节，另有 [数据说明](../data/README.md)。
+- [x] **7. 生成算法代码示例。** README 第 4、7 节，链接完整生成代码。
+- [x] **8. 验证结果和报告样例。** README 第 7 节，链接离线与真实模型报告。
+- [x] **9. 挑战和解决方案。** README 第 9 节及 [生成修复说明](generation-repair.md)。
+- [x] **10. 后续扩展方向。** README 第 9 节及 [后续路线](roadmap.md)。
+
+以上入口见 [README](../README.md)。自动路由与默认 Web 操作说明已经同步，见 [自动路由指南](automatic-routing.md)。
+
+## 8. 题目之外的扩展
+
+以下功能有助于演示和使用，但题目没有明确要求自动联网寻找 GitHub 仓库，也没有要求通用功能代码生成。
+
+- [x] **GitHub 搜索 → 固定提交下载 → AST 抽取 → 新方法生成 → 验证 → 登记。** 已完成真实 BM25Plus 案例，保留来源许可、哈希与验收清单。证据：[发现指南](github-discovery.md)、[真实报告](../examples/github-discovery-demo/report.md)。这属于复刻开源方法，不是发明新的数学算法。
+- [x] **扩大评估集，加入同义改写与相近负例。** 已使用 v2 数据跑通真实模型；数据仍是小型模拟集，全部查询有答案。证据：[数据说明](../data/README.md)、[真实报告](../examples/ollama-v2-demo/report.md)。
+- [x] **GitHub Actions 自动检查。** 配置包含静态检查、测试、打包与 AST + mock/Docker 闭环，不依赖 Jetson；不自动运行真实模型验证。证据：[CI 配置](../.github/workflows/ci.yml)、[CI 说明](ci.md)。
+- [x] **自动选择已有能力复用或 GitHub 新方法发现。** 默认自动模式已接入 CLI/API/Web；实际 Chrome 提交两个真实模型任务，完成发现、登记、比较和再次复用，共 18 次 qwen3.5:2b 调用，全部 Docker 验收通过。140 项自动测试及离线 CI 闭环通过。证据：[路由指南](automatic-routing.md)、[发现报告](../examples/automatic-discovery-demo/report.md)、[比较报告](../examples/automatic-comparison-demo/report.md)、[复用报告](../examples/automatic-reuse-demo/report.md)、[浏览器记录](../examples/automatic_web_validation.json)。
+
+## 9. 尚未完成的重点
+
+- [ ] **不同任务的验证契约与执行流程。** 先选一个第二任务，再实现其输入输出、数据隔离、指标与验证器。
+- [ ] **跨任务或跨场景的完整运行示例。** 不能仅通过增加一个检索算法插件宣称完成迁移。
+- [ ] **用于算法方案搜索的图搜索、Beam Search 或 MCTS。** 当前没有实现这类搜索机制。
+- [ ] **更完整的自治多 Agent 协作。** 当前交付是多角色串行工作流。
+- [ ] **性能优化与实际资源消耗分析。** 当前只有耗时统计和执行资源限制。
+
+版本差异视图、一键部署包、更多指标、更大或真实业务评估集，以及中断恢复也可继续完善，详见 [后续路线](roadmap.md)。这些额外改进不应全部算成笔试基础要求的缺项。

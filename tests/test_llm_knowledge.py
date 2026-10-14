@@ -36,6 +36,54 @@ def test_provider_failure_bounded_and_no_mock_fallback(tmp_path):
     assert client.calls == 2
 
 
+def test_real_generated_syntax_consumes_bounded_retry_and_keeps_raw_trace(tmp_path):
+    outputs = [r'def retrieve(query, memories, top_k=5):\n    return []',
+               'def retrieve(query, memories, top_k=5):\n    return []']
+
+    def respond(request):
+        return httpx.Response(200, json={'message': {'content': json.dumps(
+            {'code': outputs.pop(0), 'explanation': 'HTTP fixture, not a live model response'})}})
+
+    client = LLMClient('ollama', 'fixture-model', 'http://fixture', tmp_path,
+                       transport=httpx.MockTransport(respond))
+    artifact = client.ask('coder', {}, CodeArtifact)
+    assert '\n' in artifact.code and client.calls == 2
+    first = json.loads((tmp_path / '001_coder.json').read_text())
+    assert 'error' in first and first['response']['code'] == r'def retrieve(query, memories, top_k=5):\n    return []'
+
+
+def test_source_adapter_must_use_provided_kernels_with_bounded_retry(tmp_path):
+    codes = ['def score_term(tf, df, doc_len, avg_len, N):\n    return float(tf)',
+             'def score_term(tf, df, doc_len, avg_len, N):\n    return source_tf(tf) * source_idf(df, N)']
+
+    def respond(request):
+        return httpx.Response(200, json={'message': {'content': json.dumps(
+            {'code': codes.pop(0), 'explanation': 'HTTP fixture adapter'})}})
+
+    client = LLMClient('ollama', 'fixture-model', 'http://fixture', tmp_path,
+                       transport=httpx.MockTransport(respond))
+    result = client.ask('source_coder', {'required_source_calls': ['source_tf', 'source_idf']}, CodeArtifact)
+    assert 'source_idf' in result.code and client.calls == 2
+    trace = json.loads((tmp_path / '001_source_coder.json').read_text())
+    assert 'supplied source kernels' in trace['error'] and 'return float(tf)' in trace['response']['code']
+
+
+def test_pure_source_adapter_uses_compact_deterministic_prompt(tmp_path):
+    hint = 'def score_term(tf, df, doc_len, avg_len, N):\n    return source_tf(tf) * source_idf(df, N)'
+
+    def respond(request):
+        payload = json.loads(request.content)
+        assert payload['options']['temperature'] == 0 and payload['options']['num_predict'] == 1024
+        assert 'exact small Python wrapper' in payload['messages'][0]['content']
+        return httpx.Response(200, json={'message': {'content': json.dumps({'code':hint,'explanation':'Fixture wrapper'})}})
+
+    client = LLMClient('ollama', 'qwen3.5:2b', 'http://fixture', tmp_path,
+                       transport=httpx.MockTransport(respond))
+    output = client.ask('source_adapter', {'source_adapter_hint':hint,
+                       'required_source_calls':['source_tf','source_idf']}, CodeArtifact)
+    assert output.code == hint
+
+
 @pytest.mark.parametrize('role', ['understander', 'coder', 'source_coder'])
 def test_qwen_code_sampling_and_actual_options_are_auditable(tmp_path, role):
     sent = []

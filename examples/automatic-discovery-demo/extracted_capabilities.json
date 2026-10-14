@@ -1,0 +1,35 @@
+[
+  {
+    "id": "cap_github_xhluca_bm25s_20261014t160901_22b20fbf",
+    "name": "BM25Plus",
+    "task": "memory_retrieval",
+    "algorithm": "github_xhluca_bm25s",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "BM25Plus is only applicable when the repository contains the _score_idf_bm25plus and _score_tfc_bm25plus functions in bm25s/scoring.py.",
+      "The method is applicable only when the corpus is in JSONL format as specified by the JsonlCorpus class in bm25s/utils/corpus.py."
+    ],
+    "metrics": [
+      "recall_at_k",
+      "mrr_at_k",
+      "precision_at_k",
+      "p95_ms"
+    ],
+    "dependencies": [],
+    "limitations": [
+      "The method does not support English language input as the current bm25s implementation only supports English.",
+      "The method relies on the existing bm25s library and cannot be used independently without the underlying scoring functions."
+    ],
+    "source_id": "source_github_material_970bf85f0c24403458b8cc6eca47c2f3246919969da54217b0e351b68ea29dac",
+    "evidence": "def _score_idf_bm25plus(df, N):",
+    "algorithm_plugin_version": "20261014T160901_22b20fbf"
+  }
+]

@@ -1,0 +1,103 @@
+{
+  "repositories": [
+    {
+      "full_name": "cognica-io/bayesian-bm25",
+      "description": "Bayesian probability transforms for BM25 retrieval scores",
+      "license": "Apache-2.0",
+      "stars": 78,
+      "url": "https://github.com/cognica-io/bayesian-bm25"
+    },
+    {
+      "full_name": "xhluca/bm25s",
+      "description": "Fast BM25 search in Python, powered by Numpy and Numba",
+      "license": "MIT",
+      "stars": 1804,
+      "url": "https://github.com/xhluca/bm25s"
+    },
+    {
+      "full_name": "dorianbrown/rank_bm25",
+      "description": "A Collection of BM25 Algorithms in Python",
+      "license": "Apache-2.0",
+      "stars": 1407,
+      "url": "https://github.com/dorianbrown/rank_bm25"
+    },
+    {
+      "full_name": "nhirakawa/BM25",
+      "description": "A Python implementation of the BM25 ranking function.",
+      "license": "MIT",
+      "stars": 244,
+      "url": "https://github.com/nhirakawa/BM25"
+    },
+    {
+      "full_name": "jxmorris12/bm25_pt",
+      "description": "minimal pytorch implementation of bm25 (with sparse tensors)",
+      "license": "MIT",
+      "stars": 105,
+      "url": "https://github.com/jxmorris12/bm25_pt"
+    }
+  ],
+  "excluded": [
+    {
+      "repository": "link1697/StageForge",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "RickyT715/Agentic-Resume-and-Cover-Letter-Generator",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "kanhub-007/kapsula",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "CRAZY-NEO/memory-agent-factory",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "ihtesham-jahangir/SynapseOS",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "lsq960124/Inverted-index-BM25",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "Htring/BM25",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "Oaklight/searxng-bm25-reranker",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "fanta-mnix/python-bm25",
+      "reason": "private, invalid name or unsupported/unknown license"
+    }
+  ],
+  "search_trace": [
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "BM25Plus Chinese English hybrid retrieval in:readme language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    },
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "BM25Plus memory retrieval plugin in:readme language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    },
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "BM25 in:name language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    }
+  ]
+}

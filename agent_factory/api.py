@@ -5,6 +5,7 @@ import os
 import re
 import secrets
 from pathlib import Path
+from typing import Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -20,6 +21,7 @@ RUN_PATTERN = r"^\d{8}T\d{6}_[0-9a-f]{8}$"
 
 class FactorySubmission(Contract):
     description: str = Field(min_length=5, max_length=6000)
+    mode: Literal['auto', 'reuse', 'discover'] = 'auto'
 
 
 class BrowserOpening(Contract):
@@ -209,7 +211,7 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
     def discover_algorithm(body: FactorySubmission):
         if os.getenv('FACTORY_PROVIDER', 'mock') != 'ollama':
             raise HTTPException(status_code=400, detail='GitHub algorithm discovery requires Ollama mode')
-        return submit('discovery', body.model_dump())
+        return submit('discovery', {'description': body.description})
 
     @app.get('/v1/jobs', dependencies=[Depends(authenticate)])
     def recent_jobs(limit: int = Query(default=20, ge=1, le=100)):
@@ -274,7 +276,7 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
     @app.get('/v1/runs/{run_id}/artifacts/{filename}', dependencies=[Depends(authenticate)])
     def download(run_id: str, filename: str):
         if filename not in {'selected_retrieval.py', 'plugin.json', 'report.json', 'report.md',
-                            'search_results.json', 'proposal.json', 'source_context.json', 'source_contract.json', 'extracted_repository.json'}:
+                            'routing.json', 'search_results.json', 'proposal.json', 'source_context.json', 'source_contract.json', 'extracted_repository.json'}:
             raise HTTPException(status_code=404, detail='Artifact not found')
         if filename == 'report.json':
             return JSONResponse(report(run_id), headers={'Content-Disposition': 'attachment; filename="report.json"'})

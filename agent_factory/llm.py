@@ -1,5 +1,6 @@
 """One typed API for deterministic demonstrations and real Ollama role calls."""
 
+import ast
 import json
 import logging
 import re
@@ -16,9 +17,12 @@ from .registry import load_registry
 T = TypeVar("T", bound=BaseModel)
 LOGGER = logging.getLogger(__name__)
 ROLE_PROMPTS = {
-    "source_search": "根据需求提出最多两个简短英文 GitHub 搜索词组 queries，以及一个更宽泛的算法家族词 family_query，不加限定符。例如 BM25Plus 类名可能只出现在代码里，family_query 应用 BM25。只使用算法术语，不包含私人业务资料。优先算法实现库。当前只支持 memory_retrieval；分类、预测等必须标记 unsupported。寻找 existing_algorithms 没有的方法，top_k 默认5。不能编造仓库或成功结果。",
+    'source_adapter': 'Return the exact small Python wrapper in source_adapter_hint as the code field, with a one-sentence explanation. The pure source kernels are supplied separately. Preserve every call, argument and numeric constant in the hint. Do not inline, re-derive, round, optimize, or add imports/classes/other functions. This step only wires the requested source method into the scoring interface.',
+    'source_adapter_repairer': 'Return the complete corrected wrapper using source_adapter_hint. Preserve all supplied kernel calls, arguments, constants and guards. Trusted errors take precedence over reviewer advice. Do not re-derive formulas, round, add imports/classes or define the supplied kernels. Explain in one sentence.',
+    'router': 'Extract explicit requested retrieval method names from the description. The catalog is NOT a closed list: an unregistered method MUST remain in requested_methods and will be discovered later. literal_method_mentions are names found directly in the input; do not omit them because they are missing from the catalog. Current supported task is memory_retrieval; classification and prediction are unsupported. requested_methods contains only names explicitly mentioned by the user (registered IDs also allowed), never invent a preferred algorithm for a generic request. Preserve exact variants: BM25Plus/BM25+/BM25L are not BM25. An unnamed ordinary retrieval request has requested_methods=[]. discover_new is true only when the user explicitly asks for a new/unregistered method or requirements clearly require a capability absent from the catalog. Do not select a repository or modify thresholds. Rationale at most two sentences.',
+    "source_search": "根据需求提出最多两个简短英文 GitHub 搜索词组 queries，以及一个更宽泛的算法家族词 family_query，不加限定符。requested_method 非空时只搜索该方法，不搜索需求中用于后续比较的已有方法。例如 BM25Plus 类名可能只出现在代码里，family_query 应用 BM25。只使用算法术语，不包含私人业务资料。优先算法实现库。当前只支持 memory_retrieval；分类、预测等必须标记 unsupported。寻找 existing_algorithms 没有的方法，top_k 默认5。不能编造仓库或成功结果。",
     "source_repository": "从实际 repositories 结果选一个最相关的算法源码仓库，repository 必须逐字等于列表 full_name。优先独立算法库，避免只调用该库的 RAG 应用。考虑用户要求的新方法、许可、语言和实现可复刻性，简洁说明理由。",
-    "source_proposal": "Choose the requested retrieval method actually present in source_functions. name must be only its original English method name, with no descriptive suffix. id is github_ plus a readable method name. Do not rename an existing algorithm. guidance: at most three short sentences explaining interface/tokenizer adaptation; do not combine different algorithms or rewrite formulas. Keep retrieve(query, memories, top_k=5). For evidence select one path and copy ONE string from exact_quote_options exactly, not the full compacted function because removed docstrings make it non-continuous. Give one applicable condition and one limitation. Ignore irrelevant source variants.",
+    "source_proposal": "Choose the requested retrieval method actually present in source_functions. If requested_method is specified, reproduce exactly that method; never silently substitute another variant. name must be only its original English method name, with no descriptive suffix. id is github_ plus a readable method name. Do not rename an existing algorithm. guidance: at most three short sentences explaining interface/tokenizer adaptation; do not combine different algorithms or rewrite formulas. Keep retrieve(query, memories, top_k=5). For evidence select one path and copy ONE string from exact_quote_options exactly, not the full compacted function because removed docstrings make it non-continuous. Give one applicable condition and one limitation. Ignore irrelevant source variants.",
     "source_coder": "Implement ONLY scoring_hook.signature. If source_adapter_hint is present, use that short adapter: adapted_source_kernels are already supplied unchanged from the selected external source. Call those helper functions, do not redefine them or re-derive formulas. This is source adaptation, not a new scoring design. Otherwise use actual source formulas and source_numeric_defaults. Preserve defaults and satisfy public_algorithm_cases. No retrieve, tokenizer, classes or numpy. Prefer a complete function under 15 lines and explain in two sentences.",
     "source_reviewer": "Diagnose the generated score_document hook using source functions and trusted validation errors. Framework supplies tokenization and retrieve. Suggest at most six concise fixes to actual formula, count handling or stability errors. Do not add classes, dependencies, tokenizers or retrieve functions; do not change data or thresholds. Advice is unverified and cannot override source formulas or execution diagnostics.",
     "source_repairer": "Return complete corrected scoring_hook.signature. If source_adapter_hint exists, follow it and call the supplied adapted_source_kernels; do not redefine those helpers or re-derive formulas. Preserve source defaults and public numeric scores, including tf=0. Framework supplies retrieve and statistics. Reviewer advice is unverified; ignore contradictions. On rebuild_from_source discard the prior hook. No retrieve, tokenizer, numpy or classes. Prefer a complete function under 15 lines and explanation in two sentences.",
@@ -41,6 +45,8 @@ sklearn.metrics.pairwise。禁止 IO、网络、系统操作、反射、动态�
 对参与浮点累加的无序查询词排序遍历，以保持跨进程结果稳定。
 不使用测试查询或标注。不能使用 open/print/eval/exec/getattr 或 globals 等。
 不附带 main、__name__ 或演示调用，只定义函数和所需导入。
+代码经一次 JSON 解码后必须直接是合法 Python 源码：换行和引号只做 JSON 必需的一层转义，不要再次转义。
+省略 docstring 与长注释，避免引号错误；保留完整函数和所有需要的导入，不要截断或添加未定义的辅助函数。
 """
 SOURCE_CODE_RULES = """Return only a JSON object with code and explanation. Code contains imports and function definitions only.
 Exact scoring hook is specified by scoring_hook.signature; preserve all argument names. Return a numeric score, not a list.
@@ -57,6 +63,10 @@ Implement only method_name, preserving actual source formulas and defaults. No t
 
 class LLMError(RuntimeError):
     """A provider failure is explicit; it never triggers a silent mock fallback."""
+
+
+class CodeResponseError(ValueError):
+    """Generated code violates an explicit source-adapter response contract."""
 
 
 class LLMClient:
@@ -150,11 +160,24 @@ class LLMClient:
                     raise ValueError("Unsupported provider: " + self.provider)
                 log["response"] = response
                 parsed = schema.model_validate(response)
+                if self.provider == 'ollama' and role in {'coder', 'repairer', 'source_coder', 'source_repairer',
+                                                        'source_adapter', 'source_adapter_repairer'}:
+                    # Syntax is checked without executing code. Malformed source
+                    # consumes the existing bounded response retry, not a silent
+                    # template fallback or mutation of the generated string.
+                    tree = ast.parse(parsed.code)
+                    required = set(context.get('required_source_calls', []))
+                    calls = {node.func.id for node in ast.walk(tree)
+                             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)}
+                    if required - calls:
+                        raise CodeResponseError('Use source_adapter_hint and call the supplied source kernels: '
+                                                + ', '.join(sorted(required - calls))
+                                                + '. Do not re-derive or round their formulas.')
                 return parsed
             except LLMError as exc:
                 log["error"] = str(exc)
                 raise
-            except (httpx.HTTPError, ValidationError, KeyError, json.JSONDecodeError) as exc:
+            except (httpx.HTTPError, ValidationError, KeyError, json.JSONDecodeError, SyntaxError, CodeResponseError) as exc:
                 previous_error = str(exc)[:2000]
                 log["error"] = previous_error
                 if retry == 1:
@@ -168,6 +191,12 @@ class LLMClient:
 
     def _mock(self, role, context):
         """Rule/template mode intentionally demonstrates control flow, not LLM intelligence."""
+        if role == 'router':
+            from .routing import mock_route
+            return mock_route(context)
+        if role in {'source_adapter', 'source_adapter_repairer'}:
+            return {'code': context['source_adapter_hint'],
+                    'explanation': 'Mock response reuses the supplied source adapter; execution and metrics are real.'}
         if role == "extractor":
             text = context["text"]
             match = re.search(r"算法：([a-z][a-z0-9_]*)", text)
