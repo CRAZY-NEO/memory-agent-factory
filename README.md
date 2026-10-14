@@ -8,13 +8,19 @@
 
 ## 1. 快速开始
 
-网页入口现已实现，详见 [Web 启动指南](docs/web-ui.md)：
+已有本地环境可直接使用网页入口，详见 [Web 启动指南](docs/web-ui.md)：
 
 ```bash
 cd ~/Downloads/agent-factory
 .venv/bin/python scripts/serve_web.py
 # 打开 http://127.0.0.1:8010，输入 state/web/access-token.txt 中的访问密钥
 # 默认 mock + Docker；真实模型用 --provider ollama 并保持原 SSH 隧道
+```
+
+新机器先获取项目（已有目录可跳过）：
+
+```bash
+git clone https://github.com/CRAZY-NEO/memory-agent-factory.git ~/Downloads/agent-factory
 ```
 
 需要 Python 3.11 或 3.12，建议 3.12。本机项目已创建 `.venv`；已有环境可直接激活并从演示命令开始。
@@ -239,12 +245,11 @@ scripts/run_tests.sh -q
 ruff check agent_factory scripts tests
 git status
 
-# 建立自己的 GitHub 仓库后，使用实际仓库地址配置 remote，再推送
-# git remote add origin <your-repository-url>
-# git push -u origin main
+# 提交本地修改后，推送到已配置的远端
+git push origin main
 ```
 
-已有本地 Git 版本控制；远端 GitHub 尚未配置。`.venv`、运行数据库、临时运行目录和密钥不纳入版本控制。
+项目已提交至 [GitHub 仓库](https://github.com/CRAZY-NEO/memory-agent-factory)，保留原有提交历史。`.venv`、运行数据库、临时运行目录和密钥不纳入版本控制。
 所有演示资料均由本项目编写；外部库遵循各自许可证。
 
 参考：[LangGraph 状态图](https://docs.langchain.com/oss/python/langgraph/graph-api)、[Ollama chat API](https://docs.ollama.com/api/chat)、[scikit-learn TF-IDF](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html)、[BEIR 检索评估](https://github.com/beir-cellar/beir)。
