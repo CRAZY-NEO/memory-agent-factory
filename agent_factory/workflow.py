@@ -100,7 +100,14 @@ class Factory:
         return {"knowledge": knowledge}
 
     def _plan(self, state):
-        plan = self.client.ask("planner", {"request": state["request"], **state["knowledge"],
+        knowledge = dict(state["knowledge"])
+        if knowledge.get("repository_candidates"):
+            # Planning needs provenance and descriptions; only the current coder
+            # receives the bounded code excerpt, preserving the small-model budget.
+            knowledge["repository_candidates"] = [
+                {key: value for key, value in row.items() if key != "code"}
+                for row in knowledge["repository_candidates"]]
+        plan = self.client.ask("planner", {"request": state["request"], **knowledge,
                                           "algorithm_catalog": self.registry.catalog(self.config)["algorithms"],
                                           "max_candidates": self.config.max_candidates,
                                           "required_algorithms": self.config.algorithms
@@ -132,6 +139,7 @@ class Factory:
                     'source_run': seed['source_run'], 'source_revision': seed['source_revision'],
                     'source_hash': seed['source_hash'], 'unchanged': False}}
         context = focused_context(state, self.registry)
+        repository_ids = [row['id'] for row in context.get('repository_candidates', [])]
         role = 'coder'
         strategy = 'reproduce_reference'
         if state['revision']:
@@ -150,10 +158,12 @@ class Factory:
             unchanged = bool(state['revision'] and code_fingerprint(artifact.code) == code_fingerprint(state['code']))
             return {'code': artifact.code, 'code_explanation': artifact.explanation, 'generation_error': None,
                     'generation': {'strategy': strategy, 'unchanged': unchanged,
-                                   'semantic_hash': code_fingerprint(artifact.code)}}
+                                   'semantic_hash': code_fingerprint(artifact.code),
+                                   'repository_candidate_ids': repository_ids}}
         except LLMError as exc:
             return {'code': '', 'code_explanation': '', 'generation_error': str(exc),
-                    'generation': {'strategy': strategy, 'unchanged': False}}
+                    'generation': {'strategy': strategy, 'unchanged': False,
+                                   'repository_candidate_ids': repository_ids}}
 
     def _validate(self, state):
         memories, queries = load_dataset(self.workspace / "data", "validation")
@@ -184,6 +194,8 @@ class Factory:
         self.store.add_edge(candidate["capability_id"], impl_id, "realized_by")
         self.store.add_edge(impl_id, val_id, "validated_by")
         self.store.add_edge(impl_id, self.environment_id, "requires")
+        for evidence_id in attempt['generation'].get('repository_candidate_ids', []):
+            self.store.add_edge(impl_id, evidence_id, "context_from")
         if parent:
             self.store.add_edge(impl_id, parent, "revises")
         if not report["passed"] or revision:

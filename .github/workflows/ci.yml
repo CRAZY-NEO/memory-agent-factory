@@ -1,0 +1,81 @@
+name: Offline checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Python 3.12 / mock + Docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONUNBUFFERED: "1"
+      TZ: UTC
+      LANG: C.UTF-8
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      LANGSMITH_TRACING: "false"
+      LANGCHAIN_TRACING_V2: "false"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.lock.txt
+
+      - name: Install locked dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.lock.txt
+          .venv/bin/python -m pip check
+          mkdir -p state/ci
+
+      - name: Check Python and browser JavaScript
+        run: |
+          .venv/bin/ruff check agent_factory tests scripts
+          node --check agent_factory/web/app.js
+
+      - name: Run isolated tests
+        run: bash scripts/run_tests.sh -q --junitxml=state/ci/tests.xml
+
+      - name: Build and inspect wheel
+        run: |
+          .venv/bin/python -m pip wheel --no-deps --wheel-dir state/ci/wheels .
+          .venv/bin/python scripts/check_ci.py wheel state/ci/wheels
+          .venv/bin/python -m pip install --no-deps --force-reinstall state/ci/wheels/*.whl
+          .venv/bin/python -I scripts/check_ci.py installed
+
+      - name: Build bounded algorithm runner
+        run: |
+          docker build -f Dockerfile.runner -t agent-factory-runner:0.1 .
+          docker image inspect agent-factory-runner:0.1 > state/ci/runner-image.json
+
+      - name: Exercise generation, failure repair, final test and knowledge persistence
+        timeout-minutes: 6
+        run: .venv/bin/python scripts/check_ci.py smoke state/ci/factory
+
+      - name: Upload test results and workflow diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: offline-checks-${{ github.run_id }}-${{ github.run_attempt }}
+          path: state/ci/
+          if-no-files-found: warn
+          retention-days: 7

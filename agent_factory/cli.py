@@ -12,6 +12,7 @@ from .llm import LLMClient
 from .models import ValidationConfig
 from .registry import load_registry
 from .repair import load_failed_codes
+from .repository import ingest_repository
 from .runtime import MemoryRetriever
 from .validation import load_dataset, validate
 from .visualization import write_graph_html
@@ -39,6 +40,15 @@ def parser():
     commands.add_parser("plugins", help="列出已发现的算法、指标及版本")
     ingest = commands.add_parser("ingest", help="从算法材料抽取能力并写入知识库")
     provider_options(ingest)
+    repository = commands.add_parser("ingest-repo", help="静态抽取本地 Python 仓库的函数、依赖与来源证据")
+    repository.add_argument("repository", type=Path, help="本地代码仓库目录；不导入或运行目标源码")
+    repository.add_argument("--algorithm", help="人工关联一个已启用算法，不自动注册或认证目标代码")
+    repository.add_argument("--include", action="append", help="相对仓库路径的 glob，可重复；默认 *.py")
+    repository.add_argument("--output", type=Path, help="默认 knowledge/extracted_repository.json")
+    repository.add_argument("--max-files", type=int, default=200)
+    repository.add_argument("--max-file-bytes", type=int, default=262144)
+    repository.add_argument("--max-total-bytes", type=int, default=5242880)
+    repository.add_argument("--max-symbols", type=int, default=1000)
     run = commands.add_parser("run", help="需求 → 检索知识 → 生成 → 验证 → 修复 → 沉淀")
     provider_options(run)
     request = run.add_mutually_exclusive_group(required=True)
@@ -100,6 +110,20 @@ def main(argv=None):
             result = ingest_sources(store, client, workspace / "knowledge" / "sources", output,
                                     registry=registry, algorithm_ids=config.algorithms)
             print(json.dumps({"capabilities": len(result), "output": str(output)}, ensure_ascii=False))
+        elif arguments.command == "ingest-repo":
+            if arguments.algorithm and arguments.algorithm not in config.algorithms:
+                raise ValueError("Repository association requires an enabled algorithm")
+            store = KnowledgeStore(workspace / "state" / "knowledge.sqlite")
+            output = arguments.output or workspace / "knowledge" / "extracted_repository.json"
+            result = ingest_repository(store, arguments.repository, output, registry=registry,
+                                       algorithm=arguments.algorithm, include=arguments.include,
+                                       max_files=arguments.max_files, max_file_bytes=arguments.max_file_bytes,
+                                       max_total_bytes=arguments.max_total_bytes, max_symbols=arguments.max_symbols)
+            snapshot = result["snapshot"]
+            print(json.dumps({"snapshot_id": snapshot["id"], "status": snapshot["status"],
+                              "files_parsed": snapshot["files_parsed"], "candidates": len(result["candidates"]),
+                              "limited": snapshot["limited"], "issues": snapshot["issues"],
+                              "output": str(output)}, ensure_ascii=False, indent=2))
         elif arguments.command == "export":
             store = KnowledgeStore(workspace / "state" / "knowledge.sqlite")
             output = arguments.output or workspace / "state" / "export"

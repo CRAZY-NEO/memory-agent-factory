@@ -14,7 +14,7 @@
 
 ## 基础交付
 
-- 代码库：agent_factory；Git 本地版本控制，提交到 GitHub 需配置用户实际远端。
+- 代码库：agent_factory；Git 历史已推送至 https://github.com/CRAZY-NEO/memory-agent-factory。
 - 模拟行业数据：data，软件研发与运维技术记忆。
 - 算法材料及抽取文件：knowledge/sources、knowledge/extracted_capabilities.json。
 - 图谱 schema：docs/schema.md。
@@ -25,18 +25,20 @@
 
 ## 已实现的进阶点
 
-CLI 与鉴权异步 API；多轮有限修复；三个算法候选比较；插件注册与自动发现；Precision@k 及可配置指标排序；图谱 HTML/GraphML；自动报告；知识回写；
-来源证据；AST 与 Docker 执行选项；失败经验；能力及代码版本；设计依据；性能计时。
+Web、CLI 与鉴权异步 API；多轮有限修复；三个算法候选比较；插件注册与自动发现；Precision@k 及可配置指标排序；图谱 HTML/GraphML；自动报告；知识回写；
+来源证据；AST 安全检查与 Docker 执行选项；失败经验；能力及代码版本；设计依据；性能计时。
+
+真实 Python 仓库的 AST 能力候选抽取：`ingest-repo` 提取函数/方法、签名、注释、import、代码行号、Git HEAD 与内容哈希；扫描结果写回图谱，并作为未验证证据进入规划和当前算法的生成/修复上下文。见 [仓库指南](repository-extraction.md)、[实际抽取 JSON](../examples/repository-demo/extracted_repository.json)及 [AST + Docker 完整报告](../examples/repository-demo/report.md)。不自动执行仓库代码，不把注释或人工算法关联当成正确性证明。
 
 角色协作由同一个模型串行承担，不能将其描述成并发自治 Agent 群。
 图遍历用于知识检索，没有实现 Beam Search/MCTS 算法搜索。
 检索任务支持算法/指标插件和外部包发现；尚未实现跨任务验证配置。
 
-## 提交前仍需补充
+## 新数据、真实模型与自动检查
 
-1. 已由 Mac 工厂经 SSH 隧道调用 Jetson qwen3.5:2b 完成真实闭环，见 examples/ollama-demo；新插件记录见 examples/plugin-jaccard-ollama-demo。提交时保留原始调用与报告。
-2. 扩大和改写检索数据，降低简单词面重合带来的虚高指标。
-3. 配置自己的 GitHub 远端并推送；仓库公开前排除私人资料与密钥。
+1. 已由 Mac 工厂经 SSH 隧道调用 Jetson qwen3.5:2b 完成真实闭环，历史记录保留。最新 [v2 真实报告](../examples/ollama-v2-demo/report.md)使用 48 条记忆、36 条验证查询与 30 条最终测试，共 8 次真实模型调用，三候选首版通过，选定 TF-IDF；本次无修复，历史修复证据仍见 examples/repair-ollama-demo。
+2. 数据已增加同义改写、相近负例、多相关文档及分组失败分析，仍为小型模拟集；真实业务专家审核、更大语料和无答案查询是后续方向。
+3. 新增 [GitHub Actions](../.github/workflows/ci.yml)：锁定依赖安装、代码检查、全量测试、wheel 资源及独立安装、AST + mock/Docker 闭环，保存诊断产物。该检查无须连接 Jetson；真实模型报告单独归档。远端状态以仓库 Actions 页面为准。
 
 题目允许 mock/规则模板演示，因此当前版本能展示核心闭环；真实 LLM 运行有助于更充分证明代码生成与修复能力。
 

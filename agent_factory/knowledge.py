@@ -109,7 +109,56 @@ class KnowledgeStore:
         lessons = list({row["node_id"]: row for row in lessons}.values())
         histories = list({row["node_id"]: row for row in histories}.values())
         return {"capabilities": selected, "sources": sources, "lessons": lessons[-6:],
-                "historical_validations": histories[-6:]}
+                "historical_validations": histories[-6:],
+                "repository_candidates": self.repository_candidates(description, seen, graph)}
+
+    def repository_candidates(self, description, algorithms, graph=None):
+        """Return bounded unvalidated evidence, at most one function per selected algorithm.
+
+        An explicit operator association permits retrieval, never plugin registration or
+        a passed validation claim. Source files and full extraction stay in the graph;
+        prompt context deliberately carries only a small, labelled excerpt.
+        """
+        candidates = [item for item in self.nodes("CodeCandidate")
+                      if item.get("algorithm") in algorithms
+                      and item.get("association_method") == "operator_explicit"]
+        if not candidates:
+            return []
+        text = [" ".join([item["qualified_name"], item["signature"], item.get("docstring") or "",
+                          *[comment["text"] for comment in item["comments"]]]) for item in candidates]
+        vectorizer = TfidfVectorizer(analyzer="char", ngram_range=(1, 3))
+        matrix = vectorizer.fit_transform(text)
+        scores = cosine_similarity(vectorizer.transform([description]), matrix)[0]
+        order = sorted(range(len(candidates)), key=lambda index: (
+            candidates[index]["name"] != "retrieve", -scores[index], candidates[index]["id"]))
+        graph = graph or self.graph()
+        selected, seen = [], set()
+        for index in order:
+            candidate = candidates[index]
+            if candidate["algorithm"] in seen:
+                continue
+            seen.add(candidate["algorithm"])
+            source_id = candidate["source_id"]
+            commits = sorted({graph.nodes[uid]["payload"]["git_commit"]
+                              for uid in graph.predecessors(source_id)
+                              if graph.nodes[uid]["kind"] == "RepositorySnapshot"
+                              and graph.nodes[uid]["payload"].get("git_commit")})
+            selected.append({key: candidate[key] for key in (
+                "id", "algorithm", "algorithm_plugin_version", "association_method", "status", "trust",
+                "source_id", "path", "file_sha256", "code_sha256", "line_start", "line_end")})
+            selected[-1].update({
+                "qualified_name": candidate["qualified_name"][:160],
+                "signature": candidate["signature"][:500],
+                "description": (candidate.get("docstring") or "No docstring; semantic capability is unverified.")[:500],
+                "comments": [{"line": comment["line"], "text": comment["text"][:200]}
+                             for comment in candidate["comments"][:4]],
+                "imports": [{key: value[:120] if isinstance(value, str) else value
+                             for key, value in dependency.items()}
+                            for dependency in candidate["imports"][:8]],
+                "git_commits": commits[:3],
+                "code": candidate["code"][:3000], "code_truncated": len(candidate["code"]) > 3000,
+            })
+        return selected
 
     def export(self, directory):
         directory = Path(directory)

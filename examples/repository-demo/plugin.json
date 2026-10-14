@@ -1,0 +1,52 @@
+{
+  "task": "memory_retrieval",
+  "entrypoint": "retrieve",
+  "interface_version": "1",
+  "runner": "docker",
+  "run_id": "20261014T033355_6999daf6",
+  "code_hash": "84fbe993c241919f3a551f0f81a7be700dfa09e16c23ae1a37b746ca7b432d6a",
+  "code_path": "examples/repository-demo/selected_retrieval.py",
+  "algorithm_plugin": {
+    "id": "tfidf",
+    "name": "字符 TF-IDF",
+    "version": "1.0.1",
+    "task": "memory_retrieval",
+    "dependencies": [
+      "scikit-learn"
+    ],
+    "environment": "retrieval-v1",
+    "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。必须对 texts=[memory[\"text\"] for memory in memories] 拟合，每条完整记忆对应矩阵一行，行数必须等于 len(memories)。禁止把拆分去重的词当成多篇文档，禁止移除中文或过滤行后仍用原列表索引；transform([query]) 后与整个语料计算相似度。",
+    "public_cases": [
+      {
+        "query": "甲乙 alpha beta",
+        "memories": [
+          {
+            "id": "a",
+            "text": "甲乙 alpha beta",
+            "source": "public://a"
+          },
+          {
+            "id": "b",
+            "text": "乙丙 alpha gamma",
+            "source": "public://b"
+          }
+        ],
+        "top_k": 5,
+        "expected": [
+          {
+            "id": "a",
+            "score": 1.0000000000000016
+          },
+          {
+            "id": "b",
+            "score": 0.46518071501565006
+          }
+        ]
+      }
+    ]
+  },
+  "dependencies": [
+    "scikit-learn"
+  ],
+  "validation_report": "examples/repository-demo/report.json"
+}

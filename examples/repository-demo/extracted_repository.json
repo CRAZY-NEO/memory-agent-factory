@@ -1,0 +1,226 @@
+{
+  "snapshot": {
+    "repository_key": "25aa67c66aeae3b8fd517565692c0cb67ac566c47c861d881a51ff304adb9d1f",
+    "repository_name": "agent-factory",
+    "git_commit": "cf7a9c44d822e436e7d75b0c8b891e4c63f3716c",
+    "extractor_version": "1.0.0",
+    "include": [
+      "agent_factory/templates/jaccard.py"
+    ],
+    "limits": {
+      "max_files": 200,
+      "max_file_bytes": 262144,
+      "max_total_bytes": 5242880,
+      "max_symbols": 1000
+    },
+    "algorithm": "jaccard",
+    "algorithm_plugin_version": "1.0.1",
+    "task": "memory_retrieval",
+    "association_method": "operator_explicit",
+    "source_ids": [
+      "repo_source_84d383c36e221568fbd7bc1fee96980c6fdece020b761264441a66ed307bb88c"
+    ],
+    "candidate_ids": [
+      "code_candidate_c5e0adf886224595fdeb580385806d49ad95766817190e36a08926fd31510acd",
+      "code_candidate_211d8eb3d6ad1e05835dce6f72435004da8200e4abd13fe6b330caf57b1acfb8"
+    ],
+    "files_examined": 1,
+    "files_parsed": 1,
+    "bytes_read": 956,
+    "issues": [
+      {
+        "path": ".git",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": ".github",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": ".pytest_cache",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": ".ruff_cache",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": ".venv",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "build",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "memory_agent_factory.egg-info",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "runs",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "state",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "agent_factory/__pycache__",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "agent_factory/plugins/__pycache__",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "agent_factory/plugins/algorithms/__pycache__",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "agent_factory/plugins/metrics/__pycache__",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "scripts/__pycache__",
+        "reason": "excluded_directory"
+      },
+      {
+        "path": "tests/__pycache__",
+        "reason": "excluded_directory"
+      }
+    ],
+    "limited": false,
+    "status": "static_extraction_only",
+    "id": "repo_snapshot_5c20dbe8a07b33b8339fe7ee2f911893214af16a5f422b86ed9f13026875d9ad"
+  },
+  "sources": [
+    {
+      "id": "repo_source_84d383c36e221568fbd7bc1fee96980c6fdece020b761264441a66ed307bb88c",
+      "source_type": "python_repository",
+      "path": "agent_factory/templates/jaccard.py",
+      "repository_key": "25aa67c66aeae3b8fd517565692c0cb67ac566c47c861d881a51ff304adb9d1f",
+      "sha256": "4fb0baa6a02f22aae5d5a6329794e367342d3c178e437b7c22b8d96b77de0894",
+      "encoding": "utf-8",
+      "byte_count": 956,
+      "text": "\"\"\"Set Jaccard retrieval with Chinese characters/bigrams and English identifiers.\"\"\"\n\nimport re\n\n\ndef tokenize(text):\n    tokens = set(re.findall(r\"[a-z0-9_]+\", text.lower()))\n    for fragment in re.findall(r\"[\\u4e00-\\u9fff]+\", text):\n        tokens.update(fragment)\n        tokens.update(fragment[index:index + 2] for index in range(len(fragment) - 1))\n    return tokens\n\n\ndef retrieve(query, memories, top_k=5):\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    query_tokens = tokenize(query)\n    if not query_tokens:\n        return []\n    hits = []\n    for memory in memories:\n        document_tokens = tokenize(memory[\"text\"])\n        union = query_tokens | document_tokens\n        score = len(query_tokens & document_tokens) / len(union) if union else 0.0\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": float(score)})\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n",
+      "module_docstring": "Set Jaccard retrieval with Chinese characters/bigrams and English identifiers.",
+      "imports": [
+        {
+          "module": "re",
+          "name": null,
+          "alias": null,
+          "level": 0,
+          "line": 3
+        }
+      ]
+    }
+  ],
+  "candidates": [
+    {
+      "qualified_name": "tokenize",
+      "name": "tokenize",
+      "kind": "function",
+      "async": false,
+      "line_start": 6,
+      "definition_line": 6,
+      "line_end": 11,
+      "signature": "def tokenize(text)",
+      "parameters": [
+        {
+          "name": "text",
+          "kind": "positional_or_keyword",
+          "annotation": null,
+          "default": null
+        }
+      ],
+      "return_annotation": null,
+      "type_comment": null,
+      "decorators": [],
+      "docstring": null,
+      "comments": [],
+      "code": "def tokenize(text):\n    tokens = set(re.findall(r\"[a-z0-9_]+\", text.lower()))\n    for fragment in re.findall(r\"[\\u4e00-\\u9fff]+\", text):\n        tokens.update(fragment)\n        tokens.update(fragment[index:index + 2] for index in range(len(fragment) - 1))\n    return tokens\n",
+      "code_sha256": "ee7cccbfbd67f0feea6e4e9d49c0fa9b5b5b3c23d04803a3a8a8d5730467e197",
+      "algorithm": "jaccard",
+      "algorithm_plugin_version": "1.0.1",
+      "task": "memory_retrieval",
+      "association_method": "operator_explicit",
+      "source_id": "repo_source_84d383c36e221568fbd7bc1fee96980c6fdece020b761264441a66ed307bb88c",
+      "path": "agent_factory/templates/jaccard.py",
+      "repository_key": "25aa67c66aeae3b8fd517565692c0cb67ac566c47c861d881a51ff304adb9d1f",
+      "file_sha256": "4fb0baa6a02f22aae5d5a6329794e367342d3c178e437b7c22b8d96b77de0894",
+      "imports": [
+        {
+          "module": "re",
+          "name": null,
+          "alias": null,
+          "level": 0,
+          "line": 3
+        }
+      ],
+      "extraction_method": "python_ast",
+      "extractor_version": "1.0.0",
+      "status": "unvalidated",
+      "trust": "untrusted_repository_evidence",
+      "id": "code_candidate_c5e0adf886224595fdeb580385806d49ad95766817190e36a08926fd31510acd"
+    },
+    {
+      "qualified_name": "retrieve",
+      "name": "retrieve",
+      "kind": "function",
+      "async": false,
+      "line_start": 14,
+      "definition_line": 14,
+      "line_end": 27,
+      "signature": "def retrieve(query, memories, top_k=5)",
+      "parameters": [
+        {
+          "name": "query",
+          "kind": "positional_or_keyword",
+          "annotation": null,
+          "default": null
+        },
+        {
+          "name": "memories",
+          "kind": "positional_or_keyword",
+          "annotation": null,
+          "default": null
+        },
+        {
+          "name": "top_k",
+          "kind": "positional_or_keyword",
+          "annotation": null,
+          "default": "5"
+        }
+      ],
+      "return_annotation": null,
+      "type_comment": null,
+      "decorators": [],
+      "docstring": null,
+      "comments": [],
+      "code": "def retrieve(query, memories, top_k=5):\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    query_tokens = tokenize(query)\n    if not query_tokens:\n        return []\n    hits = []\n    for memory in memories:\n        document_tokens = tokenize(memory[\"text\"])\n        union = query_tokens | document_tokens\n        score = len(query_tokens & document_tokens) / len(union) if union else 0.0\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": float(score)})\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n",
+      "code_sha256": "333b1fae1d32a4ce3bad2a633720270473d699dac470b86c779a67ce0efe2e85",
+      "algorithm": "jaccard",
+      "algorithm_plugin_version": "1.0.1",
+      "task": "memory_retrieval",
+      "association_method": "operator_explicit",
+      "source_id": "repo_source_84d383c36e221568fbd7bc1fee96980c6fdece020b761264441a66ed307bb88c",
+      "path": "agent_factory/templates/jaccard.py",
+      "repository_key": "25aa67c66aeae3b8fd517565692c0cb67ac566c47c861d881a51ff304adb9d1f",
+      "file_sha256": "4fb0baa6a02f22aae5d5a6329794e367342d3c178e437b7c22b8d96b77de0894",
+      "imports": [
+        {
+          "module": "re",
+          "name": null,
+          "alias": null,
+          "level": 0,
+          "line": 3
+        }
+      ],
+      "extraction_method": "python_ast",
+      "extractor_version": "1.0.0",
+      "status": "unvalidated",
+      "trust": "untrusted_repository_evidence",
+      "id": "code_candidate_211d8eb3d6ad1e05835dce6f72435004da8200e4abd13fe6b330caf57b1acfb8"
+    }
+  ]
+}

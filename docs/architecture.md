@@ -14,6 +14,7 @@
 | 插件契约 | registry.py、plugins/ | 可信包发现、版本及依赖声明、阈值预检、算法与指标注册 |
 | 模型适配 | llm.py | Ollama 原生 chat、JSON schema、一次重试、调用记录、明确的 mock 模板模式 |
 | 能力知识 | knowledge.py | 材料抽取、原文证据检查、SQLite 版本存储、词面检索及图遍历 |
+| 仓库证据 | repository.py | 不执行源码的 AST 抽取、函数/依赖/行号与哈希、人工关联、未验证候选入库 |
 | 编排 | workflow.py | LangGraph 状态、角色交接、分支、修复预算、冻结候选与结果回写 |
 | 执行边界 | safety.py、runner.py、worker.py | AST 策略、无标注输入、限时进程、Docker 隔离选项 |
 | 修复支持 | repair.py | 专属上下文、可信失败定位、AST 进展检查、哈希校验的历史失败重放 |
@@ -27,6 +28,8 @@
 flowchart TD
   A[材料] --> B[Extractor: 结构化能力及证据]
   B --> K[(SQLite 能力知识库)]
+  Repo[本地 Python 仓库] --> AST[AST 静态抽取: 未验证候选及来源]
+  AST --> K
   U[算法开发需求] --> I[Understander: 需求结构化]
   I --> R[可信检索: 能力、历史、失败经验]
   K --> R
@@ -48,6 +51,8 @@ flowchart TD
 每个角色使用独立提示与结构化输出，同一 Ollama 模型可以串行承担这些角色。
 这是有明确交接的角色协作工作流，没有实现自治 Agent 间并发协商。
 控制、检索、指标计算和发布决策由确定性代码负责。
+
+仓库抽取是独立 CLI 入库步骤；同一 workspace 后续运行会检索关联候选。Planner 只收到函数概要，生成和修复角色最多收到当前算法一个限长源码参考。候选保持未验证，生成版本记录 `context_from` 来源边，仍须通过可信验证。扫描范围、字节/符号预算和边界见 [仓库抽取指南](repository-extraction.md)。
 
 每个候选默认初版+最多两次修复；每次模型调用最多两次尝试。
 LangGraph 递归上限提供额外终止保护。所有候选失败时出失败报告，不生成成功插件。

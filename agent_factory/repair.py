@@ -71,7 +71,7 @@ def focused_context(state, registry):
     capabilities = [cap for cap in knowledge['capabilities'] if cap['id'] == candidate['capability_id']]
     source_ids = {cap['source_id'] for cap in capabilities}
     reference = plugin.reference.read_text(encoding='utf-8')
-    return {'request': state['request'], 'candidate': candidate,
+    context = {'request': state['request'], 'candidate': candidate,
             'algorithm_plugin': plugin.metadata(), 'capabilities': capabilities,
             'sources': [source for source in knowledge['sources'] if source['source_id'] in source_ids],
             # Unverified historic advice is available to the planner, not treated as code instructions.
@@ -79,6 +79,12 @@ def focused_context(state, registry):
                                  if lesson.get('algorithm') == plugin.id and lesson.get('validated_fix')][:3],
             'reference_example': {'algorithm': plugin.id, 'source': f'plugin:{plugin.id}@{plugin.version}',
                                   'sha256': hashlib.sha256(reference.encode()).hexdigest(), 'code': reference}}
+    # Static repository findings remain unverified evidence, never trusted plugins.
+    repository_candidates = [row for row in knowledge.get('repository_candidates', [])
+                             if row.get('algorithm') == plugin.id][:1]
+    if repository_candidates:
+        context['repository_candidates'] = repository_candidates
+    return context
 
 
 def load_failed_codes(directory, enabled_algorithms):

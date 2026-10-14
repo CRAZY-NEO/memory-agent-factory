@@ -31,7 +31,7 @@ mock 首版故意丢弃所有检索结果，是显式演示故障；其余检查
 ## 第五步：完成笔试提交
 
 检查归档的真实 Ollama 运行报告；完善更难查询；检查 Git diff；在新环境跑测试和演示。
-创建自己的 GitHub 仓库后配置 remote 并推送，README 中说明哪些是 mock 演示、哪些是实际 LLM 运行。
+仓库已推送至 https://github.com/CRAZY-NEO/memory-agent-factory。继续提交时保留 mock 与真实 LLM 证据的区分；新增的 GitHub Actions 检查依赖、测试、打包与 Docker 离线闭环，详见 ci.md。当前 v2 真实模型结果见 examples/ollama-v2-demo；仓库 AST 抽取及工作流集成见 repository-extraction.md。
 不要把 .venv、个人记忆、服务密钥或本机 state 数据库提交到公开仓库。
 
 ## 可以扩展的接口

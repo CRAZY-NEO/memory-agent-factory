@@ -1,0 +1,20 @@
+{
+  "candidates": [
+    {
+      "algorithm": "tfidf",
+      "capability_id": "char_tfidf_89b6acd7980f",
+      "rationale": "适用于小规模中文与英文混合笔记，利用 scikit-learn 拟合向量器计算余弦相似度，能处理词面相近的排错记录。"
+    },
+    {
+      "algorithm": "bm25",
+      "capability_id": "char_bm25_3819f381772f",
+      "rationale": "适用于不同长度笔记及包含明确组件名或故障词的查询，依赖 Python 标准库，分词策略影响排序但能处理跨语言标识。"
+    },
+    {
+      "algorithm": "jaccard",
+      "capability_id": "char_jaccard_9a96b36a8181",
+      "rationale": "适用于词面相近的排错记录及项目决策，通过集合交并比计算相似度，无需额外训练数据，但难以解决同义改写。"
+    }
+  ],
+  "design_explanation": "为软件研发人员构建混合检索系统，覆盖 TF-IDF、BM25 和 Jaccard 三种算法，分别针对小规模混合笔记、特定组件查询及集合相似度场景，确保空输入、非正 top_k 及跨语言分词处理的一致性。"
+}

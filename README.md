@@ -4,7 +4,7 @@
 
 工厂输入是“生成一个中文技术记忆检索算法”，产物为 Python 代码、依赖说明、验证报告与版本历史。生成的插件输入查询和记忆列表，输出相关记忆的 ID 与得分，可用于后续个人记忆系统。
 
-**当前可运行模式**：离线 mock/规则模板演示，以及远端 Ollama 原生 API 接入。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。已通过本机 11435 转发接口调用 `qwen3.5:2b`，完成真实模型抽取、两候选生成、一次 BM25 修复、Docker 验证及知识回写，见 [真实模型报告](examples/ollama-demo/report.md)。工厂和算法执行容器运行在 Mac；远端硬件与 SSH 隧道由用户管理。
+**当前可运行模式**：离线 mock/规则模板演示，以及远端 Ollama 原生 API 接入。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。已通过本机 11435 转发接口调用 `qwen3.5:2b`，在 v2 评估集上完成真实模型抽取、三候选生成、Docker 验证及知识回写，见 [最新真实模型报告](examples/ollama-v2-demo/report.md)；历史运行保留真实代码修复记录。工厂和算法执行容器运行在 Mac；远端硬件与 SSH 隧道由用户管理。
 
 ## 1. 快速开始
 
@@ -100,6 +100,17 @@ scripts/run_tests.sh -q
 
 **能力知识图谱保存算法知识；未来个人记忆图谱保存个人事实和关系，两者分别设计。**
 
+也支持从实际 Python 仓库进行 AST 静态抽取：
+
+```bash
+# 扫描已存在的 Git 工作目录中的 Jaccard 实现，不导入或运行被扫描代码
+agent-factory ingest-repo . --include 'agent_factory/templates/jaccard.py' --algorithm jaccard
+# 同一工作目录中后续 run 会检索这些仓库参考证据
+agent-factory run --request-file examples/request.txt
+```
+
+输出函数/方法、签名、参数与返回类型、docstring、注释、import、源码行号、文件/代码哈希与 Git HEAD，写入 RepositorySnapshot → Source → CodeCandidate。`--algorithm` 为人工关联，候选始终标记为未验证；不会自动安装依赖或注册执行插件。规划使用概要，生成/修复使用当前算法的限长源码参考，生成版本保留 `context_from` 来源边。详见 [仓库抽取指南](docs/repository-extraction.md)、[实际抽取结果](examples/repository-demo/extracted_repository.json)和 [AST + mock/Docker 闭环报告](examples/repository-demo/report.md)。
+
 ## 4. 工作流与生成算法
 
 Extractor 从材料抽取结构化能力；Understander 理解开发需求；Planner 引用检索到的能力，在配置预算内规划候选（当前三个，最多八个）；Coder 生成 Python；Reviewer 诊断可信错误；Repairer 返回修复后的完整代码。
@@ -160,6 +171,9 @@ docker build -f Dockerfile.runner -t agent-factory-runner:0.1 .
 # 保持 SSH 隧道连接，首次抽取能力知识后运行完整流程
 # 单独使用 state/ollama-real 保存真实模型知识库与结果
 bash scripts/run_ollama_demo.sh
+
+# 使用独立的新目录，确保载入当前 v2 数据；已有目录不会自动替换历史数据
+FACTORY_DEMO_WORKSPACE=state/ollama-v2-new bash scripts/run_ollama_demo.sh
 ```
 
 使用 Ollama 原生 `/api/chat`，`stream=false`，`think=false`，`format` 为当前角色 JSON schema；schema 同时进入角色提示词。默认上下文 8192、输出上限 4096 token，单次 HTTP 等待上限 600 秒，最多尝试两次。原始响应、结束原因、token 用量和耗时均记录在本次 `llm/` 目录。
@@ -178,7 +192,7 @@ CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变�
 [示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
 
 报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
-当前 59 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
+当前 72 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
 真实模型例子见 [Ollama 完整报告](examples/ollama-demo/report.md)、[候选规划](examples/ollama-demo/plan.json)、[BM25 首版与修订](examples/ollama-demo/bm25/)、[模型调用记录](examples/ollama-demo/llm/) 和 [最终插件](examples/ollama-demo/selected_retrieval.py)。2026-10-12 的样例调用八次模型；TF-IDF 首版通过，BM25 首版因缺少 `re` 导入失败，模型根据真实错误修复后通过。选定 BM25 修订版的最终测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；这些数值只描述 24 条模拟记忆与 10 条最终测试查询。
 所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
 显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
@@ -203,6 +217,10 @@ FACTORY_DEMO_WORKSPACE=state/jaccard-demo bash scripts/run_plugin_demo.sh
 三算法演示启用 `compare_all_algorithms=true`，规划及可信检查均要求覆盖全部启用算法，避免模型漏掉候选。新增算法只需材料、参考实现与注册模块；新增指标只需可信计算函数和注册模块。也可通过配置接入已安装的外部插件包，详见 [插件接入指南](docs/plugins.md)。当前支持检索任务及已审查的执行环境，其他任务或新依赖环境需要扩展契约和镜像。
 
 新版网页完整运行见 [v2 评估报告](examples/web-evaluation-demo/report.md)和 [真实浏览器验证记录](examples/web_validation.json)，提供方明确为 mock，算法在 Docker 中实际执行。三候选验证 Recall/MRR 分别为 TF-IDF 1.0000/0.9537、BM25 0.9722/0.9083、Jaccard 0.9306/0.8958，按原规则选定 TF-IDF。最终测试 Recall@5=1、MRR@5=0.9528、Precision@5=0.2533；同义改写仍存在排序与负例混淆。分组和失败明细保留，不修改历史 v1 结果。另有 [新版 Docker 网关验证](examples/web_container_validation.json)，该独立测试的 worker 为 mock/local，与浏览器测试的 mock/Docker 区分。
+
+**v2 数据的真实模型复验已完成**：[qwen3.5:2b + Docker 报告](examples/ollama-v2-demo/report.md)，运行 `20261014T032846_393cdb11`，共 8 次真实模型调用，包括三份材料抽取、需求理解、规划及三次代码生成。三个算法均首版通过，无故障注入、历史重放或本次修复。选定 TF-IDF 后，在 30 条最终测试上得到 Recall@5=1、MRR@5=0.9528、Precision@5=0.2533、P95=7.08 ms。数据为当前 48/36/30 的 v2，已核对数据哈希、模型响应与产物代码哈希；两条最终测试排序错误仍完整保留。该运行未启用随后新增的仓库参考抽取，仓库集成另以离线端到端测试验证。
+
+GitHub 自动检查见 [CI 说明](docs/ci.md)：无需 Ollama 或密钥，检查代码规范、自动测试、安装包资源，以及 Docker 下的 mock 生成、故障修复、独立最终测试和知识回写。真实模型质量以带模型调用记录的报告为证，不由 mock CI 代替。
 
 ## 8. 用于未来个人记忆系统
 
@@ -234,7 +252,7 @@ hits = retriever.retrieve("MySQL 连接池耗尽", memories, top_k=5)
 - 保持跨进程稳定：BM25 查询词排序后再累加，避免无序集合造成浮点差异；计时结果不承诺逐次完全一致。
 - 防止指标泄漏：候选只用验证集；最终测试在版本冻结后执行。多次人工查看并用于优化后，应重新建立最终测试集。
 - 一周实现范围：CLI、鉴权 API 与 Web 界面、持久任务队列、三个注册候选、可配置指标与排序、有限修复、图检索、离线图谱、版本/经验回写及分组失败分析；暂未实现工作流中断恢复、MCTS、任意任务验证。
-- 后续扩展：向量与混合检索、持久化索引、多任务验证配置、更严格隔离服务、真实代码仓库函数抽取、个人事实图谱。
+- 后续扩展：向量与混合检索、持久化索引、多任务验证配置、更严格隔离服务、跨文件语义分析、个人事实图谱。
 
 分步学习和扩展路线见 [实现指南](docs/implementation-guide.md)。
 
