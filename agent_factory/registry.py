@@ -80,14 +80,15 @@ class PluginRegistry:
     def _identity(spec):
         if not IDENTIFIER.fullmatch(spec.id) or not spec.name or not spec.version:
             raise ValueError("Plugin needs a valid id, name and version")
-        if spec.task != "memory_retrieval":
+        if spec.task not in {"memory_retrieval", "memory_classification"}:
             raise ValueError(f"Unsupported plugin task: {spec.task}")
 
     def add_algorithm(self, spec: AlgorithmSpec):
         self._identity(spec)
         if spec.id in self.algorithms:
             raise ValueError(f"Duplicate algorithm plugin: {spec.id}")
-        if spec.environment != "retrieval-v1" or not set(spec.dependencies) <= {"scikit-learn"}:
+        expected = {"memory_retrieval": "retrieval-v1", "memory_classification": "classification-v1"}
+        if spec.environment != expected[spec.task] or not set(spec.dependencies) <= {"scikit-learn"}:
             raise ValueError(f"Algorithm {spec.id} requires an unsupported execution environment")
         if not spec.material.is_file() or not spec.reference.is_file() or not spec.guidance:
             raise ValueError(f"Algorithm {spec.id} has missing material, reference or guidance")

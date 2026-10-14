@@ -1,0 +1,104 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "coder",
+  "context": {
+    "request": {
+      "task": "memory_classification",
+      "description": "为个人记忆生成文本分类算法，根据带标签训练样本为新记忆预测一个类别，比较两个候选并验证修复",
+      "language": "mixed",
+      "top_k": 5
+    },
+    "candidate": {
+      "algorithm": "tfidf_logreg",
+      "capability_id": "char_tfidf_logreg_c2abb510f65b",
+      "rationale": "来自材料的适用条件：适用：有代表性训练标签的中英文短文本与个人记忆归档。"
+    },
+    "algorithm_plugin": {
+      "id": "tfidf_logreg",
+      "name": "字符 TF-IDF + Logistic Regression",
+      "version": "1.0.0",
+      "task": "memory_classification",
+      "dependencies": [
+        "scikit-learn"
+      ],
+      "environment": "classification-v1",
+      "guidance": "实现 classify(texts, training_examples)。仅用 training_examples 的 text 和 label 训练字符 1 至 3 元组 TF-IDF 与 LogisticRegression(C=4, max_iter=400, random_state=42, class_weight=\"balanced\")；对 texts 只 transform/predict。返回与输入等长的字符串标签列表，不修改输入。空 texts 返回 []；非空 texts 且空训练集抛 ValueError。空白文本和空词表使用训练集多数标签，票数相同按标签字典序；单标签训练集直接返回该标签。禁止硬编码业务标签、使用评估 gold 或将 texts 用于拟合。",
+      "public_cases": []
+    },
+    "capabilities": [
+      {
+        "node_id": "char_tfidf_logreg_c2abb510f65b",
+        "algorithm": "tfidf_logreg",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "有代表性训练标签的中英文短文本与个人记忆归档。"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "evidence": "适用：有代表性训练标签的中英文短文本与个人记忆归档。",
+        "id": "char_tfidf_logreg_c2abb510f65b",
+        "inputs": [
+          "texts",
+          "training_examples"
+        ],
+        "limitations": [
+          "局限：词面特征不能保证识别未见同义词、复杂语义或新类别。"
+        ],
+        "metrics": [
+          "accuracy",
+          "classification_p95_ms",
+          "macro_f1"
+        ],
+        "name": "中文技术记忆 tfidf_logreg",
+        "outputs": [
+          "label"
+        ],
+        "source_id": "source_41f6570dcbd4667f759ea4a2bfaa22e614365222406de7f584a76a391c6c4ba4",
+        "task": "memory_classification"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_41f6570dcbd4667f759ea4a2bfaa22e614365222406de7f584a76a391c6c4ba4",
+        "text": "# 字符 TF-IDF + Logistic Regression 记忆分类\n\n算法：tfidf_logreg\n适用：有代表性训练标签的中英文短文本与个人记忆归档。\n局限：词面特征不能保证识别未见同义词、复杂语义或新类别。\n\n任务为 `memory_classification`，环境 `classification-v1`，接口为\n`classify(texts, training_examples) -> list[str]`。输入为待分类文本列表和仅含\n`text`、`label` 的有标注训练记录；输出与文本等长并保留原顺序，每个标签必须来自训练集。\n\n业务标签由训练数据定义。字符 1–3 元组 TF-IDF 保留中文、英文和技术缩写，避免依赖中文分词词典。\n先对训练文本 `fit_transform`，再用逻辑回归 `fit`；待分类文本仅 `transform`。\n参考参数 C=4、max_iter=400、random_state=42、class_weight=balanced。\n\n适用条件是文本较短、类别封闭且有少量代表性标注数据。字符词面特征对未见同义词、长距离语义和新类别能力有限。\n评价使用 Accuracy、Macro-F1 与整批调用 P95（含训练），禁止使用验证/测试标签训练。\n空输入返回 []，无训练数据抛 ValueError；单类别训练直接返回该类别；空白文本与空词表返回训练多数类，平票按标签字典序。\n依赖 scikit-learn，无需大模型即可运行产物。模型版本 1.0.0；验证结果由每次运行独立生成。\n"
+      }
+    ],
+    "validated_lessons": [],
+    "reference_example": {
+      "algorithm": "tfidf_logreg",
+      "source": "plugin:tfidf_logreg@1.0.0",
+      "sha256": "a61c52cb887f6884826ac4e887f9fbee3d6dbee830a913a153992fe7827d65e4",
+      "code": "\"\"\"Character TF-IDF and logistic regression for multilingual memory classification.\"\"\"\n\nfrom collections import Counter\n\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\n\n\ndef classify(texts, training_examples):\n    \"\"\"Fit only training examples; return one training label for each input in order.\"\"\"\n    if not texts:\n        return []\n    if not training_examples:\n        raise ValueError(\"training_examples must not be empty\")\n    labels = [row[\"label\"] for row in training_examples]\n    counts = Counter(labels)\n    fallback = sorted(counts, key=lambda label: (-counts[label], label))[0]\n    if len(counts) == 1:\n        return [fallback for text in texts]\n    vectorizer = TfidfVectorizer(analyzer=\"char\", ngram_range=(1, 3), sublinear_tf=True)\n    try:\n        matrix = vectorizer.fit_transform([row[\"text\"] for row in training_examples])\n    except ValueError:\n        return [fallback for text in texts]\n    model = LogisticRegression(C=4.0, max_iter=400, random_state=42, class_weight=\"balanced\")\n    model.fit(matrix, labels)\n    predictions = model.predict(vectorizer.transform(texts))\n    return [str(label) if text.strip() else fallback for text, label in zip(texts, predictions)]\n"
+    },
+    "repair_strategy": "reproduce_reference"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "maxLength": 40000,
+        "minLength": 30,
+        "title": "Code",
+        "type": "string"
+      },
+      "explanation": {
+        "title": "Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "explanation"
+    ],
+    "title": "CodeArtifact",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "code": "\"\"\"Character TF-IDF and logistic regression for multilingual memory classification.\"\"\"\n\nfrom collections import Counter\n\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\n\n\ndef classify(texts, training_examples):\n    \"\"\"Fit only training examples; return one training label for each input in order.\"\"\"\n    if not texts:\n        return []\n    if not training_examples:\n        raise ValueError(\"training_examples must not be empty\")\n    labels = [row[\"label\"] for row in training_examples]\n    counts = Counter(labels)\n    fallback = sorted(counts, key=lambda label: (-counts[label], label))[0]\n    if len(counts) == 1:\n        return [fallback for text in texts]\n    vectorizer = TfidfVectorizer(analyzer=\"char\", ngram_range=(1, 3), sublinear_tf=True)\n    try:\n        matrix = vectorizer.fit_transform([row[\"text\"] for row in training_examples])\n    except ValueError:\n        return [fallback for text in texts]\n    model = LogisticRegression(C=4.0, max_iter=400, random_state=42, class_weight=\"balanced\")\n    model.fit(matrix, labels)\n    predictions = model.predict(vectorizer.transform(texts))\n    return [str(label) if text.strip() else fallback for text, label in zip(texts, predictions)]\n",
+    "explanation": "规则模板演示"
+  },
+  "duration_seconds": 3.774999640882015e-05
+}

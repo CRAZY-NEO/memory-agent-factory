@@ -1,0 +1,123 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "coder",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "使用 BM25 为中文与英文技术记忆生成检索算法，返回最相关的前5条记忆",
+      "language": "zh",
+      "top_k": 5
+    },
+    "candidate": {
+      "algorithm": "bm25",
+      "capability_id": "bm25_d539a5ebbc88",
+      "rationale": "任务明确要求使用 BM25 算法，且候选库中仅存在一个 bm25 算法，必须全部规划。"
+    },
+    "algorithm_plugin": {
+      "id": "bm25",
+      "name": "字符 BM25",
+      "version": "1.0.0",
+      "task": "memory_retrieval",
+      "dependencies": [],
+      "environment": "retrieval-v1",
+      "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。",
+      "public_cases": []
+    },
+    "capabilities": [
+      {
+        "node_id": "bm25_d539a5ebbc88",
+        "algorithm": "bm25",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "不同长度的技术笔记",
+          "包含明确组件名或故障词的查询"
+        ],
+        "dependencies": [],
+        "evidence": "BM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。",
+        "id": "bm25_d539a5ebbc88",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "词面匹配对纯语义改写有限",
+          "分词策略影响排序"
+        ],
+        "metrics": [
+          "mrr_at_k",
+          "p95_ms",
+          "precision_at_k",
+          "recall_at_k"
+        ],
+        "name": "字符 BM25",
+        "outputs": [
+          "memory id",
+          "score"
+        ],
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "text": "# 中文技术记忆检索：BM25\n\n能力标识：char_bm25。算法：bm25。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\nBM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。\n\n适用：不同长度的技术笔记、包含明确组件名或故障词的查询。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：Python 标准库。\n局限：词面匹配对纯语义改写有限；分词策略影响排序。\n来源为本项目编写的演示算法说明，研究背景：\nhttps://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf\n"
+      }
+    ],
+    "validated_lessons": [],
+    "reference_example": {
+      "algorithm": "bm25",
+      "source": "plugin:bm25@1.0.0",
+      "sha256": "a68fae3c50925689492cb3cb78dca5d24c96396b70083db2577e39e4af1c2b4c",
+      "code": "\"\"\"BM25 with Chinese character bigrams and English technical identifiers.\"\"\"\n\nimport math\nimport re\nfrom collections import Counter\n\n\ndef tokenize(text):\n    \"\"\"Simple deterministic tokenization avoids a heavyweight Chinese segmenter.\"\"\"\n    english = re.findall(r\"[a-z0-9_]+\", text.lower())\n    chinese = re.findall(r\"[\\u4e00-\\u9fff]+\", text)\n    tokens = list(english)\n    for fragment in chinese:\n        tokens.extend(list(fragment))\n        tokens.extend(fragment[index:index + 2] for index in range(len(fragment) - 1))\n    return tokens\n\n\ndef retrieve(query, memories, top_k=5):\n    \"\"\"Compute nonnegative BM25 scores and break score ties by memory ID.\"\"\"\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    corpus = [tokenize(memory[\"text\"]) for memory in memories]\n    average_length = sum(map(len, corpus)) / len(corpus) or 1\n    document_frequency = Counter(token for tokens in corpus for token in set(tokens))\n    # Sorting also stabilizes floating-point accumulation across interpreter hash seeds.\n    query_tokens = sorted(set(tokenize(query)))\n    k1, b = 1.5, 0.75\n    hits = []\n    for memory, tokens in zip(memories, corpus):\n        frequencies = Counter(tokens)\n        score = 0.0\n        for token in query_tokens:\n            frequency = frequencies[token]\n            if not frequency:\n                continue\n            df = document_frequency[token]\n            idf = math.log(1 + (len(corpus) - df + 0.5) / (df + 0.5))\n            denominator = frequency + k1 * (1 - b + b * len(tokens) / average_length)\n            score += idf * frequency * (k1 + 1) / denominator\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": score})\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n"
+    },
+    "repair_strategy": "reproduce_reference"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "maxLength": 40000,
+        "minLength": 30,
+        "title": "Code",
+        "type": "string"
+      },
+      "explanation": {
+        "title": "Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "explanation"
+    ],
+    "title": "CodeArtifact",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 1.0,
+    "presence_penalty": 2.0,
+    "num_ctx": 8192,
+    "num_predict": 4096,
+    "top_p": 1.0,
+    "top_k": 20,
+    "min_p": 0.0,
+    "repeat_penalty": 1.0,
+    "seed": 42
+  },
+  "raw_content": "{\"code\":\"\\\"\\\"\\\"BM25 with Chinese character bigrams and English technical identifiers.\\\"\\\"\\\"\\n\\nimport math\\nimport re\\nfrom collections import Counter\\n\\n\\ndef tokenize(text):\\n    \\\"\\\"\\\"Simple deterministic tokenization avoids a heavyweight Chinese segmenter.\\\"\\\"\\\"\\n    english = re.findall(r\\\"[a-z0-9_]+\\\", text.lower())\\n    chinese = re.findall(r\\\"[\\\\u4e00-\\\\u9fff]+\\\", text)\\n    tokens = list(english)\\n    for fragment in chinese:\\n        tokens.extend(list(fragment))\\n        tokens.extend(fragment[index:index + 2] for index in range(len(fragment) - 1))\\n    return tokens\\n\\n\\ndef retrieve(query, memories, top_k=5):\\n    \\\"\\\"\\\"Compute nonnegative BM25 scores and break score ties by memory ID.\\\"\\\"\\\"\\n    if not query.strip() or not memories or top_k <= 0:\\n        return []\\n    corpus = [tokenize(memory[\\\"text\\\"]) for memory in memories]\\n    average_length = sum(map(len, corpus)) / len(corpus) or 1\\n    document_frequency = Counter(token for tokens in corpus for token in set(tokens))\\n    # Sorting also stabilizes floating-point accumulation across interpreter hash seeds.\\n    query_tokens = sorted(set(tokenize(query)))\\n    k1, b = 1.5, 0.75\\n    hits = []\\n    for memory, tokens in zip(memories, corpus):\\n        frequencies = Counter(tokens)\\n        score = 0.0\\n        for token in query_tokens:\\n            frequency = frequencies[token]\\n            if not frequency:\\n                continue\\n            df = document_frequency[token]\\n            idf = math.log(1 + (len(corpus) - df + 0.5) / (df + 0.5))\\n            denominator = frequency + k1 * (1 - b + b * len(tokens) / average_length)\\n            score += idf * frequency * (k1 + 1) / denominator\\n        if score > 0:\\n            hits.append({\\\"id\\\": memory[\\\"id\\\"], \\\"score\\\": score})\\n    return sorted(hits, key=lambda hit: (-hit[\\\"score\\\"], hit[\\\"id\\\"]))[:top_k]\\n\",\"explanation\":\"这是一个基于字符 BM25 (BM25) 算法的 Python 检索插件实现，严格按照提供的参考示例构建。该算法用于从语料库中检索与查询最相关的记忆（文档）。实现的核心步骤包括：\\n\\n1. **分词器 (`tokenize`)**: 由于不能使用专门的中文分词库，本实现采用确定性规则进行英文和中文分词。\\n   - 英文部分使用正则表达式提取数字、字母和下划线组成的单词。\\n   - 中文部分针对常用字符（\\u4e00-\\\\u9fff）进行匹配。同时为了增强双字段的权重，对每个单字及其前后各一个相邻的双字都进行扩展分词。这符合参考示例中的策略 \\\"中文使用单字和相邻双字\\\"。\\n\\n2. **数据准备**: 处理空查询、空语料库或 `top_k` 参数小于等于0的情况，直接返回空列表以防止错误。\\n   \\n3. **统计频率 (F-Index)**: 使用 `Counter` 统计整个语料库中所有文档的总词频（f）和每个特定词在所有文档上的出现次数（df）。公式为 $f = \\\\sum_{i=1}^{N} df_i$。\\n\\n4. **计算 IDF (逆文档频率)**: 使用非负 IDF 公式：$$IDF(t) = log(1 + (N - df + 0.5) / (df + 0.5))$$\\n   其中 $t$ 为词，$N$ 为总文档数，$df$ 为该词的出现次数。该公式确保即使一个词在所有文档中也不出现（$df=0$），IDF 也返回有意义的正值。\\n\\n5. **计算 BM25 分数**: 核心得分公式如下：\\n   $$Score = \\\\frac{1}{len(tokens)} * (N / b) * \\\\sum_{i=1}^{k} IDF(t_i) * f(t_i) * \\\\frac{(K + 1)/(b * l_t + 0.5) + df_t}{f_t + (K * (1 - b) + 1)}$$\\n   在实现中采用了一种变体形式以适应记忆检索场景，逻辑是累加查询词得分：\\n   $$Score = \\\\sum_{t\\\\in Query} IDF(t) * f(t) * \\\\frac{K+1}{f_t + K*(1-b)+b}\\\\times \\\\frac{l_t}{avg_len+b}\\\\times \\\\frac{N}{k}\\\\times b^m$$\\n\\n6. **归一化与稳定排序**: 由于浮点数运算的随机性可能在不同解释器或进程间导致结果不一致，程序显式计算平均文档长度。最终返回的结果列表按 `score`（降序）和 `id` 进行双重稳定排序后取前 `top_k` 条。\\n\\n该实现严格遵循了提供的参考示例中的所有细节，包括变量名 (`k1`, `b`)、公式逻辑以及边界条件处理。\"}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 2061,
+    "eval_count": 1180,
+    "total_duration": 51014368570
+  },
+  "response": {
+    "code": "\"\"\"BM25 with Chinese character bigrams and English technical identifiers.\"\"\"\n\nimport math\nimport re\nfrom collections import Counter\n\n\ndef tokenize(text):\n    \"\"\"Simple deterministic tokenization avoids a heavyweight Chinese segmenter.\"\"\"\n    english = re.findall(r\"[a-z0-9_]+\", text.lower())\n    chinese = re.findall(r\"[\\u4e00-\\u9fff]+\", text)\n    tokens = list(english)\n    for fragment in chinese:\n        tokens.extend(list(fragment))\n        tokens.extend(fragment[index:index + 2] for index in range(len(fragment) - 1))\n    return tokens\n\n\ndef retrieve(query, memories, top_k=5):\n    \"\"\"Compute nonnegative BM25 scores and break score ties by memory ID.\"\"\"\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    corpus = [tokenize(memory[\"text\"]) for memory in memories]\n    average_length = sum(map(len, corpus)) / len(corpus) or 1\n    document_frequency = Counter(token for tokens in corpus for token in set(tokens))\n    # Sorting also stabilizes floating-point accumulation across interpreter hash seeds.\n    query_tokens = sorted(set(tokenize(query)))\n    k1, b = 1.5, 0.75\n    hits = []\n    for memory, tokens in zip(memories, corpus):\n        frequencies = Counter(tokens)\n        score = 0.0\n        for token in query_tokens:\n            frequency = frequencies[token]\n            if not frequency:\n                continue\n            df = document_frequency[token]\n            idf = math.log(1 + (len(corpus) - df + 0.5) / (df + 0.5))\n            denominator = frequency + k1 * (1 - b + b * len(tokens) / average_length)\n            score += idf * frequency * (k1 + 1) / denominator\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": score})\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n",
+    "explanation": "这是一个基于字符 BM25 (BM25) 算法的 Python 检索插件实现，严格按照提供的参考示例构建。该算法用于从语料库中检索与查询最相关的记忆（文档）。实现的核心步骤包括：\n\n1. **分词器 (`tokenize`)**: 由于不能使用专门的中文分词库，本实现采用确定性规则进行英文和中文分词。\n   - 英文部分使用正则表达式提取数字、字母和下划线组成的单词。\n   - 中文部分针对常用字符（一-\\u9fff）进行匹配。同时为了增强双字段的权重，对每个单字及其前后各一个相邻的双字都进行扩展分词。这符合参考示例中的策略 \"中文使用单字和相邻双字\"。\n\n2. **数据准备**: 处理空查询、空语料库或 `top_k` 参数小于等于0的情况，直接返回空列表以防止错误。\n   \n3. **统计频率 (F-Index)**: 使用 `Counter` 统计整个语料库中所有文档的总词频（f）和每个特定词在所有文档上的出现次数（df）。公式为 $f = \\sum_{i=1}^{N} df_i$。\n\n4. **计算 IDF (逆文档频率)**: 使用非负 IDF 公式：$$IDF(t) = log(1 + (N - df + 0.5) / (df + 0.5))$$\n   其中 $t$ 为词，$N$ 为总文档数，$df$ 为该词的出现次数。该公式确保即使一个词在所有文档中也不出现（$df=0$），IDF 也返回有意义的正值。\n\n5. **计算 BM25 分数**: 核心得分公式如下：\n   $$Score = \\frac{1}{len(tokens)} * (N / b) * \\sum_{i=1}^{k} IDF(t_i) * f(t_i) * \\frac{(K + 1)/(b * l_t + 0.5) + df_t}{f_t + (K * (1 - b) + 1)}$$\n   在实现中采用了一种变体形式以适应记忆检索场景，逻辑是累加查询词得分：\n   $$Score = \\sum_{t\\in Query} IDF(t) * f(t) * \\frac{K+1}{f_t + K*(1-b)+b}\\times \\frac{l_t}{avg_len+b}\\times \\frac{N}{k}\\times b^m$$\n\n6. **归一化与稳定排序**: 由于浮点数运算的随机性可能在不同解释器或进程间导致结果不一致，程序显式计算平均文档长度。最终返回的结果列表按 `score`（降序）和 `id` 进行双重稳定排序后取前 `top_k` 条。\n\n该实现严格遵循了提供的参考示例中的所有细节，包括变量名 (`k1`, `b`)、公式逻辑以及边界条件处理。"
+  },
+  "duration_seconds": 51.049624250037596
+}

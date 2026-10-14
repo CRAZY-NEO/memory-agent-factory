@@ -1,0 +1,35 @@
+[
+  {
+    "id": "bm25_d539a5ebbc88",
+    "name": "字符 BM25",
+    "task": "memory_retrieval",
+    "algorithm": "bm25",
+    "inputs": [
+      "query",
+      "memories",
+      "top_k"
+    ],
+    "outputs": [
+      "memory id",
+      "score"
+    ],
+    "applicable_conditions": [
+      "不同长度的技术笔记",
+      "包含明确组件名或故障词的查询"
+    ],
+    "metrics": [
+      "mrr_at_k",
+      "p95_ms",
+      "precision_at_k",
+      "recall_at_k"
+    ],
+    "dependencies": [],
+    "limitations": [
+      "词面匹配对纯语义改写有限",
+      "分词策略影响排序"
+    ],
+    "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+    "evidence": "BM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。",
+    "algorithm_plugin_version": "1.0.0"
+  }
+]

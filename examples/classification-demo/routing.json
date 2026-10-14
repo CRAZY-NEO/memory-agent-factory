@@ -1,0 +1,14 @@
+{
+  "requested_mode": "auto",
+  "action": "reuse",
+  "intent": {
+    "task": "memory_classification",
+    "requested_methods": [],
+    "discover_new": false,
+    "rationale": "用户请求为个人记忆生成文本分类算法，属于 memory_classification 任务。"
+  },
+  "literal_method_mentions": [],
+  "registered_methods": [],
+  "missing_methods": [],
+  "reason": "已有能力可以作为实现依据，无需联网搜索。"
+}

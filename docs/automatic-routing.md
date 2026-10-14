@@ -1,6 +1,6 @@
 # 自动路由：复用与发现
 
-Web、CLI `run` 和 `POST /v1/factory/runs` 默认使用 `auto`。直接描述需要的检索能力，无须勾选 GitHub 发现入口。当前任务类型仍是 `memory_retrieval`。
+Web、CLI `run` 和 `POST /v1/factory/runs` 默认使用 `auto`。直接描述需要的检索能力，无须勾选 GitHub 发现入口。自动识别 `memory_retrieval` 和 `memory_classification`，加载相应的可信验证配置。分类示例与产物见[指南](classification-and-export.md)。
 
 ## 选择规则
 
@@ -11,7 +11,9 @@ Web、CLI `run` 和 `POST /v1/factory/runs` 默认使用 `auto`。直接描述�
 | 指定一个未登记的方法 | GitHub 搜索、固定提交下载、AST、源码适配、验证及登记 |
 | 比较已有方法和一个未登记的方法 | 先发现及登记，再运行所请求方法的候选比较 |
 | 登记后再次请求同一方法 | 复用其材料与已验证实现，再生成和验证 |
-| 分类、预测等其他任务 | 拒绝，需对应的数据契约和验证器 |
+| 个人文本记忆分类 | 使用分类配置、训练数据与专用验证器，比较已登记分类候选 |
+| 分类任务请求 GitHub 新方法 | 明确拒绝；发现执行契约目前只支持检索 |
+| 预测、图像等其他任务 | 拒绝，需对应的数据契约和验证器 |
 
 模型提取意图，确定性代码对照真实注册表决定路径。名称按精确边界匹配，BM25 不匹配 BM25Plus/BM25+。原文中的明确复刻/比较表达补充有限范围的方法名，记录为 `literal_method_mentions`，防止模型因名称不在目录而遗漏它。模型提取的名称也必须出现在原文或对应已提到的注册别名，否则最多纠正一次，仍错误则停止。
 
@@ -70,6 +72,8 @@ FACTORY_API_TOKEN_FILE=/path/to/workspace/state/web/access-token.txt \
 | 发现后比较 | 20261014T161001_92e82969 | 9 | 1.0000 / 0.9528 / 0.2533 | TF-IDF r2 与 BM25Plus r0 通过，选定 TF-IDF |
 | 再次复用 | 20261014T161126_0568ab6e | 4 | 0.9667 / 0.9250 / 0.2467 | 已登记 BM25Plus 首版通过，无 GitHub 搜索 |
 
-证据：[发现](../examples/automatic-discovery-demo/report.md)、[比较](../examples/automatic-comparison-demo/report.md)、[复用](../examples/automatic-reuse-demo/report.md)、[浏览器检查](../examples/automatic_web_validation.json)。来源为 xhluca/bm25s，MIT 许可，固定提交 03eac5a8fb3aa4958ce37415a4cf2220d35157f7；来源公式检查和登记哈希均保留。当前共 140 项测试通过，另通过 Docker 离线闭环与安装包资源检查。
+证据：[发现](../examples/automatic-discovery-demo/report.md)、[比较](../examples/automatic-comparison-demo/report.md)、[复用](../examples/automatic-reuse-demo/report.md)、[浏览器检查](../examples/automatic_web_validation.json)。来源为 xhluca/bm25s，MIT 许可，固定提交 03eac5a8fb3aa4958ce37415a4cf2220d35157f7；来源公式检查和登记哈希均保留。该次自动路由验收共 140 项测试通过，另通过 Docker 离线闭环与安装包资源检查。
 
 验收前的失败与一次撤销登记见 [审计记录](../examples/automatic-routing-audits.json)，不计入上述成功调用数。最终运行位于独立 workspace `state/automatic-acceptance-20261015`，默认目录没有登记该新方法；导师从默认目录首次提交 BM25Plus 时仍可演示自动发现。
+
+组合名称优先匹配完整方法：`tfidf_logreg` 不匹配检索 `tfidf`，`TF-IDF + Logistic Regression` 识别为分类管线。任务切换后重新加载该任务配置中的可信插件包，跨任务算法组合明确拒绝。

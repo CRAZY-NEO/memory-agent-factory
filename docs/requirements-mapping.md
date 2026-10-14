@@ -4,16 +4,16 @@
 
 状态说明：勾选 `[x]` 表示已实现并有对应证据；未勾选 `[ ]` 配合“部分实现”或“未实现”说明缺口。这里的“已实现”指原型范围内完成，不代表生产级能力或任意输入下的正确性保证。进阶要求、加分项与基础要求分开统计。
 
-当前业务场景是**软件研发与运维技术记忆检索**，任务类型为 `memory_retrieval`。工厂产出 `retrieve(query, memories, top_k=5)` 检索插件；目前没有实现此前讨论过的技术笔记分类任务，也没有实现任意功能代码的通用验证。
+当前支持**技术记忆检索**与**个人文本记忆分类**，任务为 `memory_retrieval` / `memory_classification`，产出 `retrieve(...)` / `classify(...)`。两任务复用同一 Factory 状态图与知识库，各自使用独立数据契约和验证配置；未实现任意功能代码的通用验证。
 
-本次核对包含自动路由的完整验收：真实模型发现、候选比较和再次复用均通过；模型记录、报告及浏览器证据在 `examples/automatic-*-demo/` 与 `examples/automatic_web_validation.json`。
+本次核对补充了检索→文本分类的真实模型完整运行和 ZIP 独立执行。证据：[分类报告](../examples/classification-demo/report.md)、[迁移验收](../examples/transfer_validation.json)、[浏览器验收](../examples/classification_web_validation.json)。之前的自动发现/比较/复用证据继续保留。
 
 ## 1. 任务要求
 
 - [x] **1. 使用开源模型或 LLM 接口完成理解、抽取、生成或修复。** 接入 Ollama `qwen3.5:2b`，保留实际模型调用与运行报告；另有离线 mock 演示。证据：[LLM 接入](../agent_factory/llm.py)、[真实模型三候选报告](../examples/ollama-v2-demo/report.md)、[真实模型发现与修复报告](../examples/github-discovery-demo/report.md)。
 - [x] **2. 选择一个具体行业场景。** 选择软件研发与运维知识管理，使用故障排查、工具经验和项目决策笔记作为模拟材料。题目中的场景是举例，并非必须从列举的六种任务中选择。证据：[项目说明](../README.md)、[数据说明](../data/README.md)。
 - [x] **3. 构建算法能力知识库或知识图谱。** SQLite 保存能力与历史，NetworkX 表达图关系；包含输入输出、适用条件、指标、依赖、代码版本、验证与失败经验。证据：[schema](schema.md)、[知识存储与检索](../agent_factory/knowledge.py)、[抽取结果](../knowledge/extracted_capabilities.json)。
-- [x] **4. 从自然语言描述复刻可运行算法代码。** 已登记方法通过知识与参考模板生成；新方法可通过 GitHub 源码发现路径适配生成，无须预先添加该方法的模板。范围仍限于检索任务。证据：[标准工作流](../agent_factory/workflow.py)、[发现工作流](../agent_factory/discovery.py)、[生成代码样例](../examples/github-discovery-demo/selected_retrieval.py)。
+- [x] **4. 从自然语言描述复刻可运行算法代码。** 已登记方法通过知识与参考模板生成；新方法可通过 GitHub 源码发现路径适配生成，无须预先添加该方法的模板。标准复刻已支持检索与分类；GitHub 新方法发现仍限检索。证据：[标准工作流](../agent_factory/workflow.py)、[发现工作流](../agent_factory/discovery.py)、[生成代码样例](../examples/github-discovery-demo/selected_retrieval.py)。
 - [x] **5. 统一验证功能、指标、稳定性和接口规范。** 可信验证器执行生成代码，检查接口、边界输入、输出规范、一致性与指标门槛；最终测试前冻结选定代码。证据：[验证器](../agent_factory/validation.py)、[执行器](../agent_factory/runner.py)、[验证测试](../tests/test_validation.py)。
 - [x] **6. 提供 UI、CLI 或 API。** 三者均有：Web 提交与结果展示、命令行生成与验证、FastAPI 异步任务接口。证据：[Web 指南](web-ui.md)、[CLI](../agent_factory/cli.py)、[API](../agent_factory/api.py)。
 
@@ -40,7 +40,7 @@
 ## 4. 基础交付内容
 
 - [x] **完整项目代码库。** [代码目录](../agent_factory/)、[GitHub 仓库](https://github.com/CRAZY-NEO/memory-agent-factory)。
-- [x] **示例行业数据、文档或模拟业务材料。** 48 条模拟技术笔记、36 条验证查询、30 条最终测试查询，以及算法能力材料。证据：[数据目录](../data/)、[算法材料](../knowledge/sources/)。
+- [x] **示例行业数据、文档或模拟业务材料。** 48 条模拟技术笔记、36 条验证查询、30 条最终测试查询，以及 64/24/24 条分类训练/验证/测试记忆和算法能力材料。证据：[数据目录](../data/)、[算法材料](../knowledge/sources/)。
 - [x] **知识图谱 schema 设计说明。** 包含实体、关系、版本与验证状态边界。证据：[schema 文档](schema.md)。
 - [x] **知识抽取结果文件。** 包含能力 JSON、仓库 AST JSON、图谱 JSON/GraphML。证据：[能力抽取 JSON](../knowledge/extracted_capabilities.json)、[仓库抽取 JSON](../examples/repository-demo/extracted_repository.json)。
 - [x] **Agent 工作流代码或配置。** LangGraph 状态图、条件修复循环与运行轨迹。证据：[工作流代码](../agent_factory/workflow.py)、[示例流程图](../examples/demo/workflow.mmd)。
@@ -59,7 +59,7 @@
 - [x] **知识图谱可视化。** 导出可离线打开的 HTML 和 GraphML。证据：[可视化代码](../agent_factory/visualization.py)、[示例图谱](../examples/graph/graph.html)。
 - [x] **自动生成验证报告。** 运行时输出结构化结果与 Markdown 报告。证据：[报告模块](../agent_factory/reporting.py)。
 - [x] **验证结果回写知识库或图谱。** 代码版本、执行环境、验证与经验均保留。证据：[知识模块](../agent_factory/knowledge.py)、[schema](schema.md)。
-- [ ] **未实现：支持不同任务类型的验证配置。** 目前只支持 `memory_retrieval`。指标阈值、候选与预算可配置，但尚未提供文本分类、表格分类、预测等任务的数据契约和验证器；这不能算跨任务支持。
+- [x] **支持不同任务类型的验证配置。** 检索与文本分类有各自的数据/接口/指标/执行契约，共用 TaskSpec 调度。分类使用训练/验证/测试隔离、Accuracy、Macro-F1 和整批 P95。证据：[任务适配](../agent_factory/tasks.py)、[分类配置](../config/classification.json)、[分类验证器](../agent_factory/classification.py)、[跨任务测试](../tests/test_task_workflow.py)。
 - [x] **插件式接入算法模板或评估指标。** `AlgorithmSpec` / `MetricSpec` 支持注册与发现，已新增 Jaccard 和 Precision@k；外部源码方法可通过验证后登记。证据：[注册表](../agent_factory/registry.py)、[插件指南](plugins.md)、[发布模块](../agent_factory/releases.py)。
 
 ## 6. 加分项
@@ -71,8 +71,8 @@
 - [x] **自动分析失败并形成可复用经验。** 记录漏召回、排名错误、相近负例混淆和代码错误；经验进入知识图谱并可检索，区分建议与已验证修复。证据：[验证分析](../agent_factory/validation.py)、[真实失败分析样例](../examples/ollama-v2-demo/report.md)。
 - [x] **算法能力版本管理。** 能力抽取与实现不可覆盖，保存来源/代码哈希、修订关系、验证与发布版本；尚无专门的版本差异 UI。证据：[知识存储](../agent_factory/knowledge.py)、[发布清单](../agent_factory/releases.py)、[schema](schema.md)。
 - [x] **自然语言解释方案设计依据。** 方案与报告保存依据和来源关联；模型解释用于说明选择，不作为算法正确性证据。证据：[方案](../examples/ollama-v2-demo/plan.json)、[报告](../examples/ollama-v2-demo/report.md)。
-- [ ] **未实现：跨场景迁移。** 尚未用同一框架跑通表格分类、文本分类等不同任务。新检索方法的登记仍发生在同一任务类型内。
-- [x] **自动接口文档或部署配置。** FastAPI 提供 `/docs`、`/openapi.json`；已有 Dockerfile、Compose 与部署指南。尚无一键导出选定插件部署包的功能。证据：[API](../agent_factory/api.py)、[Compose](../compose.yaml)、[部署指南](jetson-deployment.md)。
+- [x] **跨场景迁移。** 同一 Factory、路由入口与 SQLite 从技术笔记检索扩展到个人记忆单标签分类，复用规划/生成/修复/回写并切换可信验证器；不是在旧检索任务上仅增加算法。证据：[真实双任务验收](../examples/transfer_validation.json)、[双任务验收脚本](../scripts/smoke_transfer.py)、[使用指南](classification-and-export.md)、[端到端测试](../tests/test_task_workflow.py)。范围为两类文本任务，尚无表格/图像任务。
+- [x] **自动接口文档或部署配置。** FastAPI 提供 `/docs`、`/openapi.json`；已有 Dockerfile、Compose 与部署指南。已提供成功产物一键 ZIP 导出，包含独立入口、依赖、示例与 Dockerfile；分类包含冻结训练集。证据：[API](../agent_factory/api.py)、[Compose](../compose.yaml)、[部署指南](jetson-deployment.md)。
 - [ ] **部分实现：性能优化与资源消耗分析。** 已测查询 P95、执行耗时，并设置容器 CPU/内存限制；尚无 CPU/内存峰值采样、性能剖析、持久索引优化或优化前后基准比较。资源限制不等于资源消耗分析。证据：[性能指标](../agent_factory/plugins/metrics/latency.py)、[执行器](../agent_factory/runner.py)。
 
 ## 7. 提交要求：README 中的十项说明
@@ -97,14 +97,14 @@
 - [x] **GitHub 搜索 → 固定提交下载 → AST 抽取 → 新方法生成 → 验证 → 登记。** 已完成真实 BM25Plus 案例，保留来源许可、哈希与验收清单。证据：[发现指南](github-discovery.md)、[真实报告](../examples/github-discovery-demo/report.md)。这属于复刻开源方法，不是发明新的数学算法。
 - [x] **扩大评估集，加入同义改写与相近负例。** 已使用 v2 数据跑通真实模型；数据仍是小型模拟集，全部查询有答案。证据：[数据说明](../data/README.md)、[真实报告](../examples/ollama-v2-demo/report.md)。
 - [x] **GitHub Actions 自动检查。** 配置包含静态检查、测试、打包与 AST + mock/Docker 闭环，不依赖 Jetson；不自动运行真实模型验证。证据：[CI 配置](../.github/workflows/ci.yml)、[CI 说明](ci.md)。
-- [x] **自动选择已有能力复用或 GitHub 新方法发现。** 默认自动模式已接入 CLI/API/Web；实际 Chrome 提交两个真实模型任务，完成发现、登记、比较和再次复用，共 18 次 qwen3.5:2b 调用，全部 Docker 验收通过。140 项自动测试及离线 CI 闭环通过。证据：[路由指南](automatic-routing.md)、[发现报告](../examples/automatic-discovery-demo/report.md)、[比较报告](../examples/automatic-comparison-demo/report.md)、[复用报告](../examples/automatic-reuse-demo/report.md)、[浏览器记录](../examples/automatic_web_validation.json)。
+- [x] **自动选择已有能力复用或 GitHub 新方法发现。** 默认自动模式已接入 CLI/API/Web；实际 Chrome 提交两个真实模型任务，完成发现、登记、比较和再次复用，共 18 次 qwen3.5:2b 调用，全部 Docker 验收通过。该次验收的 140 项自动测试及离线 CI 闭环通过。证据：[路由指南](automatic-routing.md)、[发现报告](../examples/automatic-discovery-demo/report.md)、[比较报告](../examples/automatic-comparison-demo/report.md)、[复用报告](../examples/automatic-reuse-demo/report.md)、[浏览器记录](../examples/automatic_web_validation.json)。
+
+- [x] **一键导出独立运行的 ZIP。** 通过 Web/CLI/API 导出已验收代码、最少依赖、示例、Dockerfile、指标摘要和来源许可证，分类附带冻结训练数据。导出前验证哈希与最终测试状态。证据：[导出模块](../agent_factory/exporting.py)、[使用指南](classification-and-export.md)、[独立运行记录](../examples/transfer_validation.json)。
 
 ## 9. 尚未完成的重点
 
-- [ ] **不同任务的验证契约与执行流程。** 先选一个第二任务，再实现其输入输出、数据隔离、指标与验证器。
-- [ ] **跨任务或跨场景的完整运行示例。** 不能仅通过增加一个检索算法插件宣称完成迁移。
 - [ ] **用于算法方案搜索的图搜索、Beam Search 或 MCTS。** 当前没有实现这类搜索机制。
 - [ ] **更完整的自治多 Agent 协作。** 当前交付是多角色串行工作流。
 - [ ] **性能优化与实际资源消耗分析。** 当前只有耗时统计和执行资源限制。
 
-版本差异视图、一键部署包、更多指标、更大或真实业务评估集，以及中断恢复也可继续完善，详见 [后续路线](roadmap.md)。这些额外改进不应全部算成笔试基础要求的缺项。
+版本差异视图、更多指标、更大或真实业务评估集，以及中断恢复也可继续完善，详见 [后续路线](roadmap.md)。这些额外改进不应全部算成笔试基础要求的缺项。

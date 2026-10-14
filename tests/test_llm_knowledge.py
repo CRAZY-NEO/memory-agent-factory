@@ -129,7 +129,7 @@ def test_ingest_provenance_idempotence_and_immutable_store(workspace):
     records = ingest_sources(store, client, workspace / "knowledge" / "sources", workspace / "extracted.json")
     ingest_sources(store, client, workspace / "knowledge" / "sources", workspace / "extracted.json")
     assert len(store.nodes("Capability")) == len(records)
-    retrieved = store.retrieve("中文技术记忆检索")
+    retrieved = store.retrieve("中文技术记忆检索", algorithms=['bm25'])
     assert {item["source_id"] for item in retrieved["sources"]} == {
         cap["source_id"] for cap in retrieved["capabilities"]}
     assert any("log(1 + (N - df" in source["text"] for source in retrieved["sources"])
@@ -156,3 +156,50 @@ def test_extractor_hallucinated_evidence_rejected(workspace):
     with pytest.raises(ValueError, match="evidence"):
         ingest_sources(store, BadExtractor(), workspace / "knowledge" / "sources", workspace / "out.json")
     assert not store.nodes("Capability")
+
+
+def test_real_extraction_retries_out_of_source_evidence_without_persisting(workspace):
+    mock = LLMClient('mock', 'mock', '', workspace / 'mock-traces')
+    calls = []
+
+    def respond(request):
+        sent = json.loads(request.content)
+        context = json.loads(sent['messages'][1]['content'])
+        calls.append(context)
+        result = mock._mock('extractor', context)
+        if len(calls) == 1:
+            result['capabilities'][0]['evidence'] = 'This invented quote is absent from the material'
+        return httpx.Response(200, json={'message': {'content': json.dumps(result)}})
+
+    client = LLMClient('ollama', 'fixture', 'http://fixture', workspace / 'traces',
+                      transport=httpx.MockTransport(respond))
+    store = KnowledgeStore(workspace / 'state/grounding.sqlite')
+    records = ingest_sources(store, client, workspace / 'knowledge/sources', workspace / 'extracted.json',
+                             algorithm_ids=['tfidf_logreg'])
+    assert client.calls == 2 and len(records) == 1
+    assert records[0]['algorithm'] == 'tfidf_logreg'
+    assert [row['id'] for row in calls[0]['registered_algorithms']] == ['tfidf_logreg']
+    assert records[0]['evidence'] in calls[0]['text']
+    assert 'error' in json.loads((workspace / 'traces/001_extractor.json').read_text())
+
+
+def test_classifier_codegen_uses_own_contract_and_retries_wrong_entrypoint(tmp_path):
+    from agent_factory.registry import load_registry
+
+    reference = load_registry().algorithm('tfidf_logreg').reference.read_text()
+    sent = []
+
+    def respond(request):
+        payload = json.loads(request.content)
+        sent.append(payload)
+        code = 'def retrieve(query, memories, top_k=5): return []' if len(sent) == 1 else reference
+        return httpx.Response(200, json={'message': {'content': json.dumps({'code': code, 'explanation': 'fixture'})}})
+
+    client = LLMClient('ollama', 'qwen3.5:2b', 'http://fixture', tmp_path,
+                      transport=httpx.MockTransport(respond))
+    artifact = client.ask('coder', {'request': {'task': 'memory_classification'}}, CodeArtifact)
+    assert artifact.code == reference and client.calls == 2
+    assert 'def classify(texts, training_examples)' in sent[0]['messages'][0]['content']
+    assert 'def retrieve' not in sent[0]['messages'][0]['content']
+    assert sent[0]['options']['temperature'] == 0
+    assert 'missing top-level classify' in json.loads((tmp_path / '001_coder.json').read_text())['error']

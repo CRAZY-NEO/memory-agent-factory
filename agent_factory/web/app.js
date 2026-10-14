@@ -2,8 +2,9 @@
 const $ = (id) => document.getElementById(id);
 const names = { queued:"排队中", running:"执行中", succeeded:"已完成", failed:"失败", passed:"通过", failed_validation:"验证未通过", failed_test:"最终测试未通过", prepare:"准备材料", understand:"理解需求", retrieve:"检索能力知识", plan:"规划候选", generate:"生成 / 修复代码", validate:"自动验证", review:"诊断问题", advance:"切换候选", select:"选择并冻结版本", test:"独立最终测试", persist:"报告与知识回写" };
 Object.assign(names, { route:"判断能力与执行路径", source_search:"理解新能力与搜索规划", github_search:"搜索 GitHub", pick_repository:"选择来源仓库", download_repository:"下载固定提交源码", extract_repository:"AST 抽取源码", propose_algorithm:"提议新算法能力", approve_algorithm:"验证后登记算法" });
-const categories = { direct:"词面基线", paraphrase:"同义改写", hard_negative:"相近负例", multi_relevance:"多相关文档" };
-const metricNames = { recall_at_k:"Recall@k", mrr_at_k:"MRR@k", precision_at_k:"Precision@k", p95_ms:"P95 ms" };
+const categories = { direct:"词面基线", paraphrase:"同义改写", hard_negative:"相近负例", multi_relevance:"多相关文档", lexical:"词面基线", near_boundary:"相近类别" };
+const metricNames = { recall_at_k:"Recall@k", mrr_at_k:"MRR@k", precision_at_k:"Precision@k", p95_ms:"P95 ms", accuracy:"Accuracy", macro_f1:"Macro F1", classification_p95_ms:"P95 ms" };
+const taskNames = { memory_retrieval:"记忆检索", memory_classification:"文本记忆分类" };
 // The opening ticket is consumed once; remove it before any authenticated request.
 function takeOpeningTicket() {
   const ticket = new URLSearchParams(location.hash.slice(1)).get("login");
@@ -37,18 +38,18 @@ async function request(path, options = {}, blob = false) {
   } catch (error) { if (error.name === "AbortError") throw new Error("请求超时，请检查服务连接后刷新。"); throw error; }
   finally { clearTimeout(timeout); }
 }
-async function download(path, filename) {
-  try { const data = await request(path, {}, true); const url = URL.createObjectURL(data); const link = node("a"); link.href = url; link.download = filename; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+async function download(path, filename, method = "GET") {
+  try { const data = await request(path, { method }, true); const url = URL.createObjectURL(data); const link = node("a"); link.href = url; link.download = filename; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
   catch (error) { notice(error.message); }
 }
-function downloadButton(label, path, filename, small = false) { const button = node("button", label, small ? "text-button" : "secondary"); button.type = "button"; button.addEventListener("click", () => download(path, filename)); return button; }
+function downloadButton(label, path, filename, small = false, method = "GET") { const button = node("button", label, small ? "text-button" : "secondary"); button.type = "button"; button.addEventListener("click", async () => { button.disabled = true; try { await download(path, filename, method); } finally { button.disabled = false; } }); return button; }
 async function refreshHistory() {
   const [jobs, runs] = await Promise.all([request("/v1/jobs?limit=12"), request("/v1/runs?limit=20")]);
   $("jobs").replaceChildren();
   for (const job of jobs.jobs) { const item = node("li"); const kind = { factory:"算法生成", discovery:"发现新算法", ingest:"能力抽取", search:"检索试用" }[job.kind] || job.kind; const button = node("button", `${names[job.status] || job.status} · ${kind} · ${job.id.slice(0, 8)}`, "history-button"); button.type = "button"; button.addEventListener("click", () => selectJob(job.id)); item.append(button); $("jobs").append(item); }
   if (!jobs.jobs.length) $("jobs").append(node("li", "还没有任务。", "muted"));
   $("runs").replaceChildren();
-  for (const run of runs.runs) { const item = node("li"); const button = node("button", `${names[run.status] || run.status} · ${run.algorithm || "未发布"}`, "history-button"); button.type = "button"; button.append(node("small", `${run.run_id} · ${run.provider} / ${run.model}`)); button.addEventListener("click", () => selectRun(run.run_id)); item.append(button); $("runs").append(item); }
+  for (const run of runs.runs) { const item = node("li"); const button = node("button", `${names[run.status] || run.status} · ${taskNames[run.task] || "记忆检索"} · ${run.algorithm || "未发布"}`, "history-button"); button.type = "button"; button.append(node("small", `${run.run_id} · ${run.provider} / ${run.model}`)); button.addEventListener("click", () => selectRun(run.run_id)); item.append(button); $("runs").append(item); }
   if (!runs.runs.length) $("runs").append(node("li", "还没有完成的运行。", "muted"));
 }
 function renderJob(job) {
@@ -92,16 +93,26 @@ async function selectRun(id) {
     $("events").scrollTop = $("events").scrollHeight;
   } catch (error) { if (current === selection) notice(error.message); }
 }
-function categoryTable(title, evaluation) {
+function reportMetrics(report) {
+  const catalog = report.plugin_catalog?.metrics || [];
+  const keys = Object.keys(report.validation_config?.metrics || {});
+  const enabled = keys.length ? keys : [...new Set([...Object.keys(report.test?.metrics || {}), ...Object.keys(report.selected?.validation?.metrics || {})])];
+  return enabled.map((id) => ({ id, name:catalog.find((metric) => metric.id === id)?.name || metricNames[id] || id }));
+}
+function categoryTable(title, evaluation, metrics, classification) {
   if (!evaluation?.by_category) return null;
-  const box = node("div", undefined, "table-scroll"); const table = node("table"); table.append(node("caption", title)); const head = node("thead"); const header = node("tr"); for (const label of ["查询类型", "数量", "Recall@k", "MRR@k", "Precision@k", "失败查询", "负例优先"]) header.append(node("th", label)); head.append(header); table.append(head); const body = node("tbody");
-  for (const [category, group] of Object.entries(evaluation.by_category)) { const row = node("tr"); for (const value of [categories[category] || category, group.query_count, format(group.metrics.recall_at_k), format(group.metrics.mrr_at_k), format(group.metrics.precision_at_k), group.failure_count, group.hard_negative_confusion_count]) row.append(node("td", value)); body.append(row); }
+  const box = node("div", undefined, "table-scroll"); const table = node("table"); table.append(node("caption", title)); const head = node("thead"); const header = node("tr");
+  const columns = [classification ? "样本类型" : "查询类型", "数量", ...metrics.map((metric) => metric.name), "失败样本", ...(classification ? [] : ["负例优先"])];
+  for (const label of columns) header.append(node("th", label)); head.append(header); table.append(head); const body = node("tbody");
+  for (const [category, group] of Object.entries(evaluation.by_category)) { const row = node("tr"); for (const value of [categories[category] || category, group.example_count ?? group.query_count ?? group.count ?? "—", ...metrics.map((metric) => format(group.metrics?.[metric.id])), group.failure_count ?? "—", ...(classification ? [] : [group.hard_negative_confusion_count ?? "—"])]) row.append(node("td", value)); body.append(row); }
   table.append(body); box.append(table); return box;
 }
 function renderReport(report) {
   $("result").hidden = false; badge("run-status", report.status);
   const selected = report.selected;
-  $("run-caption").textContent = `${report.run_id} · ${report.provider} / ${report.model} · ${report.runner} · ${selected ? "选定 " + selected.algorithm + " r" + selected.revision : "无可发布候选"}`;
+  const classification = report.request?.task === "memory_classification";
+  const metrics = reportMetrics(report);
+  $("run-caption").textContent = `${report.run_id} · ${taskNames[report.request?.task] || "记忆检索"} · ${report.provider} / ${report.model} · ${report.runner} · ${selected ? "选定 " + selected.algorithm + " r" + selected.revision : "无可发布候选"}`;
   $("design").textContent = report.plan?.design_explanation || "";
   const routing = $("routing-evidence"); routing.replaceChildren(); routing.hidden = !report.routing;
   if (report.routing) {
@@ -121,24 +132,33 @@ function renderReport(report) {
       evidence.append(downloadButton("下载 " + file, `/v1/runs/${report.run_id}/artifacts/${file}`, file, true));
   }
   $("metric-cards").replaceChildren();
-  for (const [key, label] of Object.entries(metricNames)) { const card = node("div", undefined, "metric"); card.append(node("span", "最终测试 · " + label), node("strong", format(report.test?.metrics?.[key]))); $("metric-cards").append(card); }
+  for (const metric of metrics) { const card = node("div", undefined, "metric"); card.append(node("span", "最终测试 · " + metric.name), node("strong", format(report.test?.metrics?.[metric.id]))); $("metric-cards").append(card); }
+  const header = node("tr"); for (const label of ["算法 / 版本", "通过", ...metrics.map((metric) => metric.name), "问题与代码"]) header.append(node("th", label)); $("candidates").querySelector("thead").replaceChildren(header);
   const body = $("candidates").querySelector("tbody"); body.replaceChildren();
-  for (const attempt of report.attempts) { const row = node("tr"); const metrics = attempt.validation.metrics;
-    for (const value of [`${attempt.algorithm} r${attempt.revision}`, attempt.validation.passed ? "通过" : "未通过", ...Object.keys(metricNames).map((key) => format(metrics[key]))]) row.append(node("td", value));
+  for (const attempt of report.attempts) { const row = node("tr"); const values = attempt.validation.metrics;
+    for (const value of [`${attempt.algorithm} r${attempt.revision}`, attempt.validation.passed ? "通过" : "未通过", ...metrics.map((metric) => format(values?.[metric.id]))]) row.append(node("td", value));
     const info = node("td"); if (attempt.validation.errors.length) { const details = node("details"); details.append(node("summary", `${attempt.validation.errors.length} 条问题`), node("pre", attempt.validation.errors.join("\n"))); info.append(details); }
     info.append(downloadButton("下载该版本代码", `/v1/runs/${report.run_id}/code/${attempt.algorithm}/${attempt.revision}`, `${attempt.algorithm}-r${attempt.revision}.py`, true)); row.append(info); body.append(row);
   }
   $("category-analysis").replaceChildren();
-  for (const [title, evaluation] of [["选定候选 · 验证集分类表现", selected?.validation], ["选定版本 · 独立最终测试分类表现", report.test]]) { const table = categoryTable(title, evaluation); if (table) $("category-analysis").append(table); }
+  for (const [title, evaluation] of [["选定候选 · 验证集分组表现", selected?.validation], ["选定版本 · 独立最终测试分组表现", report.test]]) {
+    const table = categoryTable(title, evaluation, metrics, classification); if (table) $("category-analysis").append(table);
+    if (classification && evaluation?.confusion_matrix) { const details = node("details"); details.append(node("summary", title + " · 混淆矩阵（行：真实，列：预测）"), node("pre", JSON.stringify(evaluation.confusion_matrix, null, 2))); $("category-analysis").append(details); }
+  }
+  if (classification) $("category-analysis").append(node("p", "分类延迟包含整批训练与预测，P95 来自 3 次调用测量。", "muted"));
   $("failures").replaceChildren(); let failureCount = 0;
   for (const [title, evaluation] of [["验证", selected?.validation], ["最终测试", report.test]]) {
     for (const row of evaluation?.per_query || []) { if (!row.failure_types?.length) continue; failureCount++; const item = node("div", undefined, "failure-item"); item.append(node("p", `${title} / ${row.query_id} · ${categories[row.category] || row.category} · ${row.query}`), node("pre", `类型：${row.failure_types.join(", ")}\n相关：${row.relevant_ids.join(", ")}\n漏召回：${row.missed_relevant_ids.join(", ")}\n负例优先：${JSON.stringify(row.hard_negative_confusions)}\n返回顺序：${row.predictions.map((hit) => hit.id).join(" → ")}`), node("p", row.annotation, "muted")); $("failures").append(item); }
+    for (const row of evaluation?.per_example || []) { if (row.label === row.prediction && !row.failure_types?.length) continue; failureCount++; const item = node("div", undefined, "failure-item"); item.append(node("p", `${title} / ${row.id} · ${categories[row.category] || row.category || "分类样本"} · ${row.text}`), node("pre", `真实标签：${row.label}\n预测标签：${row.prediction ?? "无预测"}`)); if (row.annotation) item.append(node("p", row.annotation, "muted")); $("failures").append(item); }
   }
-  if (!failureCount) $("failures").append(node("p", selected ? "此报告未记录逐查询失败；旧版报告可能没有此分析字段。" : "所有候选均未通过，详情见候选问题及完整报告。", "muted"));
+  if (!failureCount) $("failures").append(node("p", selected ? "此报告未记录逐样本失败；旧版报告可能没有此分析字段。" : "所有候选均未通过，详情见候选问题及完整报告。", "muted"));
   $("downloads").replaceChildren();
-  const files = report.status === "passed" ? ["selected_retrieval.py", "plugin.json", "report.md", "report.json"] : ["report.md", "report.json"];
-  const labels = { "selected_retrieval.py":"下载选定算法", "plugin.json":"下载插件清单", "report.md":"下载 Markdown 报告", "report.json":"下载 JSON 报告" };
+  const files = report.status === "passed" ? [classification ? "selected_classification.py" : "selected_retrieval.py", "plugin.json", "report.md", "report.json"] : ["report.md", "report.json"];
+  const labels = { "selected_retrieval.py":"下载选定算法", "selected_classification.py":"下载选定算法", "plugin.json":"下载插件清单", "report.md":"下载 Markdown 报告", "report.json":"下载 JSON 报告" };
+  if (report.status === "passed") $("downloads").append(downloadButton("一键导出可运行 ZIP", `/v1/runs/${report.run_id}/export`, `${report.run_id}-deployment.zip`, false, "POST"));
   for (const file of files) $("downloads").append(downloadButton(labels[file], `/v1/runs/${report.run_id}/artifacts/${file}`, file));
+  $("export-note").hidden = report.status !== "passed";
+  $("export-note").textContent = classification ? "分类包包含训练样本（文本及标签），不包含验证集或最终测试集。解压后按 README 安装依赖即可运行，无需连接模型。" : "部署包包含选定代码、运行入口、依赖与验证摘要。解压后按 README 安装依赖即可运行，无需连接模型。";
 }
 async function connectWorkspace(token = "") {
   $("connect").disabled = true; notice(""); accessToken = token; connected = true;
@@ -147,9 +167,12 @@ async function connectWorkspace(token = "") {
     $("mode").disabled = false;
     $("mode").querySelector('option[value="discover"]').disabled = !settings.discovery_available;
     if (!settings.discovery_available && $("mode").value === "discover") $("mode").value = "auto";
-    $("routing-hint").textContent = settings.discovery_available ? "自动判断：已有能力优先；未登记的方法会自动搜索 GitHub，验证合格后登记。" : "自动判断已启用；当前为离线演示，发现未登记的方法时会提示需要 Ollama。";
-    $("dataset").textContent = d ? `v${d.version} · ${d.memory_count} 条记忆 · ${d.splits.validation.query_count} 验证查询 · ${d.splits.test.query_count} 最终测试查询` : "当前工作空间未提供数据版本说明。";
-    $("connection").textContent = "已连接 · " + settings.algorithms.join(" / ");
+    $("routing-hint").textContent = settings.discovery_available ? "自动识别检索或文本分类需求，使用对应的评估配置；检索任务缺少方法时会搜索 GitHub，验证合格后登记。" : "自动识别检索或文本分类需求；当前为离线演示，发现未登记的检索方法需要 Ollama。";
+    const classificationData = settings.classification_dataset;
+    const retrievalSummary = d ? `检索 v${d.version}：${d.memory_count} 条记忆，${d.splits.validation.query_count} 验证查询，${d.splits.test.query_count} 最终测试查询。` : "检索：未提供数据版本说明。";
+    const classificationSummary = classificationData ? `分类：${classificationData.training_count ?? classificationData.splits?.train?.example_count ?? "—"} 条训练，${classificationData.validation_count ?? classificationData.splits?.validation?.example_count ?? "—"} 条验证，${classificationData.test_count ?? classificationData.splits?.test?.example_count ?? "—"} 条最终测试。` : "分类：使用独立的训练、验证及最终测试集。";
+    $("dataset").textContent = retrievalSummary + " " + classificationSummary;
+    $("connection").textContent = "已连接 · " + (settings.tasks || ["memory_retrieval"]).map((task) => taskNames[task] || task).join(" / ");
     $("token").value = ""; $("token").hidden = true; document.querySelector('label[for="token"]').hidden = true; $("connect").hidden = true;
     $("disconnect").hidden = false; $("submit").disabled = false; $("refresh").disabled = false;
     await refreshHistory();
@@ -180,3 +203,4 @@ $("example").addEventListener("click", () => { $("description").value = "为个�
 $("refresh").addEventListener("click", async () => { notice(""); try { await refreshHistory(); if (selectedJob) selectJob(selectedJob); } catch (error) { notice(error.message); } });
 
 $("new-example").addEventListener("click", () => { $("description").value = "为中文与英文混合技术笔记复刻 BM25Plus 检索方法，输入 query、memories、top_k=5，返回相关记忆 ID 和得分，通过验证后交付可复用代码。"; $("description").dispatchEvent(new Event("input")); });
+$("classification-example").addEventListener("click", () => { $("mode").value = "auto"; $("description").value = "生成文本记忆分类算法，根据训练样本将技术笔记分类，输入 texts 与 training_examples，返回与文本顺序一致的类别标签。比较配置中的分类候选，检查 Accuracy、Macro F1、运行稳定性和接口，有限修复后用独立最终测试集验证并沉淀为可复用插件。"; $("description").dispatchEvent(new Event("input")); });

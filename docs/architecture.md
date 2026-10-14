@@ -21,6 +21,8 @@
 | 编排 | workflow.py | LangGraph 状态、角色交接、分支、修复预算、冻结候选与结果回写 |
 | 执行边界 | safety.py、runner.py、worker.py | AST 策略、无标注输入、限时进程、Docker 隔离选项 |
 | 修复支持 | repair.py | 专属上下文、可信失败定位、AST 进展检查、哈希校验的历史失败重放 |
+| 任务适配 | tasks.py、classification.py | 同一状态图切换检索/分类的数据、接口、指标与冻结产物 |
+| 部署导出 | exporting.py | 成功产物校验、最少依赖、独立 ZIP 与来源许可 |
 | 可信验证 | validation.py | 输入数据检查、接口/功能/稳定性、注册指标（Recall/MRR/Precision/P95）、配置门槛 |
 | 结果交付 | reporting.py、runtime.py、visualization.py | 报告、可复用插件适配器、图谱导出 |
 | 业务接口 | api.py、jobs.py、job_worker.py | token 鉴权、输入限制、持久任务队列、租约与宿主 worker |
@@ -52,7 +54,7 @@ flowchart TD
   S --> T[冻结版本后最终测试]
   T --> W[报告、版本、经验写回]
   W --> K
-  W --> O[最终测试通过后发布检索插件]
+  W --> O[最终测试通过后发布检索或分类插件]
 ```
 
 每个角色使用独立提示与结构化输出，同一 Ollama 模型可以串行承担这些角色。
@@ -92,3 +94,9 @@ LLM 不能更改验证器、数据标注、阈值或发布条件。模型服务�
 web/ 的静态页面通过鉴权任务 API 提交需求；JobStore 为领取后的任务关联 run_id，网页轮询可信执行阶段。下载接口限定文件及目录范围，生成的文字只作为文本展示。serve_web.py 同时启动网关和 worker，二者使用同一 workspace。
 
 Query 新增 category、hard_negative_ids 和 annotation。负例在真实检索语料中参与检索；评分器独立检查标签，计算分组指标与漏召回/排序/负例混淆诊断。生成执行器继续只接收 query、无标注 memories 与 top_k，诊断分组不是新的验收门槛。
+
+## 检索与分类迁移
+
+AutomaticFactory 先识别任务，Factory.activate_task 加载对应可信配置；TaskSpec 选择数据加载器、接口、验证器和产物文件名。LangGraph 角色交接、候选选择、修复预算、环境/代码版本和知识回写继续共用。分类训练数据在运行开始时复制到 training_examples.json 并绑定 SHA-256；所有候选与最终测试使用同一副本，数据变动会阻止发布。
+
+分类 worker 只接收 texts 和 training_examples（仅 text/label），评估标签保留在父进程。它可以在调用内训练，但不保存拟合模型；MemoryClassifier 和独立 ZIP 每次根据冻结训练集重新训练，适合小型原型，不宣称生产推理优化。最终测试失败不再修复或换候选。

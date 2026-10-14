@@ -1,0 +1,15 @@
+{"node": "route", "time": "2026-10-14T18:11:32.616169+00:00", "candidate_index": null, "revision": null}
+{"node": "understand", "time": "2026-10-14T18:11:32.636911+00:00", "candidate_index": null, "revision": null}
+{"node": "retrieve", "time": "2026-10-14T18:11:32.637610+00:00", "candidate_index": null, "revision": null}
+{"node": "plan", "time": "2026-10-14T18:11:32.641865+00:00", "candidate_index": null, "revision": null}
+{"node": "generate", "time": "2026-10-14T18:11:32.642695+00:00", "candidate_index": 0, "revision": 0}
+{"node": "validate", "time": "2026-10-14T18:11:32.643692+00:00", "candidate_index": 0, "revision": 0}
+{"node": "advance", "time": "2026-10-14T18:11:35.613800+00:00", "candidate_index": 0, "revision": 0}
+{"node": "generate", "time": "2026-10-14T18:11:35.614072+00:00", "candidate_index": 1, "revision": 0}
+{"node": "validate", "time": "2026-10-14T18:11:35.616733+00:00", "candidate_index": 1, "revision": 0}
+{"node": "review", "time": "2026-10-14T18:11:36.906892+00:00", "candidate_index": 1, "revision": 0}
+{"node": "generate", "time": "2026-10-14T18:11:36.909314+00:00", "candidate_index": 1, "revision": 1}
+{"node": "validate", "time": "2026-10-14T18:11:36.911042+00:00", "candidate_index": 1, "revision": 1}
+{"node": "select", "time": "2026-10-14T18:11:39.371611+00:00", "candidate_index": 1, "revision": 1}
+{"node": "test", "time": "2026-10-14T18:11:39.372045+00:00", "candidate_index": 1, "revision": 1}
+{"node": "persist", "time": "2026-10-14T18:11:42.295060+00:00", "candidate_index": 1, "revision": 1}

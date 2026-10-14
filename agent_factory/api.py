@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import Field
 
 from .demo_session import DemoSession
+from .exporting import export_run
 from .jobs import JobStore, QueueFull
 from .models import Contract, Memory
 
@@ -204,8 +205,20 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
         config = json.loads((workspace / 'config.json').read_text(encoding='utf-8'))
         metadata = workspace / 'data' / 'dataset.json'
         dataset = json.loads(metadata.read_text(encoding='utf-8')) if metadata.exists() else None
+        classification_metadata = workspace / 'data' / 'classification' / 'dataset.json'
+        classification_dataset = (json.loads(classification_metadata.read_text(encoding='utf-8'))
+                                  if classification_metadata.exists() else None)
+        if classification_dataset is None:
+            paths = {name: workspace / 'data' / 'classification' / (split + '.json')
+                     for name, split in [('training_count', 'train'), ('validation_count', 'validation'),
+                                         ('test_count', 'test')]}
+            if all(path.is_file() for path in paths.values()):
+                classification_dataset = {name: len(json.loads(path.read_text(encoding='utf-8')))
+                                          for name, path in paths.items()}
         return {'algorithms': config.get('algorithms', []), 'metrics': config.get('metrics', {}),
-                'dataset': dataset, 'discovery_available': os.getenv('FACTORY_PROVIDER', 'mock') == 'ollama'}
+                'dataset': dataset, 'classification_dataset': classification_dataset,
+                'tasks': ['memory_retrieval', 'memory_classification'],
+                'discovery_available': os.getenv('FACTORY_PROVIDER', 'mock') == 'ollama'}
 
     @app.post('/v1/algorithms/discover', status_code=202, dependencies=[Depends(authenticate)])
     def discover_algorithm(body: FactorySubmission):
@@ -235,6 +248,7 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
             selected = content.get('selected') or {}
             records.append({'run_id': directory.name, 'status': content['status'],
                             'provider': content['provider'], 'model': content['model'],
+                            'task': content.get('request', {}).get('task', 'memory_retrieval'),
                             'algorithm': selected.get('algorithm')})
             if len(records) >= limit:
                 break
@@ -273,9 +287,20 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
         content = re.sub(r'"code_path":\s*"[^"]*"', '"code_path": "artifact"', content)
         return json.loads(content)
 
+    @app.post('/v1/runs/{run_id}/export', dependencies=[Depends(authenticate)])
+    def export_deployment(run_id: str):
+        """Export only frozen, validated artifacts; no algorithm is executed here."""
+        run_directory(run_id)
+        try:
+            path = export_run(workspace, run_id)
+        except (ValueError, OSError, KeyError, TypeError) as exc:
+            raise HTTPException(status_code=409,
+                                detail='Cannot export: run must have intact artifacts passing validation and final test') from exc
+        return FileResponse(path, filename=f'{run_id}-deployment.zip', media_type='application/zip')
+
     @app.get('/v1/runs/{run_id}/artifacts/{filename}', dependencies=[Depends(authenticate)])
     def download(run_id: str, filename: str):
-        if filename not in {'selected_retrieval.py', 'plugin.json', 'report.json', 'report.md',
+        if filename not in {'selected_retrieval.py', 'selected_classification.py', 'plugin.json', 'report.json', 'report.md',
                             'routing.json', 'search_results.json', 'proposal.json', 'source_context.json', 'source_contract.json', 'extracted_repository.json'}:
             raise HTTPException(status_code=404, detail='Artifact not found')
         if filename == 'report.json':
@@ -286,6 +311,10 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
     def candidate_code(run_id: str, algorithm: str, revision: int):
         if not re.fullmatch(r'[a-z][a-z0-9_]*', algorithm) or not 0 <= revision <= 3:
             raise HTTPException(status_code=404, detail='Candidate not found')
-        return artifact(run_id, f'{algorithm}/r{revision}/retrieval.py', f'{algorithm}-r{revision}.py')
+        task = report(run_id).get('request', {}).get('task', 'memory_retrieval')
+        filename = {'memory_retrieval': 'retrieval.py', 'memory_classification': 'classification.py'}.get(task)
+        if filename is None:
+            raise HTTPException(status_code=404, detail='Unsupported candidate task')
+        return artifact(run_id, f'{algorithm}/r{revision}/{filename}', f'{algorithm}-r{revision}.py')
 
     return app

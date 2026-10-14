@@ -1,0 +1,450 @@
+[
+  {
+    "id": "train-engineering-01",
+    "text": "技术笔记：Python 字典查询的平均时间复杂度是常数级。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-02",
+    "text": "排障记录：数据库连接超时需要检查连接池和网络配置。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-03",
+    "text": "技术总结：Docker 容器通过端口映射向宿主机开放服务。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-04",
+    "text": "算法笔记：向量检索使用余弦相似度比较文本表示。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-05",
+    "text": "开发经验：异步请求必须设置超时和重试次数。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-06",
+    "text": "原理记录：SQL 索引可以加速筛选但会增加写入成本。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-07",
+    "text": "技术方案：项目中出现死锁时按相同顺序获取线程锁。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-08",
+    "text": "调试笔记：日志里的空指针错误来自未初始化的对象。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-09",
+    "text": "Engineering note: Python generators yield values lazily to reduce memory use.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-10",
+    "text": "Technical explanation: database transactions ensure atomic updates and rollback.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-11",
+    "text": "Debugging note: inspect the container logs when an HTTP request times out.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-12",
+    "text": "Algorithm note: TF-IDF weights rare terms more strongly than common words.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-13",
+    "text": "Development tip: unit tests should cover boundary inputs and invalid data.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-14",
+    "text": "Technical note: configure connection pooling to reuse PostgreSQL connections.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-15",
+    "text": "Debugging lesson: the project crash came from an unhandled null reference.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-engineering-16",
+    "text": "Architecture note: a cache stores repeated results to reduce database latency.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-01",
+    "text": "项目进展：个人知识库已经完成数据导入模块。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-02",
+    "text": "当前项目的目标是构建一个可搜索的个人记忆系统。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-03",
+    "text": "项目状态：分类模块已联调完成，正在等待产品验收。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-04",
+    "text": "本次迭代范围包含登录页面和用户权限管理。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-05",
+    "text": "项目会议结论：团队采用 Python 作为后端开发语言。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-06",
+    "text": "里程碑记录：搜索功能已经上线，下一阶段是反馈收集。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-07",
+    "text": "项目分工：小林负责数据库接口，小王负责前端页面。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-08",
+    "text": "开发进度：推荐系统第一版已经完成，当前缺少评估报告。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-09",
+    "text": "Project update: the knowledge-base import module is complete.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-10",
+    "text": "The project goal is to build a personal memory search application.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-11",
+    "text": "Project status: the classification service is waiting for acceptance review.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-12",
+    "text": "This release scope includes the login screen and account permissions.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-13",
+    "text": "Project decision: the team selected Python for the backend implementation.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-14",
+    "text": "Milestone update: search is deployed and user feedback collection is in progress.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-15",
+    "text": "Team assignment: Alice owns the database API and Bob owns the frontend.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-project-16",
+    "text": "Progress report: the first recommendation prototype is ready for evaluation.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-01",
+    "text": "我的偏好：阅读技术文章时喜欢先看例子再看原理。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-02",
+    "text": "我更喜欢深色主题，浅色界面看久了眼睛累。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-03",
+    "text": "个人习惯：工作时喜欢安静的环境，不喜欢背景音乐。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-04",
+    "text": "我通常倾向于用 Python 编写脚本，因为语法简洁。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-05",
+    "text": "我的饮食偏好是清淡少盐，不喜欢太甜的咖啡。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-06",
+    "text": "我喜欢把会议安排在上午，下午更适合集中写代码。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-07",
+    "text": "个人偏好：项目文档最好提供简短摘要和清晰的示例。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-08",
+    "text": "我不喜欢频繁的通知，更愿意集中处理消息。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-09",
+    "text": "I prefer reading a short example before a detailed technical explanation.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-10",
+    "text": "My interface preference is dark mode with a larger font.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-11",
+    "text": "I like working in a quiet room without background music.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-12",
+    "text": "I usually prefer Python for small scripts because it is easy to read.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-13",
+    "text": "My food preference is a mild flavor and coffee without sugar.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-14",
+    "text": "I prefer morning meetings and uninterrupted coding time in the afternoon.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-15",
+    "text": "For project documentation I like concise summaries and practical examples.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-preference-16",
+    "text": "I dislike frequent notifications and prefer to read messages in batches.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-01",
+    "text": "提醒我明天上午检查数据库备份是否成功。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-02",
+    "text": "待办：周五之前提交个人知识库项目的演示报告。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-03",
+    "text": "下周一记得给导师发送本次实验结果。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-04",
+    "text": "提醒事项：今晚八点参加线上项目评审会议。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-05",
+    "text": "请在月底前续费服务器，并检查付款记录。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-06",
+    "text": "记得明天下午三点去领取快递。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-07",
+    "text": "待办清单：本周需要更新系统依赖并运行回归测试。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-08",
+    "text": "周末别忘了整理读书笔记和未处理的邮件。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-09",
+    "text": "Remind me to check the database backup tomorrow morning.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-10",
+    "text": "Todo: submit the project demonstration report before Friday.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-11",
+    "text": "Remember to email the experiment results to my supervisor next Monday.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-12",
+    "text": "Reminder: attend the online project review at eight tonight.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-13",
+    "text": "Please renew the server subscription before the end of the month.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-14",
+    "text": "Remember to pick up the parcel tomorrow afternoon.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-15",
+    "text": "Todo for this week: update dependencies and run regression tests.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "train-reminder-16",
+    "text": "Do not forget to organize reading notes and unanswered emails this weekend.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "summary": "验证器发现：evaluation: classify must return a list with one label per input text; classify must return a list with one label per input text; nonempty texts with no training must raise ValueError without mutation",
+  "repair_instructions": [
+    "恢复分类输出长度和合法标签，保留训练集拟合、空输入和确定性处理。"
+  ],
+  "trusted_findings": [],
+  "execution_diagnostics": [],
+  "unchanged_previous_repair": false
+}

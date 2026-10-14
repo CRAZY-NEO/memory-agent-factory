@@ -27,7 +27,7 @@ class Query(Contract):
 class Capability(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_-]+$")
     name: str
-    task: Literal["memory_retrieval"]
+    task: Literal["memory_retrieval", "memory_classification"]
     algorithm: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     inputs: list[str]
     outputs: list[str]
@@ -44,10 +44,10 @@ class Extraction(Contract):
 
 
 class Request(Contract):
-    task: Literal["memory_retrieval"]
+    task: Literal["memory_retrieval", "memory_classification"]
     description: str = Field(min_length=1)
     language: Literal["zh", "mixed"]
-    top_k: int = Field(ge=1, le=20)
+    top_k: int = Field(default=5, ge=1, le=20)
 
 
 class Candidate(Contract):
@@ -88,7 +88,7 @@ class MetricRule(Contract):
 
 
 class ValidationConfig(Contract):
-    task: Literal["memory_retrieval"] = "memory_retrieval"
+    task: Literal["memory_retrieval", "memory_classification"] = "memory_retrieval"
     algorithms: list[str] = Field(default_factory=lambda: ["tfidf", "bm25"], min_length=1)
     plugin_packages: list[str] = Field(default_factory=list)
     max_candidates: int = Field(default=2, ge=1, le=8)

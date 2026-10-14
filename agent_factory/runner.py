@@ -19,12 +19,23 @@ class Runner:
             raise ValueError("runner must be local or docker")
         self.mode, self.timeout, self.image = mode, timeout, image
 
-    def execute(self, code, cases):
-        errors = inspect_code(code)
+    def execute(self, code, cases, task="memory_retrieval"):
+        errors = inspect_code(code, task=task)
         if errors:
             return {"error": "; ".join(errors), "wall_seconds": 0, "runner": self.mode}
-        # Cases contain input data only. The parent process retains query labels and scoring.
-        if any(set(case) != {"case_id", "query", "memories", "top_k"} for case in cases):
+        # Evaluation labels stay in the parent. Classification permits training labels only.
+        if task == "memory_classification":
+            if any(set(case) != {"case_id", "texts", "training_examples"} for case in cases):
+                raise ValueError("Only texts and training examples may enter the classification worker")
+            for case in cases:
+                if not isinstance(case["texts"], list) or any(not isinstance(text, str) for text in case["texts"]):
+                    raise ValueError("Classification texts must be a list of strings")
+                if not isinstance(case["training_examples"], list) or any(
+                        not isinstance(row, dict) or set(row) != {"text", "label"}
+                        or not isinstance(row["text"], str) or not isinstance(row["label"], str)
+                        for row in case["training_examples"]):
+                    raise ValueError("Training examples must contain text and label only")
+        elif any(set(case) != {"case_id", "query", "memories", "top_k"} for case in cases):
             raise ValueError("Only unlabelled inputs may enter the worker")
         start = time.perf_counter()
         container = "factory-" + uuid.uuid4().hex
@@ -51,7 +62,7 @@ class Runner:
                                                stderr=stderr, cwd=temporary, env=environment,
                                                start_new_session=True)
                     try:
-                        process.communicate(json.dumps({"code": code, "cases": cases},
+                        process.communicate(json.dumps({"code": code, "cases": cases, "task": task},
                                                       ensure_ascii=False).encode(), timeout=self.timeout)
                     except subprocess.TimeoutExpired:
                         os.killpg(process.pid, signal.SIGKILL)

@@ -1,0 +1,94 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "router",
+  "context": {
+    "description": "使用 BM25 为中文与英文技术记忆生成检索算法，返回最相关的前5条记忆",
+    "algorithm_catalog": [
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "task": "memory_retrieval"
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "task": "memory_retrieval"
+      },
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "task": "memory_retrieval"
+      },
+      {
+        "id": "tfidf_logreg",
+        "name": "字符 TF-IDF + Logistic Regression",
+        "task": "memory_classification"
+      },
+      {
+        "id": "tfidf_nb",
+        "name": "字符 TF-IDF + Multinomial Naive Bayes",
+        "task": "memory_classification"
+      }
+    ],
+    "supported_tasks": [
+      "memory_retrieval",
+      "memory_classification"
+    ],
+    "literal_method_mentions": [
+      "bm25"
+    ]
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "enum": [
+          "memory_retrieval",
+          "memory_classification",
+          "unsupported"
+        ],
+        "title": "Task",
+        "type": "string"
+      },
+      "requested_methods": {
+        "items": {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        },
+        "maxItems": 8,
+        "title": "Requested Methods",
+        "type": "array"
+      },
+      "discover_new": {
+        "default": false,
+        "title": "Discover New",
+        "type": "boolean"
+      },
+      "rationale": {
+        "maxLength": 600,
+        "minLength": 1,
+        "title": "Rationale",
+        "type": "string"
+      }
+    },
+    "required": [
+      "task",
+      "rationale"
+    ],
+    "title": "RouteIntent",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "http_status": 500,
+  "http_error_body": "{\"error\":\"an error was encountered while running the model: unexpected EOF\"}",
+  "error": "Server error '500 Internal Server Error' for url 'http://127.0.0.1:11435/api/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+  "duration_seconds": 5.360149584012106
+}

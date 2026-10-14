@@ -1,0 +1,27 @@
+{
+  "task": "memory_classification",
+  "entrypoint": "classify",
+  "interface_version": "1",
+  "runner": "docker",
+  "run_id": "20261014T181132_a4c12d5a",
+  "code_hash": "a61c52cb887f6884826ac4e887f9fbee3d6dbee830a913a153992fe7827d65e4",
+  "code_path": "examples/classification-mock-demo/selected_classification.py",
+  "algorithm_plugin": {
+    "id": "tfidf_logreg",
+    "name": "字符 TF-IDF + Logistic Regression",
+    "version": "1.0.0",
+    "task": "memory_classification",
+    "dependencies": [
+      "scikit-learn"
+    ],
+    "environment": "classification-v1",
+    "guidance": "实现 classify(texts, training_examples)。仅用 training_examples 的 text 和 label 训练字符 1 至 3 元组 TF-IDF 与 LogisticRegression(C=4, max_iter=400, random_state=42, class_weight=\"balanced\")；对 texts 只 transform/predict。返回与输入等长的字符串标签列表，不修改输入。空 texts 返回 []；非空 texts 且空训练集抛 ValueError。空白文本和空词表使用训练集多数标签，票数相同按标签字典序；单标签训练集直接返回该标签。禁止硬编码业务标签、使用评估 gold 或将 texts 用于拟合。",
+    "public_cases": []
+  },
+  "dependencies": [
+    "scikit-learn"
+  ],
+  "validation_report": "examples/classification-mock-demo/report.json",
+  "training_data": "training_examples.json",
+  "training_data_hash": "6449f18b806f7289fa49db163a90c3c117fbd1a05d3232a9404c5d8c5b03e596"
+}

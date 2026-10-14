@@ -1,0 +1,14 @@
+{
+  "requested_mode": "auto",
+  "action": "reuse",
+  "intent": {
+    "task": "memory_classification",
+    "requested_methods": [],
+    "discover_new": false,
+    "rationale": "离线规则：优先已登记的方法；明确的新方法交给发现流程，离线模式不会伪造网络或模型结果。"
+  },
+  "literal_method_mentions": [],
+  "registered_methods": [],
+  "missing_methods": [],
+  "reason": "已有能力可以作为实现依据，无需联网搜索。"
+}

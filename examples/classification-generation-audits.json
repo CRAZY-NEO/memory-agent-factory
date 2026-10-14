@@ -1,0 +1,169 @@
+{
+  "note": "真实失败记录；未修改数据或验收门槛，未用模板替换真实模型响应。完整原始日志保留在忽略的本地state目录。",
+  "failed_runs": [
+    {
+      "run_id": "20261014T181302_27094945",
+      "workspace": "state/transfer-ollama-20261015",
+      "accepted": false,
+      "resolution": "抽取额外候选且伪造引用，被证据检查拒绝；修正为当前材料单候选schema和连续原文选项，并增加一次语义重试。",
+      "calls": [
+        {
+          "file": "001_router.json",
+          "role": "router",
+          "error": null
+        },
+        {
+          "file": "002_extractor.json",
+          "role": "extractor",
+          "error": null
+        }
+      ],
+      "failure": "ValueError: Unverifiable extraction evidence for tfidf_logreg.md"
+    },
+    {
+      "run_id": "20261014T181709_5171dde5",
+      "workspace": "state/transfer-verified-20261015",
+      "accepted": false,
+      "resolution": "完整分类代码输出长注释/截断、错误导入与返回值，达到预算后失败；改用紧凑候选上下文、明确无注释和完整入口、确定性解码。",
+      "calls": [
+        {
+          "file": "001_router.json",
+          "role": "router",
+          "error": null
+        },
+        {
+          "file": "002_extractor.json",
+          "role": "extractor",
+          "error": null
+        },
+        {
+          "file": "003_extractor.json",
+          "role": "extractor",
+          "error": null
+        },
+        {
+          "file": "004_understander.json",
+          "role": "understander",
+          "error": null
+        },
+        {
+          "file": "005_planner.json",
+          "role": "planner",
+          "error": null
+        },
+        {
+          "file": "006_coder.json",
+          "role": "coder",
+          "error": null
+        },
+        {
+          "file": "007_reviewer.json",
+          "role": "reviewer",
+          "error": null
+        },
+        {
+          "file": "008_repairer.json",
+          "role": "repairer",
+          "error": null
+        },
+        {
+          "file": "009_reviewer.json",
+          "role": "reviewer",
+          "error": null
+        },
+        {
+          "file": "010_repairer.json",
+          "role": "repairer",
+          "error": "unterminated triple-quoted string literal (detected at line 16) (<unknown>, line 1)"
+        },
+        {
+          "file": "011_repairer.json",
+          "role": "repairer",
+          "error": "unterminated triple-quoted string literal (detected at line 35) (<unknown>, line 20)"
+        },
+        {
+          "file": "012_coder.json",
+          "role": "coder",
+          "error": null
+        },
+        {
+          "file": "013_reviewer.json",
+          "role": "reviewer",
+          "error": null
+        },
+        {
+          "file": "014_repairer.json",
+          "role": "repairer",
+          "error": null
+        },
+        {
+          "file": "015_reviewer.json",
+          "role": "reviewer",
+          "error": null
+        },
+        {
+          "file": "016_repairer.json",
+          "role": "repairer",
+          "error": null
+        }
+      ],
+      "status": "failed_validation",
+      "attempts": [
+        {
+          "algorithm": "tfidf_logreg",
+          "revision": 0,
+          "passed": false,
+          "errors": [
+            "interface: missing top-level classify function"
+          ]
+        },
+        {
+          "algorithm": "tfidf_logreg",
+          "revision": 1,
+          "passed": false,
+          "errors": [
+            "safety: import outside allowlist"
+          ]
+        },
+        {
+          "algorithm": "tfidf_logreg",
+          "revision": 2,
+          "passed": false,
+          "errors": [
+            "interface: missing top-level classify function",
+            "repairer failed after two attempts: unterminated triple-quoted string literal (detected at line 35) (<unknown>, line 20)"
+          ]
+        },
+        {
+          "algorithm": "tfidf_nb",
+          "revision": 0,
+          "passed": false,
+          "errors": [
+            "evaluation: NameError: name 'allback' is not defined",
+            "contract:repeat: NameError: name 'allback' is not defined",
+            "contract:third: NameError: name 'allback' is not defined"
+          ]
+        },
+        {
+          "algorithm": "tfidf_nb",
+          "revision": 1,
+          "passed": false,
+          "errors": [
+            "evaluation: classify must return a list with one label per input text",
+            "contract:repeat: classify must return a list with one label per input text",
+            "contract:third: classify must return a list with one label per input text"
+          ]
+        },
+        {
+          "algorithm": "tfidf_nb",
+          "revision": 2,
+          "passed": false,
+          "errors": [
+            "safety: import outside allowlist"
+          ]
+        }
+      ]
+    }
+  ],
+  "accepted_run": "20261014T182650_e4852f2e"
+}

@@ -1,0 +1,89 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "router",
+  "context": {
+    "description": "为个人记忆生成文本分类算法，根据带标签训练样本为新记忆预测一个类别，比较两个候选并验证修复",
+    "algorithm_catalog": [
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "task": "memory_retrieval"
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "task": "memory_retrieval"
+      },
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "task": "memory_retrieval"
+      },
+      {
+        "id": "tfidf_logreg",
+        "name": "字符 TF-IDF + Logistic Regression",
+        "task": "memory_classification"
+      },
+      {
+        "id": "tfidf_nb",
+        "name": "字符 TF-IDF + Multinomial Naive Bayes",
+        "task": "memory_classification"
+      }
+    ],
+    "supported_tasks": [
+      "memory_retrieval",
+      "memory_classification"
+    ],
+    "literal_method_mentions": []
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "enum": [
+          "memory_retrieval",
+          "memory_classification",
+          "unsupported"
+        ],
+        "title": "Task",
+        "type": "string"
+      },
+      "requested_methods": {
+        "items": {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        },
+        "maxItems": 8,
+        "title": "Requested Methods",
+        "type": "array"
+      },
+      "discover_new": {
+        "default": false,
+        "title": "Discover New",
+        "type": "boolean"
+      },
+      "rationale": {
+        "maxLength": 600,
+        "minLength": 1,
+        "title": "Rationale",
+        "type": "string"
+      }
+    },
+    "required": [
+      "task",
+      "rationale"
+    ],
+    "title": "RouteIntent",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "task": "memory_classification",
+    "requested_methods": [],
+    "discover_new": false,
+    "rationale": "离线规则：优先已登记的方法；明确的新方法交给发现流程，离线模式不会伪造网络或模型结果。"
+  },
+  "duration_seconds": 7.66250304877758e-05
+}

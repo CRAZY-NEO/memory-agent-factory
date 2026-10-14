@@ -1,0 +1,121 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "reviewer",
+  "context": {
+    "request": {
+      "task": "memory_classification",
+      "description": "为个人记忆生成文本分类算法，根据带标签训练样本为新记忆预测一个类别，比较两个候选并验证修复",
+      "language": "mixed",
+      "top_k": 5
+    },
+    "candidate": {
+      "algorithm": "tfidf_nb",
+      "capability_id": "char_tfidf_nb_1dfb4005fdfb",
+      "rationale": "来自材料的适用条件：适用：小型封闭类别的中英文短文本与个人记忆分类。"
+    },
+    "algorithm_plugin": {
+      "id": "tfidf_nb",
+      "name": "字符 TF-IDF + Multinomial Naive Bayes",
+      "version": "1.0.0",
+      "task": "memory_classification",
+      "dependencies": [
+        "scikit-learn"
+      ],
+      "environment": "classification-v1",
+      "guidance": "实现 classify(texts, training_examples)。仅用 training_examples 的 text 和 label 训练字符 1 至 3 元组 TF-IDF 与 MultinomialNB(alpha=0.2)；对 texts 只 transform/predict。返回与输入等长的字符串标签列表，不修改输入。空 texts 返回 []；非空 texts 且空训练集抛 ValueError。空白文本和空词表使用训练集多数标签，票数相同按标签字典序；单标签训练集直接返回该标签。禁止硬编码业务标签、使用评估 gold 或将 texts 用于拟合。",
+      "public_cases": []
+    },
+    "capabilities": [
+      {
+        "node_id": "char_tfidf_nb_1dfb4005fdfb",
+        "algorithm": "tfidf_nb",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "小型封闭类别的中英文短文本与个人记忆分类。"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "evidence": "适用：小型封闭类别的中英文短文本与个人记忆分类。",
+        "id": "char_tfidf_nb_1dfb4005fdfb",
+        "inputs": [
+          "texts",
+          "training_examples"
+        ],
+        "limitations": [
+          "局限：条件独立假设和词面特征可能混淆同义改写及相近类别。"
+        ],
+        "metrics": [
+          "accuracy",
+          "classification_p95_ms",
+          "macro_f1"
+        ],
+        "name": "中文技术记忆 tfidf_nb",
+        "outputs": [
+          "label"
+        ],
+        "source_id": "source_0d8aea45924812838deb9bbb811d8a3e8457cc78e92403caf5dabac8153787cd",
+        "task": "memory_classification"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_0d8aea45924812838deb9bbb811d8a3e8457cc78e92403caf5dabac8153787cd",
+        "text": "# 字符 TF-IDF + Multinomial Naive Bayes 记忆分类\n\n算法：tfidf_nb\n适用：小型封闭类别的中英文短文本与个人记忆分类。\n局限：条件独立假设和词面特征可能混淆同义改写及相近类别。\n\n任务 `memory_classification`，环境 `classification-v1`。\n接口 `classify(texts, training_examples) -> list[str]` 返回有序且等长的训练标签列表。\n训练记录只含 `text` 和 `label`。字符 1–3 元组 TF-IDF 在训练文本上拟合，\nMultinomialNB(alpha=0.2) 学习标签；待预测文本仅做 transform/predict。\n\n该方案适合小型封闭类别的中英文记忆归档，训练快速、依赖简单；条件独立假设和词面特征可能混淆同义改写和相近类别。\n禁止硬编码示例类别、读取评估标签或在测试文本上拟合特征。空 texts 返回 []，空训练且非空 texts 抛 ValueError。\n单标签训练返回该标签，空白文本和空词表使用训练多数标签，平票按标签字典序。\n统一验证 Accuracy、Macro-F1、整批 P95（含训练）、接口、输入不变性和确定性。\n依赖 scikit-learn，版本 1.0.0；历史指标由工厂验证后写入知识库。\n"
+      }
+    ],
+    "validated_lessons": [],
+    "reference_example": {
+      "algorithm": "tfidf_nb",
+      "source": "plugin:tfidf_nb@1.0.0",
+      "sha256": "74a4982f9561d895e491efc23cad001d65402c22081ce80414bb004b65e08058",
+      "code": "\"\"\"Character TF-IDF and multinomial Naive Bayes for multilingual memory classification.\"\"\"\n\nfrom collections import Counter\n\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.naive_bayes import MultinomialNB\n\n\ndef classify(texts, training_examples):\n    \"\"\"Fit only training examples; empty and single-class training have defined behavior.\"\"\"\n    if not texts:\n        return []\n    if not training_examples:\n        raise ValueError(\"training_examples must not be empty\")\n    labels = [row[\"label\"] for row in training_examples]\n    counts = Counter(labels)\n    fallback = sorted(counts, key=lambda label: (-counts[label], label))[0]\n    if len(counts) == 1:\n        return [fallback for text in texts]\n    vectorizer = TfidfVectorizer(analyzer=\"char\", ngram_range=(1, 3), sublinear_tf=True)\n    try:\n        matrix = vectorizer.fit_transform([row[\"text\"] for row in training_examples])\n    except ValueError:\n        return [fallback for text in texts]\n    model = MultinomialNB(alpha=0.2)\n    model.fit(matrix, labels)\n    predictions = model.predict(vectorizer.transform(texts))\n    return [str(label) if text.strip() else fallback for text, label in zip(texts, predictions)]\n"
+    },
+    "code": "\"\"\"Character TF-IDF and multinomial Naive Bayes for multilingual memory classification.\"\"\"\n\nfrom collections import Counter\n\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.naive_bayes import MultinomialNB\n\n\ndef classify(texts, training_examples):\n    \"\"\"Fit only training examples; empty and single-class training have defined behavior.\"\"\"\n    if not texts:\n        return []\n    if not training_examples:\n        raise ValueError(\"training_examples must not be empty\")\n    labels = [row[\"label\"] for row in training_examples]\n    counts = Counter(labels)\n    fallback = sorted(counts, key=lambda label: (-counts[label], label))[0]\n    if len(counts) == 1:\n        return [fallback for text in texts]\n    vectorizer = TfidfVectorizer(analyzer=\"char\", ngram_range=(1, 3), sublinear_tf=True)\n    try:\n        matrix = vectorizer.fit_transform([row[\"text\"] for row in training_examples])\n    except ValueError:\n        return [fallback for text in texts]\n    model = MultinomialNB(alpha=0.2)\n    model.fit(matrix, labels)\n    predictions = model.predict(vectorizer.transform(texts))\n    return [str(label) if text.strip() else fallback for text, label in zip(texts, predictions)]\n\n\ndef classify(texts, training_examples):\n    return []\n",
+    "validation": {
+      "passed": false,
+      "split": "validation",
+      "errors": [
+        "evaluation: classify must return a list with one label per input text",
+        "classify must return a list with one label per input text",
+        "nonempty texts with no training must raise ValueError without mutation"
+      ],
+      "diagnostics": [],
+      "metrics": {}
+    },
+    "trusted_findings": []
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "repair_instructions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 6,
+        "minItems": 1,
+        "title": "Repair Instructions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "summary",
+      "repair_instructions"
+    ],
+    "title": "Diagnosis",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "summary": "验证器发现：evaluation: classify must return a list with one label per input text; classify must return a list with one label per input text; nonempty texts with no training must raise ValueError without mutation",
+    "repair_instructions": [
+      "恢复分类输出长度和合法标签，保留训练集拟合、空输入和确定性处理。"
+    ]
+  },
+  "duration_seconds": 2.1958956494927406e-05
+}

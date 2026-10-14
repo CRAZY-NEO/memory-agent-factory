@@ -191,9 +191,15 @@ def ingest_sources(store, client, source_dir, output, registry=None, algorithm_i
     for path in sources.values():
         text = path.read_text(encoding="utf-8")
         source_id = "source_" + digest(text)
+        current_plugin = registry.algorithms.get(path.stem)
+        task_context = {'task': current_plugin.task} if current_plugin else {}
         result = client.ask("extractor", {"source_id": source_id, "text": text,
-                                         "registered_algorithms": catalog,
-                                         "registered_metrics": sorted(registry.metrics)}, Extraction)
+                                         **task_context,
+                                         "registered_algorithms": [current_plugin.metadata()] if current_plugin else catalog,
+                                         "exact_quote_options": [line for line in text.splitlines()
+                                                                 if 10 <= len(line) <= 300][:12],
+                                         "registered_metrics": sorted(name for name, metric in registry.metrics.items()
+                                             if not current_plugin or metric.task == current_plugin.task)}, Extraction)
         for capability in result.capabilities:
             if capability.source_id != source_id or capability.evidence not in text:
                 raise ValueError("Unverifiable extraction evidence for " + path.name)

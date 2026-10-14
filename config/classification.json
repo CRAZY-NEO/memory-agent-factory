@@ -1,0 +1,30 @@
+{
+  "task": "memory_classification",
+  "algorithms": [
+    "tfidf_logreg",
+    "tfidf_nb"
+  ],
+  "plugin_packages": [],
+  "max_candidates": 2,
+  "compare_all_algorithms": true,
+  "metrics": {
+    "accuracy": {
+      "min": 0.75,
+      "max": null
+    },
+    "macro_f1": {
+      "min": 0.7,
+      "max": null
+    },
+    "classification_p95_ms": {
+      "min": null,
+      "max": 2000.0
+    }
+  },
+  "selection_order": [
+    "macro_f1",
+    "accuracy"
+  ],
+  "timeout_seconds": 30.0,
+  "max_repairs": 2
+}

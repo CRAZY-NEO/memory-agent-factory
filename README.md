@@ -1,8 +1,8 @@
-# 面向软件研发技术记忆检索的算法能力工厂
+# 面向个人记忆检索与分类的算法能力工厂
 
-使用 Agent 把自然语言算法需求转换为可运行、经过验证的记忆检索插件。行业场景为软件研发与运维知识管理：从研发人员的故障记录、工具使用经验和项目决策中检索相关记忆。
+使用 Agent 把自然语言算法需求转换为可运行、经过验证的记忆算法插件。软件研发与个人知识管理场景包含两项任务：从技术笔记检索相关记忆，以及把个人记忆分成技术知识、项目记录、个人偏好与待办提醒。
 
-工厂输入是“生成一个中文技术记忆检索算法”，产物为 Python 代码、依赖说明、验证报告与版本历史。生成的插件输入查询和记忆列表，输出相关记忆的 ID 与得分，可用于后续个人记忆系统。
+工厂输入是自然语言算法需求，产物为 Python 代码、依赖说明、验证报告、版本历史与可独立运行的 ZIP。检索产物提供 `retrieve(query, memories, top_k=5)`；分类产物提供 `classify(texts, training_examples)`。两项任务复用同一套 LangGraph 编排、知识库、候选比较与有限修复。
 
 **当前可运行模式**：离线 mock/规则模板演示，以及远端 Ollama 原生 API 接入。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。已通过本机 11435 转发接口调用 `qwen3.5:2b`，在 v2 评估集上完成真实模型抽取、三候选生成、Docker 验证及知识回写，见 [三候选真实模型报告](examples/ollama-v2-demo/report.md)；历史运行保留真实代码修复记录。工厂和算法执行容器运行在 Mac；远端硬件由用户管理，SSH 隧道可通过本地启动器的 --ssh-target 一起启动。
 
@@ -54,6 +54,26 @@ scripts/run_tests.sh -q
 新机器优先使用准确版本的 `requirements.lock.txt`；`requirements.txt` 与 pyproject 为兼容范围。
 该锁文件是在 macOS ARM64 / Python 3.12 上生成的，其他平台应验证对应二进制 wheel 是否可安装。
 
+### 记忆分类与 ZIP 导出
+
+已有环境升级后先重建执行镜像（旧镜像不认识分类接口）：
+
+```bash
+docker build -f Dockerfile.runner -t agent-factory-runner:0.1 .
+python -m agent_factory run --runner docker --description '为个人记忆生成文本分类算法，根据训练样本为新记忆预测类别，并比较两个候选'
+# 换成上一步返回的实际 run_id
+python -m agent_factory export --run-id YOUR_RUN_ID
+```
+
+网页点击“填入记忆分类示例”并提交，成功后点击“一键导出 ZIP 部署包”。包内有选定代码、运行入口、依赖、示例、Dockerfile 与验证摘要；分类包还包含冻结的训练文本。解压、安装依赖后即可预测，不需要 Ollama、Jetson 或整个工厂项目。完整说明见 [分类、跨任务复用与导出](docs/classification-and-export.md)。
+
+| 任务 | 候选 | 配置 | 质量指标 |
+| --- | --- | --- | --- |
+| 技术记忆检索 | TF-IDF、BM25、Jaccard，以及已登记来源算法 | [config.json](config.json) | Recall@k、MRR@k、Precision@k |
+| 文本记忆分类 | 字符 TF-IDF + Logistic Regression / MultinomialNB | [分类配置](config/classification.json) | Accuracy、Macro-F1 |
+
+分类使用 [64/24/24 条训练/验证/测试数据](data/classification/README.md)，包含中英文、同义改写和相近负例。生成代码只能使用训练标签；模型调用不接收最终测试文本或标签。GitHub 发现目前仍只支持检索，新任务不能自动继承检索验证器。
+
 ## 2. 系统架构与技术选择
 
 | 技术 | 用途与理由 |
@@ -64,7 +84,7 @@ scripts/run_tests.sh -q
 | Pydantic | 校验需求、能力抽取、候选方案、代码产物、诊断和插件输出 |
 | SQLite | 无额外数据库服务，保存不可覆盖的能力与验证版本 |
 | NetworkX | 图遍历、能力到历史经验的关系检索、JSON/GraphML 导出 |
-| scikit-learn | 可复现 TF-IDF 基线与能力知识检索 |
+| scikit-learn | TF-IDF、逻辑回归、朴素贝叶斯基线与能力知识检索 |
 | Python 标准库 BM25 / Jaccard | 无外部模型依赖的词面检索候选，便于复刻与解释 |
 | 插件注册表 | 自动发现可信算法/指标模块，配置预检；统一生成、验证、比较和报告 |
 | Docker | 隔离真实模型生成代码，禁网、只读、非 root 与资源限制 |
@@ -81,7 +101,7 @@ scripts/run_tests.sh -q
                                                    ↓
                      候选选择 → 冻结 → 最终测试 → 报告/经验回写
                                                    ↓
-                                     可复用的 retrieve 插件
+                                     可复用的 retrieve / classify 插件与 ZIP
 ```
 
 模块边界和角色交接详见 [架构说明](docs/architecture.md)。
@@ -98,7 +118,7 @@ scripts/run_tests.sh -q
 .venv/bin/python -m agent_factory plugins
 ```
 
-Web、CLI `run` 与工厂 API 默认自动判断：已有能力优先复用，指定未登记方法时自动发现；无须勾选 GitHub。混合需求先发现登记，再比较请求的方法，保留两份报告。高级选项仍可限制执行路径。现有服务需重启，详见 [自动路由](docs/automatic-routing.md)。新路径的生成上下文不包含内置 BM25 模板，模型生成来源方法的评分函数，框架提供算法无关的分词、统计和接口；最终组合代码完整接受验证。来源源码只被读取，不直接导入或安装。完整步骤、登记目录和边界见 [GitHub 算法发现指南](docs/github-discovery.md)。这里增加的是工厂尚未登记的开源方法；当前仅支持 `memory_retrieval`，其他任务仍需要对应验证器。
+Web、CLI `run` 与工厂 API 默认自动判断：已有能力优先复用，指定未登记方法时自动发现；无须勾选 GitHub。混合需求先发现登记，再比较请求的方法，保留两份报告。高级选项仍可限制执行路径。现有服务需重启，详见 [自动路由](docs/automatic-routing.md)。新路径的生成上下文不包含内置 BM25 模板，模型生成来源方法的评分函数，框架提供算法无关的分词、统计和接口；最终组合代码完整接受验证。来源源码只被读取，不直接导入或安装。完整步骤、登记目录和边界见 [GitHub 算法发现指南](docs/github-discovery.md)。这里增加的是工厂尚未登记的开源方法；这条 GitHub 发现路径仅支持 `memory_retrieval`；分类已有独立标准工作流适配，尚未接入来源发现。
 
 ## 3. 能力知识图谱与抽取结果
 
@@ -191,7 +211,7 @@ FACTORY_DEMO_WORKSPACE=state/ollama-v2-new bash scripts/run_ollama_demo.sh
 ```
 
 使用 Ollama 原生 `/api/chat`，`stream=false`，`think=false`，`format` 为当前角色 JSON schema；schema 同时进入角色提示词。默认上下文 8192、输出上限 4096 token，单次 HTTP 等待上限 600 秒，最多尝试两次。原始响应、结束原因、token 用量和耗时均记录在本次 `llm/` 目录。
-普通生成/修复角色使用 4096 输出 token，来源评分函数及其他角色使用 1024；已能静态适配的纯算术源码使用温度 0 的短包装生成角色，避免重新推导公式；诊断最多六条建议。`run` 的生成与修复上下文包含原始算法材料及对应基线示例，模型返回完整复刻代码，系统不以模板替换无效响应。`discover` 不传入内置算法模板，模型生成评分函数后组合通用接口。Qwen3.5 的代码角色采用官方非思考采样参数以减少重复循环，其他结构化角色保持温度 0；实际参数记录在调用 JSON 中，见 [发现与生成说明](docs/github-discovery.md)。
+检索完整生成/修复角色使用 4096 输出 token，分类完整生成/修复使用 2048 且温度 0；来源评分函数及其他角色使用 1024；已能静态适配的纯算术源码使用温度 0 的短包装生成角色，避免重新推导公式；诊断最多六条建议。`run` 的生成与修复上下文包含原始算法材料及对应基线示例，模型返回完整复刻代码，系统不以模板替换无效响应。`discover` 不传入内置算法模板，模型生成评分函数后组合通用接口。Qwen3.5 的检索完整代码角色采用官方非思考采样参数以减少重复循环；分类使用精简上下文与确定性参考复刻，其他结构化角色保持温度 0；实际参数记录在调用 JSON 中，见 [发现与生成说明](docs/github-discovery.md)。
 CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变量。
 每次响应由 Pydantic 验证，无效 JSON、服务错误最多重试一次并保留错误。
 某次调用失败不会自动切换 mock 并宣称 LLM 成功。
@@ -206,7 +226,7 @@ CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变�
 [示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
 
 报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
-当前 140 项自动测试通过，覆盖验证、修复、知识、接口、仓库抽取与自动路由；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
+当前 218 项自动测试通过，覆盖两类任务、验证、修复、知识、接口、仓库抽取、自动路由和部署包；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
 真实模型例子见 [Ollama 完整报告](examples/ollama-demo/report.md)、[候选规划](examples/ollama-demo/plan.json)、[BM25 首版与修订](examples/ollama-demo/bm25/)、[模型调用记录](examples/ollama-demo/llm/) 和 [最终插件](examples/ollama-demo/selected_retrieval.py)。2026-10-12 的样例调用八次模型；TF-IDF 首版通过，BM25 首版因缺少 `re` 导入失败，模型根据真实错误修复后通过。选定 BM25 修订版的最终测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；这些数值只描述 24 条模拟记忆与 10 条最终测试查询。
 所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
 显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
@@ -248,6 +268,21 @@ GitHub 自动检查见 [CI 说明](docs/ci.md)：无需 Ollama 或密钥，检�
 
 来源依旧为 `xhluca/bm25s` 的固定提交，核与参数由静态源码适配保留，模型生成调用包装。先前验收暴露的方法遗漏、参数遗漏和完整接口重写错误都保留为[失败/撤销审计](examples/automatic-routing-audits.json)，没有将它们当成成功案例。上述登记位于独立测试 workspace，默认项目配置仍为三算法基线。
 
+### 检索 → 记忆分类的真实模型验收
+
+2026-10-15（UTC+8），同一工作空间使用 `qwen3.5:2b` + Docker 完成两类任务，共 13 次实际 API 尝试（其中检索路由遇到一次服务 EOF 后成功重试）：
+
+| 任务 | 结果 | 冻结后的最终测试 |
+| --- | --- | --- |
+| BM25 技术记忆检索 | r0 通过 | Recall@5 0.9667、MRR@5 0.9278、Precision@5 0.2467 |
+| 个人记忆文本分类 | 两候选 r0 均通过；选定 tfidf_logreg | Accuracy 0.9167、Macro-F1 0.9188，24 条测试记忆 |
+
+证据：[检索报告](examples/transfer-retrieval-demo/report.md)、[分类报告](examples/classification-demo/report.md)、[分类代码](examples/classification-demo/selected_classification.py)、[真实模型调用](examples/classification-demo/llm/)、[双任务与独立 ZIP 运行记录](examples/transfer_validation.json)。分类的 7 次调用包括路由、两次抽取、理解、规划和两次代码生成。数据与门槛始终保持固定。
+
+可直接下载示例 [分类 ZIP](examples/classification-demo/deployment.zip) 或 [检索 ZIP](examples/transfer-retrieval-demo/deployment.zip)。两个真实产物解压后均在禁网只读 Docker 内独立运行，分类额外验证了四条新的中文记忆。网页另有 [实际 Chrome + mock/Docker 验收](examples/classification_web_validation.json)；[离线故障修复示例](examples/classification-mock-demo/report.md)显示故障被检测并修复，不将 mock 称为真实模型。
+
+改进前的抽取和代码生成失败见 [审计记录](examples/classification-generation-audits.json)。修正限制了单份材料的抽取范围、原文引用和分类提示体积，未用模板替换真实响应，也未根据失败修改测试标注或降低门槛。
+
 ## 8. 用于未来个人记忆系统
 
 生成的算法不需要在查询时再调用 LLM。应用整理好记忆后可直接调用经过检查的生成文件：
@@ -277,8 +312,8 @@ hits = retriever.retrieve("MySQL 连接池耗尽", memories, top_k=5)
 - 区分修复建议与事实：图谱中只有修复版本实际通过才记录 validated_fix；失败建议保持未验证标记。
 - 保持跨进程稳定：BM25 查询词排序后再累加，避免无序集合造成浮点差异；计时结果不承诺逐次完全一致。
 - 防止指标泄漏：候选只用验证集；最终测试在版本冻结后执行。多次人工查看并用于优化后，应重新建立最终测试集。
-- 一周实现范围：CLI、鉴权 API 与 Web 界面、持久任务队列、三个注册候选、可配置指标与排序、有限修复、图检索、离线图谱、版本/经验回写及分组失败分析；暂未实现工作流中断恢复、MCTS、任意任务验证。
-- 后续扩展：向量与混合检索、持久化索引、多任务验证配置、更严格隔离服务、跨文件语义分析、个人事实图谱。
+- 一周实现范围：CLI、鉴权 API 与 Web 界面、持久任务队列、检索/分类候选、按任务配置的指标与排序、有限修复、图检索、离线图谱、版本/经验回写及分组失败分析；暂未实现工作流中断恢复、MCTS、任意任务验证。
+- 后续扩展：向量与混合检索、持久化索引、表格或时序任务验证、更严格隔离服务、跨文件语义分析、个人事实图谱。
 
 分步学习和扩展路线见 [实现指南](docs/implementation-guide.md)。
 

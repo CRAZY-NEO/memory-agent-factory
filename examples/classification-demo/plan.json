@@ -1,0 +1,15 @@
+{
+  "candidates": [
+    {
+      "algorithm": "tfidf_logreg",
+      "capability_id": "tfidf_logreg_5b5ab4b9f7df",
+      "rationale": "适用于文本较短、类别封闭且有少量代表性标注数据的场景，通过字符 TF-IDF 与逻辑回归结合，能有效处理中文及缩写，避免同义词混淆。"
+    },
+    {
+      "algorithm": "tfidf_nb",
+      "capability_id": "tfidf_nb_360a705a9d5c",
+      "rationale": "适合小型封闭类别的中英文短文本，利用条件独立假设和词面特征进行快速分类，但需注意同义改写可能带来的混淆。"
+    }
+  ],
+  "design_explanation": "根据算法目录与检索结果，为满足 memory_classification 任务且预算充足，同时覆盖所有 required_algorithms（tfidf_logreg 和 tfidf_nb），生成两个候选方案。tfidf_logreg 侧重特征稳定性，tfidf_nb 侧重计算效率，两者均基于 scikit-learn 实现，符合分类-v1 接口规范。"
+}

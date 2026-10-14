@@ -1,0 +1,191 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "extractor",
+  "context": {
+    "source_id": "source_0d8aea45924812838deb9bbb811d8a3e8457cc78e92403caf5dabac8153787cd",
+    "text": "# 字符 TF-IDF + Multinomial Naive Bayes 记忆分类\n\n算法：tfidf_nb\n适用：小型封闭类别的中英文短文本与个人记忆分类。\n局限：条件独立假设和词面特征可能混淆同义改写及相近类别。\n\n任务 `memory_classification`，环境 `classification-v1`。\n接口 `classify(texts, training_examples) -> list[str]` 返回有序且等长的训练标签列表。\n训练记录只含 `text` 和 `label`。字符 1–3 元组 TF-IDF 在训练文本上拟合，\nMultinomialNB(alpha=0.2) 学习标签；待预测文本仅做 transform/predict。\n\n该方案适合小型封闭类别的中英文记忆归档，训练快速、依赖简单；条件独立假设和词面特征可能混淆同义改写和相近类别。\n禁止硬编码示例类别、读取评估标签或在测试文本上拟合特征。空 texts 返回 []，空训练且非空 texts 抛 ValueError。\n单标签训练返回该标签，空白文本和空词表使用训练多数标签，平票按标签字典序。\n统一验证 Accuracy、Macro-F1、整批 P95（含训练）、接口、输入不变性和确定性。\n依赖 scikit-learn，版本 1.0.0；历史指标由工厂验证后写入知识库。\n",
+    "task": "memory_classification",
+    "registered_algorithms": [
+      {
+        "id": "tfidf_logreg",
+        "name": "字符 TF-IDF + Logistic Regression",
+        "version": "1.0.0",
+        "task": "memory_classification",
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "environment": "classification-v1",
+        "guidance": "实现 classify(texts, training_examples)。仅用 training_examples 的 text 和 label 训练字符 1 至 3 元组 TF-IDF 与 LogisticRegression(C=4, max_iter=400, random_state=42, class_weight=\"balanced\")；对 texts 只 transform/predict。返回与输入等长的字符串标签列表，不修改输入。空 texts 返回 []；非空 texts 且空训练集抛 ValueError。空白文本和空词表使用训练集多数标签，票数相同按标签字典序；单标签训练集直接返回该标签。禁止硬编码业务标签、使用评估 gold 或将 texts 用于拟合。",
+        "public_cases": []
+      },
+      {
+        "id": "tfidf_nb",
+        "name": "字符 TF-IDF + Multinomial Naive Bayes",
+        "version": "1.0.0",
+        "task": "memory_classification",
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "environment": "classification-v1",
+        "guidance": "实现 classify(texts, training_examples)。仅用 training_examples 的 text 和 label 训练字符 1 至 3 元组 TF-IDF 与 MultinomialNB(alpha=0.2)；对 texts 只 transform/predict。返回与输入等长的字符串标签列表，不修改输入。空 texts 返回 []；非空 texts 且空训练集抛 ValueError。空白文本和空词表使用训练集多数标签，票数相同按标签字典序；单标签训练集直接返回该标签。禁止硬编码业务标签、使用评估 gold 或将 texts 用于拟合。",
+        "public_cases": []
+      }
+    ],
+    "registered_metrics": [
+      "accuracy",
+      "classification_p95_ms",
+      "macro_f1"
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "Capability": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "pattern": "^[a-z][a-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "task": {
+            "type": "string",
+            "const": "memory_classification"
+          },
+          "algorithm": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Algorithm",
+            "type": "string",
+            "enum": [
+              "tfidf_logreg",
+              "tfidf_nb"
+            ]
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "applicable_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Applicable Conditions",
+            "type": "array"
+          },
+          "metrics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "dependencies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "evidence": {
+            "minLength": 10,
+            "title": "Evidence",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "task",
+          "algorithm",
+          "inputs",
+          "outputs",
+          "applicable_conditions",
+          "metrics",
+          "dependencies",
+          "limitations",
+          "source_id",
+          "evidence"
+        ],
+        "title": "Capability",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "capabilities": {
+        "items": {
+          "$ref": "#/$defs/Capability"
+        },
+        "maxItems": 4,
+        "minItems": 1,
+        "title": "Capabilities",
+        "type": "array"
+      }
+    },
+    "required": [
+      "capabilities"
+    ],
+    "title": "Extraction",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "capabilities": [
+      {
+        "id": "char_tfidf_nb",
+        "name": "中文技术记忆 tfidf_nb",
+        "task": "memory_classification",
+        "algorithm": "tfidf_nb",
+        "inputs": [
+          "texts",
+          "training_examples"
+        ],
+        "outputs": [
+          "label"
+        ],
+        "applicable_conditions": [
+          "小型封闭类别的中英文短文本与个人记忆分类。"
+        ],
+        "metrics": [
+          "accuracy",
+          "classification_p95_ms",
+          "macro_f1"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "limitations": [
+          "局限：条件独立假设和词面特征可能混淆同义改写及相近类别。"
+        ],
+        "source_id": "source_0d8aea45924812838deb9bbb811d8a3e8457cc78e92403caf5dabac8153787cd",
+        "evidence": "适用：小型封闭类别的中英文短文本与个人记忆分类。"
+      }
+    ]
+  },
+  "duration_seconds": 0.0012202078942209482
+}

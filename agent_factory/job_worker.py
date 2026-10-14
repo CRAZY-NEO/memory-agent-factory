@@ -56,7 +56,8 @@ def execute_job(workspace, job, provider, model, base_url, runner, store=None):
         if payload.get("run_id"):
             manifest = workspace / "runs" / payload["run_id"] / "plugin.json"
         else:
-            manifests = sorted((workspace / "runs").glob("*/plugin.json"))
+            manifests = [path for path in sorted((workspace / "runs").glob("*/plugin.json"))
+                         if json.loads(path.read_text(encoding='utf-8')).get('task') == 'memory_retrieval']
             if not manifests:
                 raise ValueError("No approved retrieval plugin; submit a factory job first")
             manifest = manifests[-1]

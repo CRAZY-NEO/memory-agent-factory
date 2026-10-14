@@ -1,0 +1,82 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "coder",
+  "context": {
+    "request": {
+      "task": "memory_classification",
+      "description": "为个人记忆生成文本分类算法，根据带标签训练样本为新记忆预测一个类别，比较两个候选并验证修复",
+      "language": "zh",
+      "top_k": 5
+    },
+    "candidate": {
+      "algorithm": "tfidf_logreg",
+      "capability_id": "tfidf_logreg_5b5ab4b9f7df",
+      "rationale": "适用于文本较短、类别封闭且有少量代表性标注数据的场景，通过字符 TF-IDF 与逻辑回归结合，能有效处理中文及缩写，避免同义词混淆。"
+    },
+    "algorithm_plugin": {
+      "id": "tfidf_logreg",
+      "name": "字符 TF-IDF + Logistic Regression",
+      "version": "1.0.0",
+      "task": "memory_classification",
+      "dependencies": [
+        "scikit-learn"
+      ],
+      "environment": "classification-v1",
+      "guidance": "实现 classify(texts, training_examples)。仅用 training_examples 的 text 和 label 训练字符 1 至 3 元组 TF-IDF 与 LogisticRegression(C=4, max_iter=400, random_state=42, class_weight=\"balanced\")；对 texts 只 transform/predict。返回与输入等长的字符串标签列表，不修改输入。空 texts 返回 []；非空 texts 且空训练集抛 ValueError。空白文本和空词表使用训练集多数标签，票数相同按标签字典序；单标签训练集直接返回该标签。禁止硬编码业务标签、使用评估 gold 或将 texts 用于拟合。",
+      "public_cases": []
+    },
+    "reference_example": {
+      "algorithm": "tfidf_logreg",
+      "source": "plugin:tfidf_logreg@1.0.0",
+      "sha256": "a61c52cb887f6884826ac4e887f9fbee3d6dbee830a913a153992fe7827d65e4",
+      "code": "\"\"\"Character TF-IDF and logistic regression for multilingual memory classification.\"\"\"\n\nfrom collections import Counter\n\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\n\n\ndef classify(texts, training_examples):\n    \"\"\"Fit only training examples; return one training label for each input in order.\"\"\"\n    if not texts:\n        return []\n    if not training_examples:\n        raise ValueError(\"training_examples must not be empty\")\n    labels = [row[\"label\"] for row in training_examples]\n    counts = Counter(labels)\n    fallback = sorted(counts, key=lambda label: (-counts[label], label))[0]\n    if len(counts) == 1:\n        return [fallback for text in texts]\n    vectorizer = TfidfVectorizer(analyzer=\"char\", ngram_range=(1, 3), sublinear_tf=True)\n    try:\n        matrix = vectorizer.fit_transform([row[\"text\"] for row in training_examples])\n    except ValueError:\n        return [fallback for text in texts]\n    model = LogisticRegression(C=4.0, max_iter=400, random_state=42, class_weight=\"balanced\")\n    model.fit(matrix, labels)\n    predictions = model.predict(vectorizer.transform(texts))\n    return [str(label) if text.strip() else fallback for text, label in zip(texts, predictions)]\n"
+    },
+    "repair_strategy": "reproduce_reference"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "maxLength": 40000,
+        "minLength": 30,
+        "title": "Code",
+        "type": "string"
+      },
+      "explanation": {
+        "title": "Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "explanation"
+    ],
+    "title": "CodeArtifact",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 2048,
+    "top_p": 1.0,
+    "top_k": 20,
+    "min_p": 0.0,
+    "repeat_penalty": 1.0,
+    "seed": 42
+  },
+  "raw_content": "{\"code\": \"from collections import Counter\\nfrom sklearn.feature_extraction.text import TfidfVectorizer\\nfrom sklearn.linear_model import LogisticRegression\\n\\ndef classify(texts, training_examples):\\n    if not texts:\\n        return []\\n    if not training_examples:\\n        raise ValueError(\\\"training_examples must not be empty\\\")\\n    labels = [row[\\\"label\\\"] for row in training_examples]\\n    counts = Counter(labels)\\n    fallback = sorted(counts, key=lambda label: (-counts[label], label))[0]\\n    if len(counts) == 1:\\n        return [fallback for text in texts]\\n    vectorizer = TfidfVectorizer(analyzer=\\\"char\\\", ngram_range=(1, 3), sublinear_tf=True)\\n    try:\\n        matrix = vectorizer.fit_transform([row[\\\"text\\\"] for row in training_examples])\\n    except ValueError:\\n        return [fallback for text in texts]\\n    model = LogisticRegression(C=4.0, max_iter=400, random_state=42, class_weight=\\\"balanced\\\")\\n    model.fit(matrix, labels)\\n    predictions = model.predict(vectorizer.transform(texts))\\n    return [str(label) if text.strip() else fallback for text, label in zip(texts, predictions)]\", \"explanation\": \"Reproduces the character TF-IDF + Logistic Regression classifier. Fits only on training examples, handles whitespace via fallback label, uses char ngrams, and returns predictions in original order without mutating inputs.\"}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 1211,
+    "eval_count": 322,
+    "total_duration": 13174572868
+  },
+  "response": {
+    "code": "from collections import Counter\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\n\ndef classify(texts, training_examples):\n    if not texts:\n        return []\n    if not training_examples:\n        raise ValueError(\"training_examples must not be empty\")\n    labels = [row[\"label\"] for row in training_examples]\n    counts = Counter(labels)\n    fallback = sorted(counts, key=lambda label: (-counts[label], label))[0]\n    if len(counts) == 1:\n        return [fallback for text in texts]\n    vectorizer = TfidfVectorizer(analyzer=\"char\", ngram_range=(1, 3), sublinear_tf=True)\n    try:\n        matrix = vectorizer.fit_transform([row[\"text\"] for row in training_examples])\n    except ValueError:\n        return [fallback for text in texts]\n    model = LogisticRegression(C=4.0, max_iter=400, random_state=42, class_weight=\"balanced\")\n    model.fit(matrix, labels)\n    predictions = model.predict(vectorizer.transform(texts))\n    return [str(label) if text.strip() else fallback for text, label in zip(texts, predictions)]",
+    "explanation": "Reproduces the character TF-IDF + Logistic Regression classifier. Fits only on training examples, handles whitespace via fallback label, uses char ngrams, and returns predictions in original order without mutating inputs."
+  },
+  "duration_seconds": 13.202437290921807
+}

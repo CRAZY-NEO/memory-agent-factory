@@ -1,0 +1,62 @@
+[
+  {
+    "id": "char_tfidf_logreg_c2abb510f65b",
+    "name": "中文技术记忆 tfidf_logreg",
+    "task": "memory_classification",
+    "algorithm": "tfidf_logreg",
+    "inputs": [
+      "texts",
+      "training_examples"
+    ],
+    "outputs": [
+      "label"
+    ],
+    "applicable_conditions": [
+      "有代表性训练标签的中英文短文本与个人记忆归档。"
+    ],
+    "metrics": [
+      "accuracy",
+      "classification_p95_ms",
+      "macro_f1"
+    ],
+    "dependencies": [
+      "scikit-learn"
+    ],
+    "limitations": [
+      "局限：词面特征不能保证识别未见同义词、复杂语义或新类别。"
+    ],
+    "source_id": "source_41f6570dcbd4667f759ea4a2bfaa22e614365222406de7f584a76a391c6c4ba4",
+    "evidence": "适用：有代表性训练标签的中英文短文本与个人记忆归档。",
+    "algorithm_plugin_version": "1.0.0"
+  },
+  {
+    "id": "char_tfidf_nb_1dfb4005fdfb",
+    "name": "中文技术记忆 tfidf_nb",
+    "task": "memory_classification",
+    "algorithm": "tfidf_nb",
+    "inputs": [
+      "texts",
+      "training_examples"
+    ],
+    "outputs": [
+      "label"
+    ],
+    "applicable_conditions": [
+      "小型封闭类别的中英文短文本与个人记忆分类。"
+    ],
+    "metrics": [
+      "accuracy",
+      "classification_p95_ms",
+      "macro_f1"
+    ],
+    "dependencies": [
+      "scikit-learn"
+    ],
+    "limitations": [
+      "局限：条件独立假设和词面特征可能混淆同义改写及相近类别。"
+    ],
+    "source_id": "source_0d8aea45924812838deb9bbb811d8a3e8457cc78e92403caf5dabac8153787cd",
+    "evidence": "适用：小型封闭类别的中英文短文本与个人记忆分类。",
+    "algorithm_plugin_version": "1.0.0"
+  }
+]

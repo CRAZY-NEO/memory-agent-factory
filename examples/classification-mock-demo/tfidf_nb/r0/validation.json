@@ -1,0 +1,92 @@
+{
+  "task": "memory_classification",
+  "split": "validation",
+  "passed": false,
+  "errors": [
+    "evaluation: classify must return a list with one label per input text",
+    "contract:repeat: classify must return a list with one label per input text",
+    "contract:third: classify must return a list with one label per input text",
+    "contract:reverse: classify must return a list with one label per input text",
+    "contract:no_training: nonempty texts with no training must raise ValueError without mutation",
+    "contract:blank: classify must return a list with one label per input text",
+    "contract:unicode: classify must return a list with one label per input text",
+    "contract:duplicate: classify must return a list with one label per input text",
+    "contract:single_label: classify must return a list with one label per input text",
+    "contract:empty_vocabulary: classify must return a list with one label per input text"
+  ],
+  "metrics": {},
+  "example_count": 24,
+  "training_count": 64,
+  "labels": [
+    "engineering",
+    "preference",
+    "project",
+    "reminder"
+  ],
+  "execution": {
+    "wall_seconds": 1.2454348339233547,
+    "runner": "docker"
+  },
+  "gates": {
+    "task": "memory_classification",
+    "algorithms": [
+      "tfidf_logreg",
+      "tfidf_nb"
+    ],
+    "plugin_packages": [],
+    "max_candidates": 2,
+    "compare_all_algorithms": true,
+    "metrics": {
+      "accuracy": {
+        "min": 0.75,
+        "max": null
+      },
+      "macro_f1": {
+        "min": 0.7,
+        "max": null
+      },
+      "classification_p95_ms": {
+        "min": null,
+        "max": 2000.0
+      }
+    },
+    "selection_order": [
+      "macro_f1",
+      "accuracy"
+    ],
+    "timeout_seconds": 30.0,
+    "max_repairs": 2
+  },
+  "per_example": [],
+  "diagnostics": [],
+  "timing": "P95 of three full-batch calls; includes TF-IDF/classifier fit and predict, excludes imports",
+  "metric_plugins": [
+    {
+      "id": "accuracy",
+      "name": "Accuracy",
+      "version": "1.0.0",
+      "task": "memory_classification",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "macro_f1",
+      "name": "Macro-F1",
+      "version": "1.0.0",
+      "task": "memory_classification",
+      "direction": "higher",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "classification_p95_ms",
+      "name": "Classification batch P95 ms",
+      "version": "1.0.0",
+      "task": "memory_classification",
+      "direction": "lower",
+      "minimum": 0,
+      "maximum": null
+    }
+  ]
+}

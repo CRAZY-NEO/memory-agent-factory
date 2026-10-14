@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "started_at": "2026-10-14T18:12:08.707Z",
+  "browser": "Chrome",
+  "checks": [
+    "authenticated API",
+    "classification example with automatic routing",
+    "actual Web submission and polling",
+    "classification candidates and held-out final test",
+    "dynamic metric cards and candidate columns",
+    "confusion matrix",
+    "training data export disclosure",
+    "selected code digest",
+    "actual POST ZIP download",
+    "ZIP code and training hashes",
+    "standalone package execution",
+    "mobile layout",
+    "history after reload",
+    "no JavaScript errors"
+  ],
+  "job_id": "5dcf63cd92c2404b806f5c78c9062ae9",
+  "submitted_description": "生成文本记忆分类算法，根据训练样本将技术笔记分类，输入 texts 与 training_examples，返回与文本顺序一致的类别标签。比较配置中的分类候选，检查 Accuracy、Macro F1、运行稳定性和接口，有限修复后用独立最终测试集验证并沉淀为可复用插件。",
+  "run_id": "20261014T181212_60084714",
+  "bundle": {
+    "files": [
+      ".dockerignore",
+      "Dockerfile",
+      "README.md",
+      "algorithm.py",
+      "checksums.json",
+      "example_input.json",
+      "plugin.json",
+      "report.json",
+      "requirements.txt",
+      "run.py",
+      "training_examples.json"
+    ],
+    "standalone_output": [
+      "engineering",
+      "engineering",
+      "engineering"
+    ],
+    "code_hash": "a61c52cb887f6884826ac4e887f9fbee3d6dbee830a913a153992fe7827d65e4"
+  },
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "runner": "docker",
+  "task": "memory_classification",
+  "selected_algorithm": "tfidf_logreg",
+  "test_metrics": {
+    "accuracy": 0.9166666666666666,
+    "macro_f1": 0.9188311688311688,
+    "classification_p95_ms": 25.298191414913163
+  },
+  "llm_calls": 7,
+  "completed_at": "2026-10-14T18:12:21.329Z",
+  "scope": "Actual Chrome submits a classification factory job, inspects task-specific metrics and confusion matrices, downloads a ZIP by authenticated POST, and executes its standalone runner outside the factory. Provider and execution mode are recorded explicitly; no network responses are mocked."
+}

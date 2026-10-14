@@ -1,7 +1,7 @@
 # 算法与指标插件接入
 
 注册机制覆盖“发现 → 材料抽取 → 规划 → 生成/修复 → 验证 → 候选比较 → 报告 → 知识回写”。
-当前任务为 `memory_retrieval`，所有算法遵循 `retrieve(query, memories, top_k=5)` 接口。新增算法或指标不需要改工作流、算法枚举、验证器或报告列。
+支持 `memory_retrieval` 的 `retrieve(query, memories, top_k=5)`，以及 `memory_classification` 的 `classify(texts, training_examples)`。每个插件声明且只能用于对应任务。新增算法或指标不需要改工作流、算法枚举、验证器或报告列。
 
 本指南介绍开发者编写可信算法/指标模块的方式。也可使用新增的 [GitHub 自动发现与登记](github-discovery.md)：模型依据下载源码生成新检索实现，经验证及最终测试通过后登记为数据清单，无须手工生成新的注册 Python 文件。两种注册来源在同一目录中展示，带来源与版本信息。
 
@@ -24,7 +24,7 @@ agent_factory/templates/*.py               # 可检查的算法参考实现
 | MetricSpec | id、name、version、task、direction、compute；可选 minimum、maximum |
 | MetricContext | predictions、queries（含可信相关 ID）、top_k、durations_ms |
 
-ID 使用小写字母开头及小写字母/数字/下划线。算法当前只支持 `retrieval-v1` 环境与标准库/scikit-learn 依赖；增加其他库需要维护者同步扩展允许的环境和执行镜像，不能只声明依赖。新任务类型也需要实现相应数据契约及验证器。
+ID 使用小写字母开头及小写字母/数字/下划线。算法支持 `retrieval-v1` 与 `classification-v1` 环境与标准库/scikit-learn 依赖；增加其他库需要维护者同步扩展允许的环境和执行镜像，不能只声明依赖。新任务类型也需要实现相应数据契约及验证器。
 
 注册模块是开发者审查过的 Python 代码，在可信工厂进程执行。系统不扫描用户上传目录或生成代码目录，不将 LLM 输出当注册模块加载。指标在可信父进程评分；算法生成文件继续经过 AST 检查与受限执行。
 
@@ -35,6 +35,10 @@ ID 使用小写字母开头及小写字母/数字/下划线。算法当前只支
 | 算法 | tfidf | 1.0.1 | 字符 TF-IDF 与余弦相似度，含公开评分契约 |
 | 算法 | bm25 | 1.0.0 | 中文单字/双字及英文词 BM25 |
 | 算法 | jaccard | 1.0.1 | 中文单字/双字及英文词的集合相似度，含中英文契约 |
+| 分类算法 | tfidf_logreg | 1.0.0 | 字符 TF-IDF + Logistic Regression |
+| 分类算法 | tfidf_nb | 1.0.0 | 字符 TF-IDF + MultinomialNB |
+| 分类指标 | accuracy / macro_f1 | 1.0.0 | 准确率 / 宏平均 F1，越高越好 |
+| 分类指标 | classification_p95_ms | 1.0.0 | 整批训练+预测 P95，越低越好 |
 | 指标 | recall_at_k | 1.0.0 | 平均 Recall@k，越高越好 |
 | 指标 | mrr_at_k | 1.0.0 | 平均首个相关结果的倒数排名，越高越好 |
 | 指标 | precision_at_k | 1.0.0 | 平均 Precision@k，越高越好 |
@@ -182,3 +186,5 @@ bash scripts/run_tests.sh -q
 生成代码的质量依赖模型响应。候选集合约束加强后仍可能遇到实现或验证失败，应保留实际报告；系统不会用模板替换失败的真实响应。
 
 算法还可声明 public_cases（query/memories/top_k/expected），作为公开公式契约，自动进入生成提示与可信验证。新增评分逻辑宜加入手算样例。改进的修复流程及历史重放见 generation-repair.md；独立 CLI validate 可使用 --algorithm jaccard 启用对应公式检查。
+
+分类配置见 [config/classification.json](../config/classification.json)。分类 MetricContext 的 predictions 是 ID→标签，queries 为可信标注样本、top_k=0；不要使用检索指标解析分类输出。分类 public_cases 暂未接入，当前用统一分类接口/质量/稳定性契约验收；检索 public_cases 保持原行为。

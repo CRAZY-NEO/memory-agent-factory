@@ -1,0 +1,10 @@
+{
+  "candidates": [
+    {
+      "algorithm": "bm25",
+      "capability_id": "bm25_d539a5ebbc88",
+      "rationale": "任务明确要求使用 BM25 算法，且候选库中仅存在一个 bm25 算法，必须全部规划。"
+    }
+  ],
+  "design_explanation": "仅规划 bm25 算法，因其是唯一可用且满足任务要求的算法，无需扩展。"
+}

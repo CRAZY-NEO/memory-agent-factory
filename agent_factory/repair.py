@@ -84,6 +84,11 @@ def focused_context(state, registry):
                              if row.get('algorithm') == plugin.id][:1]
     if repository_candidates:
         context['repository_candidates'] = repository_candidates
+    if plugin.task == 'memory_classification':
+        # Planning already used grounded capabilities and their histories. Small
+        # models need one compact implementation contract, not duplicate prose
+        # from all of those records when reproducing a short classifier.
+        context = {key: context[key] for key in ['request', 'candidate', 'algorithm_plugin', 'reference_example']}
     return context
 
 
@@ -104,7 +109,9 @@ def load_failed_codes(directory, enabled_algorithms):
     for name, attempt in latest.items():
         if attempt['validation']['passed']:
             continue
-        source = (directory / name / f"r{attempt['revision']}" / 'retrieval.py').resolve()
+        from .tasks import task_spec
+        filename = task_spec(report.get('request', {}).get('task', 'memory_retrieval')).filename
+        source = (directory / name / f"r{attempt['revision']}" / filename).resolve()
         if not source.is_relative_to(directory):
             raise ValueError('Historical code path escapes the selected run')
         code = source.read_text(encoding='utf-8')

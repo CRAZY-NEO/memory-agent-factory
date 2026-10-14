@@ -46,8 +46,8 @@ def write_report(directory, summary):
                   "指标比较顺序：" + ", ".join(summary["validation_config"]["selection_order"]),
                   "同分时按依赖数量、配置算法顺序、修订号选择。"]
     evaluations = [(f"{row['algorithm']} r{row['revision']} / validation", row['validation'])
-                   for row in summary['attempts'] if row['validation'].get('by_category')]
-    if summary.get('test') and summary['test'].get('by_category'):
+                   for row in summary['attempts'] if row['validation'].get('by_category') and 'per_query' in row['validation']]
+    if summary.get('test') and summary['test'].get('by_category') and 'per_query' in summary['test']:
         evaluations.append(('选定版本 / test', summary['test']))
     for title, evaluation in evaluations:
         lines += ['', f'## 查询类型分析：{title}', '',
@@ -65,11 +65,28 @@ def write_report(directory, summary):
                 query = row['query'].replace('\n', ' ').replace('|', '/')
                 lines.append(f"- {row['query_id']}：{query}；类型 {', '.join(row['failure_types'])}；"
                              f"漏召回 {row['missed_relevant_ids']}；负例优先 {row['hard_negative_confusions']}")
+    if summary['request']['task'] == 'memory_classification':
+        for title, evaluation in [('验证集', (summary.get('selected') or {}).get('validation')),
+                                  ('冻结后的最终测试', summary.get('test'))]:
+            if not evaluation or not evaluation.get('per_example'):
+                continue
+            lines += ['', f'## 记忆分类：{title}', '',
+                      f"训练样本：{evaluation['training_count']}；评估样本：{evaluation['example_count']}",
+                      '混淆矩阵行是真实类别，列是预测类别。', '', '```json',
+                      json.dumps(evaluation['confusion_matrix'], ensure_ascii=False, indent=2), '```', '',
+                      '| 样本 | 真实类别 | 预测类别 | 正确 |', '| --- | --- | --- | --- |']
+            for row in evaluation['per_example']:
+                lines.append('| ' + ' | '.join(str(row[key]).replace('|', '/').replace('\n', ' ')
+                                               for key in ['id', 'label', 'prediction', 'correct']) + ' |')
     lines += ["", "## 可复现性与边界", "",
               "- 数据文件哈希、算法和指标插件版本、验证阈值均已记录。最终测试不参与修复和候选选择。",
               "- 所有报告指标由可信验证器计算，mock 只替代 LLM 响应。",
-              "- Precision@k 使用固定分母 k，不足 k 条的返回位置计为不相关；多查询取平均。",
-              "- P95 包含查询内索引构建，不包含解释器和依赖导入，小样本结果不代表生产性能。",
+              *( ["- Accuracy 与 Macro-F1 来自可信分类验证器；Macro-F1 对评估中真实或预测出现的类别等权平均。",
+                  "- 分类 P95 包含整批重新训练与预测，以三次整批调用估计，不是单条纯推理延迟。",
+                  "- 分类部署包包含冻结训练样本；对外分享前检查数据是否适合公开。"]
+                 if summary['request']['task'] == 'memory_classification' else
+                 ["- Precision@k 使用固定分母 k，不足 k 条的返回位置计为不相关；多查询取平均。",
+                  "- P95 包含查询内索引构建，不包含解释器和依赖导入，小样本结果不代表生产性能。"] ),
               "- 算法目录来自可信开发者模块或验证后登记清单；真实模型代码默认在禁网 Docker 容器运行，local 不构成可靠安全沙箱。", ""]
     if summary.get('discovery'):
         discovery = summary['discovery']

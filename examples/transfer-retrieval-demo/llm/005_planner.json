@@ -1,0 +1,154 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "planner",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "使用 BM25 为中文与英文技术记忆生成检索算法，返回最相关的前5条记忆",
+      "language": "zh",
+      "top_k": 5
+    },
+    "capabilities": [
+      {
+        "node_id": "bm25_d539a5ebbc88",
+        "algorithm": "bm25",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "不同长度的技术笔记",
+          "包含明确组件名或故障词的查询"
+        ],
+        "dependencies": [],
+        "evidence": "BM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。",
+        "id": "bm25_d539a5ebbc88",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "词面匹配对纯语义改写有限",
+          "分词策略影响排序"
+        ],
+        "metrics": [
+          "mrr_at_k",
+          "p95_ms",
+          "precision_at_k",
+          "recall_at_k"
+        ],
+        "name": "字符 BM25",
+        "outputs": [
+          "memory id",
+          "score"
+        ],
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "text": "# 中文技术记忆检索：BM25\n\n能力标识：char_bm25。算法：bm25。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\nBM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。\n\n适用：不同长度的技术笔记、包含明确组件名或故障词的查询。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：Python 标准库。\n局限：词面匹配对纯语义改写有限；分词策略影响排序。\n来源为本项目编写的演示算法说明，研究背景：\nhttps://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf\n"
+      }
+    ],
+    "lessons": [],
+    "historical_validations": [],
+    "repository_candidates": [],
+    "algorithm_catalog": [
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。",
+        "public_cases": []
+      }
+    ],
+    "max_candidates": 3,
+    "required_algorithms": [
+      "bm25"
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Algorithm",
+            "type": "string",
+            "enum": [
+              "bm25"
+            ]
+          },
+          "capability_id": {
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "algorithm",
+          "capability_id",
+          "rationale"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/Candidate"
+        },
+        "maxItems": 3,
+        "minItems": 1,
+        "title": "Candidates",
+        "type": "array"
+      },
+      "design_explanation": {
+        "title": "Design Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "candidates",
+      "design_explanation"
+    ],
+    "title": "Plan",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "raw_content": "{\"candidates\":[{\"algorithm\":\"bm25\",\"capability_id\":\"bm25_d539a5ebbc88\",\"rationale\":\"任务明确要求使用 BM25 算法，且候选库中仅存在一个 bm25 算法，必须全部规划。\"}],\"design_explanation\":\"仅规划 bm25 算法，因其是唯一可用且满足任务要求的算法，无需扩展。\"}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 1221,
+    "eval_count": 83,
+    "total_duration": 4342736575
+  },
+  "response": {
+    "candidates": [
+      {
+        "algorithm": "bm25",
+        "capability_id": "bm25_d539a5ebbc88",
+        "rationale": "任务明确要求使用 BM25 算法，且候选库中仅存在一个 bm25 算法，必须全部规划。"
+      }
+    ],
+    "design_explanation": "仅规划 bm25 算法，因其是唯一可用且满足任务要求的算法，无需扩展。"
+  },
+  "duration_seconds": 4.37915529194288
+}

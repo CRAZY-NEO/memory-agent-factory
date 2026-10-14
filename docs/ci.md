@@ -42,3 +42,11 @@ docker build -f Dockerfile.runner -t agent-factory-runner:0.1 .
 重复执行时为 wheel 和 factory 选择一个新的输出目录。上述 wheel 安装会将当前虚拟环境中的可编辑安装替换为安装包；日常开发若依赖 editable 模式，可在检查后运行 `.venv/bin/python -m pip install --no-deps -e .` 恢复。运行 `python -I` 时刻意排除当前源码目录，能发现源码运行正常、打包却漏带资源的问题。
 
 自动检查通过只证明所运行的离线检查通过。真实模型新评估集报告保留为独立证据；在 GitHub Actions 远端实际运行并显示绿色前，不将本地验证表述为远端 CI 已通过。
+
+新增双任务和部署包验收：
+
+```bash
+.venv/bin/python scripts/smoke_transfer.py state/ci-local/transfer
+```
+
+在同一新工作空间先生成检索算法，再生成分类算法，分类显式注入一次失败以检查修复。两任务使用真实 Docker 执行与冻结最终测试，随后导出 ZIP、解压到临时目录并用隔离 Python 进程独立运行。共享知识库必须同时包含两种任务的能力；最终测试文本不可出现在任何模型上下文。CI 已配置此步骤；真实 Ollama 验收独立进行。

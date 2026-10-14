@@ -1,0 +1,66 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "understander",
+  "context": {
+    "description": "使用 BM25 为中文与英文技术记忆生成检索算法，返回最相关的前5条记忆",
+    "task": "memory_retrieval"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "type": "string",
+        "const": "memory_retrieval"
+      },
+      "description": {
+        "minLength": 1,
+        "title": "Description",
+        "type": "string"
+      },
+      "language": {
+        "enum": [
+          "zh",
+          "mixed"
+        ],
+        "title": "Language",
+        "type": "string"
+      },
+      "top_k": {
+        "default": 5,
+        "maximum": 20,
+        "minimum": 1,
+        "title": "Top K",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "task",
+      "description",
+      "language"
+    ],
+    "title": "Request",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "raw_content": "{\"task\": \"memory_retrieval\", \"description\": \"使用 BM25 为中文与英文技术记忆生成检索算法，返回最相关的前5条记忆\", \"language\": \"zh\", \"top_k\": 5}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 258,
+    "eval_count": 50,
+    "total_duration": 2120491031
+  },
+  "response": {
+    "task": "memory_retrieval",
+    "description": "使用 BM25 为中文与英文技术记忆生成检索算法，返回最相关的前5条记忆",
+    "language": "zh",
+    "top_k": 5
+  },
+  "duration_seconds": 2.145109749864787
+}

@@ -1,0 +1,170 @@
+[
+  {
+    "id": "test-engineering-01",
+    "text": "技术总结：缓存查询结果可以降低数据库的响应延迟。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "test-engineering-02",
+    "text": "调试经验：容器服务无法访问时，需要核对端口映射。",
+    "label": "engineering",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "test-engineering-03",
+    "text": "项目技术笔记：自动化单元测试应覆盖空输入和异常分支。",
+    "label": "engineering",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "test-engineering-04",
+    "text": "Algorithm note: rare terms receive larger TF-IDF weights during text retrieval.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "test-engineering-05",
+    "text": "Development lesson: bounded retries prevent a failed network call from waiting forever.",
+    "label": "engineering",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "test-engineering-06",
+    "text": "Technical explanation for the project: acquiring locks in a consistent order prevents deadlocks.",
+    "label": "engineering",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "test-project-01",
+    "text": "项目状态：个人记忆系统的检索模块已发布，正在收集用户反馈。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "test-project-02",
+    "text": "本次里程碑已达成，推荐原型正在进入评估阶段。",
+    "label": "project",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "test-project-03",
+    "text": "项目记录：日志分析功能已经完成，目前由小林负责接口联调。",
+    "label": "project",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "test-project-04",
+    "text": "Project progress: account permissions are implemented and the UI is under review.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "test-project-05",
+    "text": "Release update: the team finished the first search prototype and is gathering feedback.",
+    "label": "project",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "test-project-06",
+    "text": "Project scope: this iteration includes database backup monitoring and a report page.",
+    "label": "project",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "test-preference-01",
+    "text": "个人习惯：我喜欢在安静的房间里读技术资料。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "test-preference-02",
+    "text": "我更倾向于短一些的摘要，不喜欢过长的说明文档。",
+    "label": "preference",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "test-preference-03",
+    "text": "即使项目很忙，我也更喜欢先读示例再理解算法。",
+    "label": "preference",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "test-preference-04",
+    "text": "My preference is coffee with no sugar and a quiet working environment.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "test-preference-05",
+    "text": "I would rather receive notifications together than be interrupted every few minutes.",
+    "label": "preference",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "test-preference-06",
+    "text": "I like project documentation to explain ideas with short Python examples.",
+    "label": "preference",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "test-reminder-01",
+    "text": "提醒事项：下周三之前上传本轮项目的测试报告。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "test-reminder-02",
+    "text": "今晚记得检查邮箱，并回复尚未处理的消息。",
+    "label": "reminder",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "test-reminder-03",
+    "text": "待办：周六整理关于数据库事务原理的技术笔记。",
+    "label": "reminder",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "test-reminder-04",
+    "text": "Remind me to run the regression tests tomorrow evening.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "test-reminder-05",
+    "text": "Remember the online review meeting next Tuesday at nine.",
+    "label": "reminder",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "test-reminder-06",
+    "text": "Todo before Friday: write down my preferences for the project interface.",
+    "label": "reminder",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  }
+]

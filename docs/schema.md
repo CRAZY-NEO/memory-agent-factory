@@ -1,4 +1,4 @@
-# 算法能力知识图谱 schema v1.2
+# 算法能力知识图谱 schema v1.3
 
 SQLite 是持久化事实源，NetworkX 从表载入有向图，导出 JSON、GraphML 和离线 HTML。
 能力知识与未来的个人事实/关系图谱分开。示例笔记是被检索的数据，并非能力知识节点。
@@ -66,3 +66,9 @@ graph LR
 ## 自动路由记录
 
 FactoryRun 新增 routing 属性：requested_mode、action、intent、literal_method_mentions、registered_methods、missing_methods、reason。混合请求的比较记录还含 discovery_run_id、discovered_algorithm，关联独立发现证据。模型原始意图和确定性原文方法名同时保留，路由信息不作为验证成功证据。详见 [自动路由](automatic-routing.md)。
+
+## 文本分类与部署包
+
+Capability.task 和 FactoryRun.request.task 可为 memory_retrieval / memory_classification；Lesson.scope 使用同一任务标识。分类 ValidationRun 新增 task、training_count、example_count、per_example、confusion_matrix、by_category；指标由分类 MetricSpec 定义，行是真实类别、列是预测类别。
+
+分类 FactoryRun 与 plugin.json 均记录 training_data_hash；manifest.training_data 固定为 training_examples.json，分类入口 classify、interface_version=1，产物 selected_classification.py。ZIP 内代码统一为 algorithm.py，所有路径相对；导出摘要只保留指标/门槛/哈希，不含评估样本文本和模型trace。ZIP不是新的算法版本，而是已冻结版本的部署形式。

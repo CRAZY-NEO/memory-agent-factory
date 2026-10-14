@@ -21,7 +21,7 @@ from .repair import code_fingerprint, focused_context, static_findings, validati
 from .reporting import write_report
 from .retrieval_scaffold import adapter_from_reference, compose_retrieval
 from .runner import Runner
-from .validation import load_dataset, validate
+from .tasks import load_task_config, task_spec
 
 LOGGER = logging.getLogger(__name__)
 
@@ -77,6 +77,50 @@ class Factory:
                             "docker_image": self.runner.image if self.runner_mode == "docker" else None}
         self.environment_id = "environment_" + digest(json.dumps(self.environment, sort_keys=True))
 
+    @property
+    def task(self):
+        return task_spec(self.config.task)
+
+    def activate_task(self, task):
+        """Switch the validation adapter before generation, preserving the run and traces."""
+        if task != self.config.task:
+            self.config = load_task_config(self.workspace, task)
+            self.registry = load_registry(self.config.plugin_packages, workspace=self.workspace)
+            self.registry.validate_config(self.config)
+            self.client.registry = self.registry
+            self.runner.timeout = self.config.timeout_seconds
+            self.client.fault_algorithm = self.config.algorithms[min(1, len(self.config.algorithms) - 1)]
+
+    def _dataset(self, split):
+        current = {name: digest((self.workspace / 'data' / name).read_text(encoding='utf-8'))
+                   for name in self.task.data_files}
+        if current != self.dataset_hashes:
+            raise ValueError('Dataset changed during the run')
+        inputs, examples = self.task.load(self.workspace / 'data', split)
+        if self.config.task == 'memory_classification':
+            # Every candidate and the final test use the same frozen training input.
+            path = self.directory / 'training_examples.json'
+            frozen = path.read_text(encoding='utf-8')
+            if digest(frozen) != self.training_data_hash:
+                raise ValueError('Frozen training data changed during the run')
+            inputs = json.loads(frozen)
+        return inputs, examples
+
+    def _prepare_data(self):
+        self.task.preflight(self.workspace / 'data')
+        self.dataset_hashes = {name: digest((self.workspace / 'data' / name).read_text(encoding='utf-8'))
+                               for name in self.task.data_files}
+        if self.config.task == 'memory_classification':
+            training, _ = self.task.load(self.workspace / 'data', 'validation')
+            frozen = json.dumps(training, ensure_ascii=False, indent=2)
+            self.training_data_hash = digest(frozen)
+            (self.directory / 'training_examples.json').write_text(frozen, encoding='utf-8')
+
+    def _evaluate(self, code, request, algorithm, split):
+        inputs, examples = self._dataset(split)
+        return self.task.evaluate(code, self.runner, inputs, examples, request, self.config,
+                                  self.registry, algorithm, split)
+
     def _wrap(self, name, function):
         def node(state):
             LOGGER.info("%s: %s", self.run_id, name)
@@ -89,7 +133,10 @@ class Factory:
         return node
 
     def _understand(self, state):
-        request = self.client.ask("understander", {"description": state["description"]}, Request)
+        request = self.client.ask("understander", {"description": state["description"],
+                                                   "task": self.config.task}, Request)
+        if request.task != self.config.task:
+            raise ValueError('Understood task differs from the selected validation profile')
         request.description = state["description"]
         return {"request": request.model_dump()}
 
@@ -180,10 +227,8 @@ class Factory:
                                    'repository_candidate_ids': repository_ids}}
 
     def _validate(self, state):
-        memories, queries = load_dataset(self.workspace / "data", "validation")
-        report = validate(state["code"], self.runner, memories, queries,
-                          state["request"]["top_k"], self.config, registry=self.registry,
-                          algorithm=state["plan"]["candidates"][state["candidate_index"]]["algorithm"])
+        report = self._evaluate(state['code'], state['request'],
+                                state['plan']['candidates'][state['candidate_index']]['algorithm'], 'validation')
         if state["generation_error"]:
             report["errors"].append(state["generation_error"])
             report["passed"] = False
@@ -194,14 +239,14 @@ class Factory:
         algorithm, revision = candidate["algorithm"], state["revision"]
         directory = self.directory / algorithm / f"r{revision}"
         directory.mkdir(parents=True)
-        (directory / "retrieval.py").write_text(state["code"], encoding="utf-8")
+        (directory / self.task.filename).write_text(state["code"], encoding="utf-8")
         (directory / "validation.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         impl_id = f"implementation_{self.run_id}_{algorithm}_r{revision}"
         val_id = f"validation_{self.run_id}_{algorithm}_r{revision}"
         parent = f"implementation_{self.run_id}_{algorithm}_r{revision - 1}" if revision else None
         attempt = {"algorithm": algorithm, "revision": revision, "implementation_id": impl_id,
                    "capability_id": candidate["capability_id"], "parent": parent,
-                   "code_hash": digest(state["code"]), "code_path": str(directory / "retrieval.py"),
+                   "code_hash": digest(state["code"]), "code_path": str(directory / self.task.filename),
                    "explanation": state["code_explanation"], "generation": state.get("generation", {}), "validation": report}
         self.store.add_node(impl_id, "Implementation", {key: value for key, value in attempt.items() if key != "validation"})
         self.store.add_node(val_id, "ValidationRun", report)
@@ -214,7 +259,7 @@ class Factory:
             self.store.add_edge(impl_id, parent, "revises")
         if not report["passed"] or revision:
             lesson_id = f"outcome_{self.run_id}_{algorithm}_r{revision}"
-            lesson = {"scope": "memory_retrieval", "algorithm": algorithm,
+            lesson = {"scope": self.config.task, "algorithm": algorithm,
                       "summary": "; ".join(report["errors"]) if not report["passed"] else "修复后的版本通过可信验证集检查",
                       "validated_fix": bool(report["passed"] and revision),
                       "implementation_id": impl_id, "parent": parent,
@@ -238,7 +283,7 @@ class Factory:
         diagnosis['execution_diagnostics'] = context['validation']['diagnostics']
         diagnosis['unchanged_previous_repair'] = state.get('generation', {}).get('unchanged', False)
         lesson_id = f"lesson_{self.run_id}_{candidate['algorithm']}_r{state['revision']}"
-        self.store.add_node(lesson_id, "Lesson", {**diagnosis, "scope": "memory_retrieval",
+        self.store.add_node(lesson_id, "Lesson", {**diagnosis, "scope": self.config.task,
                                                  "algorithm": candidate["algorithm"],
                                                  "validated_fix": False,
                                                  "origin": "failed validation; advice is not a verified fix"})
@@ -276,21 +321,20 @@ class Factory:
         code = Path(state["selected"]["code_path"]).read_text(encoding="utf-8")
         if digest(code) != state["selected"]["code_hash"]:
             raise ValueError("Selected code changed before final test")
-        memories, queries = load_dataset(self.workspace / "data", "test")
-        report = validate(code, self.runner, memories, queries, state["request"]["top_k"],
-                          self.config, "test", registry=self.registry,
-                          algorithm=state["selected"]["algorithm"])
+        report = self._evaluate(code, state['request'], state['selected']['algorithm'], 'test')
         uid = "test_" + self.run_id
         self.store.add_node(uid, "ValidationRun", report)
         self.store.add_edge(state["selected"]["implementation_id"], uid, "tested_by")
         # No repair or re-selection is permitted after a final-test failure.
         if report["passed"]:
-            shutil.copyfile(state["selected"]["code_path"], self.directory / "selected_retrieval.py")
+            shutil.copyfile(state["selected"]["code_path"], self.directory / self.task.selected_filename)
         return {"test": report, "status": "passed" if report["passed"] else "failed_test"}
 
     def _persist(self, state):
         files = {name: digest((self.workspace / "data" / name).read_text(encoding="utf-8"))
-                 for name in ["memories.json", "validation_queries.json", "test_queries.json"]}
+                 for name in self.task.data_files}
+        if files != self.dataset_hashes:
+            raise ValueError('Dataset changed during the run; refusing to publish')
         summary = {"run_id": self.run_id, "description": state["description"],
                    "provider": self.client.provider, "model": self.client.model,
                    "mock_fault_injection": self.client.inject_fault, "runner": self.runner_mode,
@@ -303,19 +347,23 @@ class Factory:
                    "mock_fault_algorithm": self.client.fault_algorithm if self.client.inject_fault else None,
                    "workflow_events": state["events"] + ["persist"]}
         summary.update(self.report_metadata(state))
+        if self.config.task == 'memory_classification':
+            summary['training_data_hash'] = self.training_data_hash
         if getattr(self, 'routing', None):
             summary['routing'] = self.routing
         self.store.add_node("run_" + self.run_id, "FactoryRun", summary)
         for attempt in state["attempts"]:
             self.store.add_edge("run_" + self.run_id, attempt["implementation_id"], "generated")
         if state["status"] == "passed":
-            plugin = {"task": "memory_retrieval", "entrypoint": "retrieve", "interface_version": "1",
+            plugin = {"task": self.config.task, "entrypoint": self.task.entrypoint, "interface_version": "1",
                       "runner": self.runner_mode,
                       "run_id": self.run_id, "code_hash": state["selected"]["code_hash"],
-                      "code_path": str(self.directory / "selected_retrieval.py"),
+                      "code_path": str(self.directory / self.task.selected_filename),
                       "algorithm_plugin": self.registry.algorithm(state["selected"]["algorithm"]).metadata(),
                       "dependencies": list(self.registry.algorithm(state["selected"]["algorithm"]).dependencies),
                       "validation_report": str(self.directory / "report.json")}
+            if self.config.task == 'memory_classification':
+                plugin.update(training_data='training_examples.json', training_data_hash=self.training_data_hash)
             (self.directory / "plugin.json").write_text(json.dumps(plugin, ensure_ascii=False, indent=2), encoding="utf-8")
         write_report(self.directory, summary)
         self.store.export(self.directory / "knowledge")
@@ -350,10 +398,7 @@ class Factory:
             if not description.strip():
                 raise ValueError("Empty capability description")
             # Gold data integrity is a trusted precondition, not a task for generated code.
-            _, validation_queries = load_dataset(self.workspace / "data", "validation")
-            _, test_queries = load_dataset(self.workspace / "data", "test")
-            if {q["query"] for q in validation_queries} & {q["query"] for q in test_queries}:
-                raise ValueError("Validation and final-test queries must be disjoint")
+            self._prepare_data()
             self.store.add_node(self.environment_id, "Environment", self.environment)
             known = {cap["algorithm"] for cap in self.store.nodes("Capability")}
             missing = [name for name in self.config.algorithms if name not in known]

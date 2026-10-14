@@ -1,0 +1,20 @@
+{
+  "requested_mode": "auto",
+  "action": "reuse",
+  "intent": {
+    "task": "memory_retrieval",
+    "requested_methods": [
+      "BM25"
+    ],
+    "discover_new": false,
+    "rationale": "用户明确要求使用 BM25 算法进行中文与英文技术记忆的检索，且指定返回前5条结果，该请求符合 memory_retrieval 任务且未提及新算法。"
+  },
+  "literal_method_mentions": [
+    "bm25"
+  ],
+  "registered_methods": [
+    "bm25"
+  ],
+  "missing_methods": [],
+  "reason": "已有能力可以作为实现依据，无需联网搜索。"
+}

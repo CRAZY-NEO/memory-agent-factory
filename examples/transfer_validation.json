@@ -1,0 +1,163 @@
+{
+  "status": "passed",
+  "same_workflow_class": "agent_factory.workflow.Factory",
+  "same_knowledge_store": true,
+  "runs": [
+    {
+      "task": "memory_retrieval",
+      "run_id": "20261014T182523_907e25f5",
+      "provider": "ollama",
+      "model": "qwen3.5:2b",
+      "runner": "docker",
+      "status": "passed",
+      "metrics": {
+        "recall_at_k": 0.9666666666666667,
+        "mrr_at_k": 0.9277777777777777,
+        "precision_at_k": 0.24666666666666667,
+        "p95_ms": 1.546583278104663
+      },
+      "selected": "bm25",
+      "code_hash": "a68fae3c50925689492cb3cb78dca5d24c96396b70083db2577e39e4af1c2b4c",
+      "llm_calls": 6,
+      "repair_exercised": false,
+      "held_out_context_audit": "passed",
+      "zip_sha256": "52791a24bcada0f18777adc3301b403c59c4e13d6313b353513038d09b9b16f0",
+      "standalone_result": null
+    },
+    {
+      "task": "memory_classification",
+      "run_id": "20261014T182650_e4852f2e",
+      "provider": "ollama",
+      "model": "qwen3.5:2b",
+      "runner": "docker",
+      "status": "passed",
+      "metrics": {
+        "accuracy": 0.9166666666666666,
+        "macro_f1": 0.9188311688311688,
+        "classification_p95_ms": 18.72471669339575
+      },
+      "selected": "tfidf_logreg",
+      "code_hash": "9541d92f5c5ec7d8d8372dd426af1f4402faee68b3600ca4dde7dea55a789741",
+      "llm_calls": 7,
+      "repair_exercised": false,
+      "held_out_context_audit": "passed",
+      "zip_sha256": "da95b4a658f11c354e5e909b75609aadcde386e7cab3c4c31b03ef378edc2a45",
+      "standalone_result": null
+    }
+  ],
+  "offline_validation": {
+    "status": "passed",
+    "same_workflow_class": "agent_factory.workflow.Factory",
+    "same_knowledge_store": true,
+    "runs": [
+      {
+        "task": "memory_retrieval",
+        "run_id": "20261014T181130_718acc62",
+        "provider": "mock",
+        "model": "mock-template-v1",
+        "runner": "docker",
+        "status": "passed",
+        "metrics": {
+          "recall_at_k": 0.9666666666666667,
+          "mrr_at_k": 0.9277777777777777,
+          "precision_at_k": 0.24666666666666667,
+          "p95_ms": 2.10902894323226
+        },
+        "selected": "bm25",
+        "code_hash": "a68fae3c50925689492cb3cb78dca5d24c96396b70083db2577e39e4af1c2b4c",
+        "llm_calls": 5,
+        "repair_exercised": false,
+        "held_out_context_audit": "passed",
+        "zip_sha256": "19aa777287c927eb6109ad47c272c58d55de5bf62ebfd9442744bf40846d9364",
+        "standalone_result": [
+          {
+            "id": "example_1",
+            "score": 4.547266648140021
+          }
+        ]
+      },
+      {
+        "task": "memory_classification",
+        "run_id": "20261014T181132_a4c12d5a",
+        "provider": "mock",
+        "model": "mock-template-v1",
+        "runner": "docker",
+        "status": "passed",
+        "metrics": {
+          "accuracy": 0.9166666666666666,
+          "macro_f1": 0.9188311688311688,
+          "classification_p95_ms": 23.82460471126251
+        },
+        "selected": "tfidf_logreg",
+        "code_hash": "a61c52cb887f6884826ac4e887f9fbee3d6dbee830a913a153992fe7827d65e4",
+        "llm_calls": 9,
+        "repair_exercised": true,
+        "held_out_context_audit": "passed",
+        "zip_sha256": "cd9b9e065582bcb9c04ea3c660ee83c664a50bcc1a2a9e7c05909f9b3ab40721",
+        "standalone_result": [
+          "engineering",
+          "engineering",
+          "engineering"
+        ]
+      }
+    ]
+  },
+  "web_validation": "classification_web_validation.json",
+  "tests_passed": 218,
+  "standalone_real_exports": [
+    {
+      "example": "classification-demo",
+      "runner": "actual Docker, network none, read-only",
+      "factory_dependency": false,
+      "ollama_dependency": false,
+      "result": [
+        "engineering",
+        "engineering",
+        "engineering"
+      ]
+    },
+    {
+      "example": "transfer-retrieval-demo",
+      "runner": "actual Docker, network none, read-only",
+      "factory_dependency": false,
+      "ollama_dependency": false,
+      "result": [
+        {
+          "id": "example_1",
+          "score": 4.547266648140021
+        }
+      ]
+    }
+  ],
+  "new_input_export_demo": {
+    "texts": [
+      "技术记录：数据库事务通过锁保证并发一致性。",
+      "项目进展：记忆系统的分类模块开发完成。",
+      "我的偏好：工作时喜欢安静的环境。",
+      "提醒我明早检查备份。"
+    ],
+    "labels": [
+      "engineering",
+      "project",
+      "preference",
+      "reminder"
+    ],
+    "no_factory_or_ollama_required": true
+  },
+  "zip_dockerfile_build": {
+    "status": "passed",
+    "source_zip": "classification-demo/deployment.zip",
+    "image_id": "sha256:7fd81a100ea1b576daa579d04c64a847626494a01cd84769831aaff71c79da4f",
+    "python_base": "python:3.12-slim",
+    "fresh_dependency_install_completed": true,
+    "runtime_network": "none",
+    "result": [
+      "engineering",
+      "project",
+      "preference",
+      "reminder"
+    ],
+    "factory_installed": false,
+    "model_server_required": false
+  }
+}

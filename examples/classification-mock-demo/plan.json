@@ -1,0 +1,15 @@
+{
+  "candidates": [
+    {
+      "algorithm": "tfidf_logreg",
+      "capability_id": "char_tfidf_logreg_c2abb510f65b",
+      "rationale": "来自材料的适用条件：适用：有代表性训练标签的中英文短文本与个人记忆归档。"
+    },
+    {
+      "algorithm": "tfidf_nb",
+      "capability_id": "char_tfidf_nb_1dfb4005fdfb",
+      "rationale": "来自材料的适用条件：适用：小型封闭类别的中英文短文本与个人记忆分类。"
+    }
+  ],
+  "design_explanation": "比较注册算法 tfidf_logreg, tfidf_nb，按配置的可信验证集指标选择通过检查的方案。"
+}

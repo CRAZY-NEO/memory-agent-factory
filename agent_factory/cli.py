@@ -4,9 +4,11 @@ import argparse
 import json
 import logging
 import os
+import shutil
 import sys
 from pathlib import Path
 
+from .exporting import export_run
 from .knowledge import KnowledgeStore, ingest_sources
 from .llm import LLMClient
 from .models import ValidationConfig
@@ -15,7 +17,7 @@ from .repair import load_failed_codes
 from .repository import ingest_repository
 from .routing import AutomaticFactory
 from .runtime import MemoryRetriever
-from .validation import load_dataset, validate
+from .tasks import TASKS, load_task_config, task_spec
 from .visualization import write_graph_html
 
 
@@ -32,7 +34,7 @@ def resolve_model(arguments):
 
 
 def parser():
-    root = argparse.ArgumentParser(description="个人技术记忆检索算法能力工厂")
+    root = argparse.ArgumentParser(description="个人技术记忆检索与分类算法能力工厂")
     root.add_argument("--workspace", type=Path, default=Path.cwd(), help="包含 data/config/knowledge 的项目目录")
     root.add_argument("--verbose", action="store_true")
     root.add_argument("--config", type=Path, help="覆盖工作目录的 config.json")
@@ -72,9 +74,11 @@ def parser():
     query.add_argument("--top-k", type=int, default=5)
     query.add_argument("--memories", type=Path, help="自己的 id/text/source JSON 记忆列表")
     query.add_argument("--runner", choices=["local", "docker"], help="默认使用插件生成时的执行器")
-    export = commands.add_parser("export", help="导出 JSON/GraphML/离线 HTML 图谱")
-    export.add_argument("--output", type=Path)
+    export = commands.add_parser("export", help="--run-id 导出算法 ZIP；不指定时导出知识图谱")
+    export.add_argument("--run-id", help="将该运行已通过最终测试的选定算法导出为可运行 ZIP")
+    export.add_argument("--output", type=Path, help="ZIP 输出文件路径，或知识图谱输出目录")
     check = commands.add_parser("validate", help="独立运行可信算法验证器")
+    check.add_argument('--task', choices=list(TASKS), help='选择验证任务及对应配置；默认沿用 --config 或检索配置')
     check.add_argument("--algorithm", help="可选：检查注册算法的公开公式样例")
     check.add_argument("--code", type=Path, required=True)
     check.add_argument("--split", choices=["validation", "test"], default="validation")
@@ -89,10 +93,49 @@ def main(argv=None):
                         format="%(levelname)s %(message)s")
     workspace = arguments.workspace.resolve()
     try:
+        # Export is based on the frozen run, independent of today's workspace config.
+        if arguments.command == 'export' and arguments.run_id:
+            output = export_run(workspace, arguments.run_id)
+            if arguments.output:
+                destination = arguments.output.resolve()
+                if destination.suffix.lower() != '.zip':
+                    raise ValueError('--output must be a .zip file for deployment export')
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                if destination != output.resolve():
+                    shutil.copyfile(output, destination)
+                output = destination
+            print(str(output))
+            return 0
         config_path = arguments.config or workspace / "config.json"
-        config = ValidationConfig.model_validate(json.loads(config_path.read_text(encoding="utf-8")))
+        history = None
+        history_task = None
+        if arguments.command == 'run' and arguments.repair_from:
+            if arguments.inject_fault:
+                raise ValueError('Historical replay cannot be combined with mock fault injection')
+            history = json.loads((arguments.repair_from / 'report.json').read_text(encoding='utf-8'))
+            history_task = history.get('request', {}).get('task', 'memory_retrieval')
+            if history_task not in TASKS:
+                raise ValueError('Historical report has an unsupported task')
+            if history.get('validation_config', {}).get('task', history_task) != history_task:
+                raise ValueError('Historical request and validation configuration specify different tasks')
+        if history_task and not arguments.config:
+            # Keep today's trusted task gates; do not take thresholds from historical evidence.
+            config = load_task_config(workspace, history_task)
+        elif arguments.command == 'validate' and arguments.task and not arguments.config:
+            config = load_task_config(workspace, arguments.task)
+        else:
+            config = ValidationConfig.model_validate(json.loads(config_path.read_text(encoding="utf-8")))
+        if arguments.command == 'validate' and arguments.task and arguments.task != config.task:
+            raise ValueError('--task and --config specify different tasks')
+        if history_task and config.task != history_task:
+            raise ValueError('--config and historical report specify different tasks')
         registry = load_registry(config.plugin_packages, workspace=workspace)
         registry.validate_config(config)
+        if history:
+            for attempt in history['attempts']:
+                algorithm = attempt['algorithm']
+                if algorithm in registry.algorithms and registry.algorithm(algorithm).task != history_task:
+                    raise ValueError('Historical candidate is incompatible with its task: ' + algorithm)
         if arguments.command == "plugins":
             print(json.dumps(registry.catalog(), ensure_ascii=False, indent=2))
             return 0
@@ -108,13 +151,11 @@ def main(argv=None):
             return 0 if result['status'] == 'passed' else 1
         if arguments.command == "run":
             description = arguments.description or arguments.request_file.read_text(encoding="utf-8")
+            seeds = load_failed_codes(arguments.repair_from, config.algorithms) if arguments.repair_from else None
             factory = AutomaticFactory(workspace, arguments.provider, resolve_model(arguments), arguments.base_url,
                               arguments.runner, arguments.inject_fault, arguments.allow_local,
                               config=config, registry=registry, mode=arguments.mode)
-            if arguments.repair_from and arguments.inject_fault:
-                raise ValueError('Historical replay cannot be combined with mock fault injection')
-            seeds = load_failed_codes(arguments.repair_from, config.algorithms) if arguments.repair_from else None
-            result = factory.run(description, initial_codes=seeds)
+            result = factory.run(description, initial_codes=seeds, expected_task=history_task)
             print(json.dumps({"status": result["status"], "run_id": result["run_id"],
                               "report": str(Path(result["directory"]) / "report.md"),
                               "algorithm": result.get('algorithm') or (result.get('selected') or {}).get('algorithm'),
@@ -151,9 +192,10 @@ def main(argv=None):
             print(str(output))
         elif arguments.command == "query":
             if arguments.run == "latest":
-                runs = sorted((workspace / "runs").glob("*/plugin.json"))
+                runs = [path for path in sorted((workspace / "runs").glob("*/plugin.json"))
+                        if json.loads(path.read_text(encoding='utf-8')).get('task') == 'memory_retrieval']
                 if not runs:
-                    raise ValueError("没有通过验证的插件，请先运行 run")
+                    raise ValueError("没有通过验证的检索插件，请先运行检索任务")
                 manifest = runs[-1]
             else:
                 if Path(arguments.run).name != arguments.run:
@@ -166,10 +208,12 @@ def main(argv=None):
                               for hit in hits], ensure_ascii=False, indent=2))
         elif arguments.command == "validate":
             from .runner import Runner
-            memories, queries = load_dataset(workspace / "data", arguments.split)
-            result = validate(arguments.code.read_text(encoding="utf-8"),
-                              Runner(arguments.runner, config.timeout_seconds), memories, queries,
-                              arguments.top_k, config, arguments.split, registry=registry, algorithm=arguments.algorithm)
+            task = task_spec(config.task)
+            task.preflight(workspace / 'data')
+            inputs, examples = task.load(workspace / 'data', arguments.split)
+            result = task.evaluate(arguments.code.read_text(encoding="utf-8"),
+                                   Runner(arguments.runner, config.timeout_seconds), inputs, examples,
+                                   {'top_k': arguments.top_k}, config, registry, arguments.algorithm, arguments.split)
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0 if result["passed"] else 1
         return 0

@@ -79,7 +79,7 @@ def test_model_omission_cannot_drop_explicit_unknown_method(workspace):
 
 @pytest.mark.parametrize('description,mode,match', [
     ('复刻 BM25Plus 检索方法', 'reuse', '未登记'),
-    ('给技术笔记做文本分类', 'auto', '验证器'),
+    ('给商品做库存预测', 'auto', '验证器'),
     ('复刻 BM25Plus 和 使用 BM25L 检索方法', 'auto', '一个未登记'),
     ('为技术笔记发现新方法', 'discover', 'Ollama')])
 def test_unsupported_or_disallowed_routes_stop_early(workspace, description, mode, match):

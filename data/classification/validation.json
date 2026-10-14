@@ -1,0 +1,170 @@
+[
+  {
+    "id": "validation-engineering-01",
+    "text": "技术笔记：为数据库查询建立索引能够减少扫描的数据量。",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "validation-engineering-02",
+    "text": "排障经验：请求一直等待时，先核实超时时间与连接池容量。",
+    "label": "engineering",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "validation-engineering-03",
+    "text": "项目技术原理：事务失败后回滚，可以避免留下部分写入的数据。",
+    "label": "engineering",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "validation-engineering-04",
+    "text": "Technical note: cosine similarity measures how closely two text vectors align.",
+    "label": "engineering",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "validation-engineering-05",
+    "text": "Debugging lesson: an exhausted connection pool makes database calls wait.",
+    "label": "engineering",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "validation-engineering-06",
+    "text": "Engineering explanation for the project: generators avoid allocating the entire sequence.",
+    "label": "engineering",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "validation-project-01",
+    "text": "项目进展：用户权限模块已经实现，登录界面仍在开发中。",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "validation-project-02",
+    "text": "本轮迭代的交付范围确定为记忆导入和搜索页面。",
+    "label": "project",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "validation-project-03",
+    "text": "项目会议记录：团队已决定采用深色主题，界面设计工作正在进行。",
+    "label": "project",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "validation-project-04",
+    "text": "Project status: the import endpoint is ready and integration testing is underway.",
+    "label": "project",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "validation-project-05",
+    "text": "Milestone report: the initial memory search release has reached acceptance review.",
+    "label": "project",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "validation-project-06",
+    "text": "Project decision: the team chose morning meetings for the next release planning.",
+    "label": "project",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "validation-preference-01",
+    "text": "我的偏好：文档中最好先展示代码示例，然后解释设计原理。",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "validation-preference-02",
+    "text": "相比不断弹出的消息，我更愿意在固定时间集中查看通知。",
+    "label": "preference",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "validation-preference-03",
+    "text": "我喜欢项目会议放在上午，下午不想被打扰。",
+    "label": "preference",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "validation-preference-04",
+    "text": "I prefer a dark interface and readable text when browsing technical notes.",
+    "label": "preference",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "validation-preference-05",
+    "text": "I would rather work without background music so I can concentrate.",
+    "label": "preference",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "validation-preference-06",
+    "text": "For project reviews I like a concise summary more than a long presentation.",
+    "label": "preference",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "validation-reminder-01",
+    "text": "提醒我周四上午把算法评估报告发给导师。",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "validation-reminder-02",
+    "text": "下周二别忘了检查服务器订阅是否需要续费。",
+    "label": "reminder",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "validation-reminder-03",
+    "text": "待办：明天把项目界面改为我喜欢的深色主题。",
+    "label": "reminder",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  },
+  {
+    "id": "validation-reminder-04",
+    "text": "Reminder: send the database test report before Thursday afternoon.",
+    "label": "reminder",
+    "category": "direct",
+    "annotation": "类别意图明确。"
+  },
+  {
+    "id": "validation-reminder-05",
+    "text": "Do not forget the server renewal payment at the end of this week.",
+    "label": "reminder",
+    "category": "paraphrase",
+    "annotation": "使用不同表达描述相同类别意图。"
+  },
+  {
+    "id": "validation-reminder-06",
+    "text": "Todo: schedule the project meeting for tomorrow morning as I prefer.",
+    "label": "reminder",
+    "category": "hard_negative",
+    "annotation": "包含其他类别词汇，但标签按整段的主要意图判定。"
+  }
+]

@@ -20,7 +20,6 @@ from .repair import code_fingerprint, static_findings, validation_feedback
 from .repository import ingest_repository
 from .retrieval_scaffold import compose_retrieval
 from .source_contracts import derive_term_contract
-from .validation import load_dataset
 from .workflow import Factory, FactoryState
 
 
@@ -461,10 +460,9 @@ class DiscoveryFactory(Factory):
 
     def run(self, description, initial_codes=None):
         try:
-            _, validation = load_dataset(self.workspace / 'data', 'validation')
-            _, test = load_dataset(self.workspace / 'data', 'test')
-            if {q['query'] for q in validation} & {q['query'] for q in test}:
-                raise ValueError('Validation and final-test queries must be disjoint')
+            if self.config.task != 'memory_retrieval':
+                raise ValueError('GitHub discovery currently supports memory_retrieval only')
+            self._prepare_data()
             self.store.add_node(self.environment_id, 'Environment', self.environment)
             graph = self.graph()
             (self.directory / 'workflow.mmd').write_text(graph.get_graph().draw_mermaid(), encoding='utf-8')
