@@ -4,7 +4,7 @@
 
 工厂输入是“生成一个中文技术记忆检索算法”，产物为 Python 代码、依赖说明、验证报告与版本历史。生成的插件输入查询和记忆列表，输出相关记忆的 ID 与得分，可用于后续个人记忆系统。
 
-**当前可运行模式**：离线 mock/规则模板演示，以及远端 Ollama 原生 API 接入。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。已通过本机 11435 转发接口调用 `qwen3.5:2b`，在 v2 评估集上完成真实模型抽取、三候选生成、Docker 验证及知识回写，见 [最新真实模型报告](examples/ollama-v2-demo/report.md)；历史运行保留真实代码修复记录。工厂和算法执行容器运行在 Mac；远端硬件与 SSH 隧道由用户管理。
+**当前可运行模式**：离线 mock/规则模板演示，以及远端 Ollama 原生 API 接入。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。已通过本机 11435 转发接口调用 `qwen3.5:2b`，在 v2 评估集上完成真实模型抽取、三候选生成、Docker 验证及知识回写，见 [最新真实模型报告](examples/ollama-v2-demo/report.md)；历史运行保留真实代码修复记录。工厂和算法执行容器运行在 Mac；远端硬件由用户管理，SSH 隧道可通过本地启动器的 --ssh-target 一起启动。
 
 ## 1. 快速开始
 
@@ -13,8 +13,9 @@
 ```bash
 cd ~/Downloads/agent-factory
 .venv/bin/python scripts/serve_web.py
-# 打开 http://127.0.0.1:8010，输入 state/web/access-token.txt 中的访问密钥
-# 默认 mock + Docker；真实模型用 --provider ollama 并保持原 SSH 隧道
+# 自动打开浏览器并登录，刷新保持连接，无须手动复制密钥
+# 默认 mock + Docker；真模型可一个终端管理隧道、网页和 worker
+.venv/bin/python scripts/serve_web.py --provider ollama --ssh-target kylon@JETSON_IP
 ```
 
 新机器先获取项目（已有目录可跳过）：
@@ -192,7 +193,7 @@ CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变�
 [示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
 
 报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
-当前 72 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
+当前 81 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
 真实模型例子见 [Ollama 完整报告](examples/ollama-demo/report.md)、[候选规划](examples/ollama-demo/plan.json)、[BM25 首版与修订](examples/ollama-demo/bm25/)、[模型调用记录](examples/ollama-demo/llm/) 和 [最终插件](examples/ollama-demo/selected_retrieval.py)。2026-10-12 的样例调用八次模型；TF-IDF 首版通过，BM25 首版因缺少 `re` 导入失败，模型根据真实错误修复后通过。选定 BM25 修订版的最终测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；这些数值只描述 24 条模拟记忆与 10 条最终测试查询。
 所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
 显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
@@ -221,6 +222,8 @@ FACTORY_DEMO_WORKSPACE=state/jaccard-demo bash scripts/run_plugin_demo.sh
 **v2 数据的真实模型复验已完成**：[qwen3.5:2b + Docker 报告](examples/ollama-v2-demo/report.md)，运行 `20261014T032846_393cdb11`，共 8 次真实模型调用，包括三份材料抽取、需求理解、规划及三次代码生成。三个算法均首版通过，无故障注入、历史重放或本次修复。选定 TF-IDF 后，在 30 条最终测试上得到 Recall@5=1、MRR@5=0.9528、Precision@5=0.2533、P95=7.08 ms。数据为当前 48/36/30 的 v2，已核对数据哈希、模型响应与产物代码哈希；两条最终测试排序错误仍完整保留。该运行未启用随后新增的仓库参考抽取，仓库集成另以离线端到端测试验证。
 
 GitHub 自动检查见 [CI 说明](docs/ci.md)：无需 Ollama 或密钥，检查代码规范、自动测试、安装包资源，以及 Docker 下的 mock 生成、故障修复、独立最终测试和知识回写。真实模型质量以带模型调用记录的报告为证，不由 mock CI 代替。
+
+本地演示入口已简化为自动打开浏览器并登录，刷新保留会话，可用 --ssh-target 统一启动 SSH 隧道；[实际 Chrome 验证](examples/session_validation.json)涵盖自动会话和 Cookie 鉴权的 mock/Docker 完整流程。API 密钥保留用于远程分享和 CLI 接入，详见 [Web 指南](docs/web-ui.md)。
 
 ## 8. 用于未来个人记忆系统
 

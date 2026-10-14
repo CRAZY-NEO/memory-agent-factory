@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "provider": "mock",
+  "runner": "docker",
+  "run_id": "20261014T082704_37a4f76c",
+  "test_metrics": {
+    "recall_at_k": 1,
+    "mrr_at_k": 0.9527777777777777,
+    "precision_at_k": 0.25333333333333335,
+    "p95_ms": 24.679537367774156
+  },
+  "checks": [
+    "automatic browser login",
+    "opening ticket removed from URL",
+    "HttpOnly session cookie",
+    "reload remains connected",
+    "no bearer key in input or browser storage",
+    "unauthorized requests rejected",
+    "cookie-authenticated Docker factory workflow",
+    "logout revokes session",
+    "opening link cannot be replayed",
+    "no browser JavaScript errors"
+  ],
+  "note": "The launcher browser callback was captured to a private file for headless Chrome; no SSH connection was created."
+}

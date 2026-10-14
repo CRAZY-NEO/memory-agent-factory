@@ -84,3 +84,7 @@ bash scripts/run_plugin_demo.sh
 保持 SSH 隧道连接直到模型流程结束。若发生模型代码失败，检查报告中所有修订与原始响应，不应将失败记录改写为成功；参见 [保留的失败例子](../examples/plugin-ollama-failure/report.md)。
 
 三算法真实模型比较已完成并归档到 [完整报告](../examples/plugin-ollama-demo/report.md)：实际规划三种算法，共 13 次调用；BM25 通过独立最终测试，TF-IDF 与 Jaccard 的错误版本耗尽修复预算后排除。此运行复用先前真实模型抽取的能力知识，抽取原始响应保留在失败运行的 llm 目录中。
+
+## 一个终端演示入口
+
+现在也可由用户在 Mac 运行 `.venv/bin/python scripts/serve_web.py --provider ollama --ssh-target kylon@JETSON_IP`，由启动器管理自己创建的隧道、API、worker，并自动打开浏览器登录。替换为自己的实际 SSH 目标；已有连接会被复用。详情见 [Web 指南](web-ui.md)。

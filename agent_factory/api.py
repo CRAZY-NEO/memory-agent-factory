@@ -6,11 +6,12 @@ import re
 import secrets
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import Field
 
+from .demo_session import DemoSession
 from .jobs import JobStore, QueueFull
 from .models import Contract, Memory
 
@@ -19,6 +20,10 @@ RUN_PATTERN = r"^\d{8}T\d{6}_[0-9a-f]{8}$"
 
 class FactorySubmission(Contract):
     description: str = Field(min_length=5, max_length=6000)
+
+
+class BrowserOpening(Contract):
+    ticket: str = Field(min_length=24, max_length=128, pattern=r'^[A-Za-z0-9_-]+$')
 
 
 class APIMemory(Memory):
@@ -66,7 +71,7 @@ class BodyLimit:
         return await self.app(scope, replay, send)
 
 
-def create_app(workspace=None, token=None):
+def create_app(workspace=None, token=None, bootstrap_ticket=None):
     """Uvicorn factory entrypoint; require an explicit private bearer token at startup."""
     workspace = Path(workspace or os.getenv("FACTORY_WORKSPACE", ".")).resolve()
     token = token or os.getenv("FACTORY_API_TOKEN", "")
@@ -74,6 +79,10 @@ def create_app(workspace=None, token=None):
         raise RuntimeError("Set FACTORY_API_TOKEN to a private random token of at least 24 characters")
     store = JobStore(workspace)
     app = FastAPI(title="Technical Memory Algorithm Factory", version="0.1.0")
+    opening = bootstrap_ticket if bootstrap_ticket is not None else os.getenv('FACTORY_BOOTSTRAP_TICKET', '')
+    if opening and not re.fullmatch(r'[A-Za-z0-9_-]{24,128}', opening):
+        raise RuntimeError('Invalid browser opening ticket')
+    session = DemoSession(opening) if opening else None
     app.add_middleware(BodyLimit)
     web = Path(__file__).with_name('web')
     app.mount('/assets', StaticFiles(directory=web), name='assets')
@@ -94,11 +103,50 @@ def create_app(workspace=None, token=None):
     def index():
         return FileResponse(web / 'index.html', media_type='text/html')
 
-    def authenticate(authorization: str = Header(default="")):
+    def same_origin(request):
+        expected = str(request.base_url).rstrip('/')
+        if request.headers.get('origin') != expected:
+            raise HTTPException(status_code=403, detail='Browser session requires a same-origin request')
+
+    def authenticate(request: Request, authorization: str = Header(default="")):
         scheme, separator, value = authorization.partition(" ")
-        if not separator or scheme.lower() != "bearer" or not secrets.compare_digest(value.encode(), token.encode()):
-            raise HTTPException(status_code=401, detail="Invalid bearer token",
-                                headers={"WWW-Authenticate": "Bearer"})
+        if authorization:
+            if separator and scheme.lower() == 'bearer' and secrets.compare_digest(value.encode(), token.encode()):
+                return
+        elif session and session.valid(request.cookies.get(session.cookie_name)):
+            if request.method not in {'GET', 'HEAD', 'OPTIONS'}:
+                same_origin(request)
+            return
+        raise HTTPException(status_code=401, detail="Invalid bearer token or browser session",
+                            headers={"WWW-Authenticate": "Bearer"})
+
+    @app.post('/v1/session/bootstrap', include_in_schema=False)
+    def open_browser(body: BrowserOpening, request: Request):
+        if session is None:
+            raise HTTPException(status_code=404, detail='Automatic browser login is disabled')
+        same_origin(request)
+        cookie = session.redeem(body.ticket)
+        if cookie is None:
+            raise HTTPException(status_code=401, detail='Browser opening ticket expired or already used')
+        response = JSONResponse({'status': 'connected'})
+        response.set_cookie(session.cookie_name, cookie, httponly=True, samesite='strict',
+                            secure=request.url.scheme == 'https', path='/v1/')
+        return response
+
+    @app.get('/v1/session', include_in_schema=False)
+    def browser_session(request: Request):
+        if session is None or not session.valid(request.cookies.get(session.cookie_name)):
+            raise HTTPException(status_code=401, detail='No active browser session')
+        return {'status': 'connected'}
+
+    @app.delete('/v1/session', include_in_schema=False)
+    def close_browser(request: Request):
+        same_origin(request)
+        if session and session.valid(request.cookies.get(session.cookie_name)):
+            session.revoke()
+        response = JSONResponse({'status': 'disconnected'})
+        response.delete_cookie(DemoSession.cookie_name, path='/v1/')
+        return response
 
     def submit(kind, payload):
         try:

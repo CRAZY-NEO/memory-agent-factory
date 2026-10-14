@@ -14,31 +14,48 @@ docker build -f Dockerfile.runner -t agent-factory-runner:0.1 .
 .venv/bin/python scripts/serve_web.py
 ```
 
-访问 [http://127.0.0.1:8010](http://127.0.0.1:8010)。启动器会在 state/web/access-token.txt 创建仅用户可读的随机访问密钥，不在日志打印密钥；页面输入该文件内容连接。
+启动器会检查端口，等待 API 就绪，随后自动打开默认浏览器并登录。直接点击“填入三算法比较示例”→“提交生成任务”；页面展示执行阶段、候选修订与结果，成功后可下载代码和报告。退出启动器用 Ctrl+C。
 
-Mac 可在另一个终端复制：
+本地自动登录不需要手动复制密钥。启动器只把一个 5 分钟内有效、只能兑换一次的随机开页凭据放入浏览器 URL fragment；前端立即移除 fragment，再换取 HttpOnly、SameSite=Strict 的浏览器会话 Cookie。真正的 API Bearer 密钥不会放进 URL、页面输入框或 localStorage/sessionStorage。会话只在 API 进程内有效，最长 12 小时，刷新页面继续连接；点击“断开”撤销会话，API 重启后旧会话失效。Cookie 鉴权的写请求检查同源 Origin。
+
+## 真模型：一个终端启动全部服务
+
+首次使用时，将下面的目标替换成自己的 SSH 别名或用户名和 Jetson 地址：
 
 ```bash
-cd ~/Downloads/agent-factory
+.venv/bin/python scripts/serve_web.py \
+  --provider ollama --runner docker \
+  --ssh-target kylon@JETSON_IP
+```
+
+命令由用户在 Mac 执行：先检查 Ollama；如尚未连接，启动带保活与转发失败检查的 SSH 隧道，将本机 11435 转发到 Jetson 的 127.0.0.1:11434。SSH 密码或首次主机确认（如有）在同一个终端完成。然后启动网页和 worker，打开浏览器自动登录。默认模型 qwen3.5:2b、OLLAMA_URL=http://127.0.0.1:11435；也可通过环境变量配置。
+
+如果旧网页启动器仍在运行，先在其终端按 Ctrl+C 停止。想由新入口统一管理隧道时，也先停止自己以前手动运行的 SSH 隧道。已有 Ollama 连接会被复用，不额外创建或关闭它。
+
+启动器只管理它创建的子进程。Ctrl+C 同时停止自己的网页、worker 和 SSH 隧道；已有外部隧道保持由用户管理。子进程意外退出会停止本次其他服务；当前不实现自动重连、任务中断恢复。建议任务结束后退出。
+
+若已保持自己的隧道，只需：
+
+```bash
+.venv/bin/python scripts/serve_web.py --provider ollama
+```
+
+真实模式启动前校验模型列表与模型名称。连接失败、模型缺失或端口占用会直接提示，避免进入网页后才提交失败任务。端口占用请停止原启动器；更换端口仍应避免同一 workspace 混用多个 worker。
+
+## 手动或远程访问
+
+API 仍要求鉴权。向导师分享 HTTPS 页面时使用访问密钥；本地自动会话只用于本启动器打开的浏览器，不会给其他浏览器自动授权。
+
+```bash
+# 不自动打开浏览器，保留手动连接方式
+.venv/bin/python scripts/serve_web.py --no-open-browser
+# Mac 上复制备用密钥
 cat state/web/access-token.txt | pbcopy
 ```
 
-然后在页面粘贴，点击“连接”→“填入三算法比较示例”→“提交生成任务”。页面轮询实际阶段、候选修订与结果；成功后可下载选定代码、插件清单及 Markdown/JSON 报告，也能下载失败候选代码用于复核。历史失败运行同样展示，最终测试失败不会提供可发布插件下载。
+备用随机密钥保存在 state/web/access-token.txt，权限仅当前用户可读，不在终端打印；若已设置 FACTORY_API_TOKEN，则沿用它，不生成该文件。手动粘贴的密钥只保存在页面内存，刷新后需重新连接。API 与历史任务不会因关闭网页而消失。
 
-密钥只存在页面内存，不写浏览器 localStorage/sessionStorage，刷新后重新连接，历史任务与报告仍由服务器保存。若启动前已设置 FACTORY_API_TOKEN，启动器沿用它而不写入文件。轮询中断不会取消服务器任务，重新连接后点击最近任务即可查看。
-
-## 接入 Jetson 真模型
-
-先保持原来的 SSH 隧道，停止 mock 启动器，再启动真实模式：
-
-```bash
-OLLAMA_URL=http://127.0.0.1:11435 OLLAMA_CHAT_MODEL=qwen3.5:2b \
-.venv/bin/python scripts/serve_web.py --provider ollama --runner docker
-```
-
-模型提供方由后台配置决定，提交者不能绕过配置。报告显示实际 provider/model/runner，mock 与真实模型明确区分。worker 运行在 Mac；Jetson 只运行 Ollama。真实生成代码必须用 Docker。
-
-Ctrl+C 同时停止网关与 worker。建议让任务结束后停止；强制中断的任务按现有 lease 规则标记失败，需要明确重提，不宣称中断恢复。端口占用可用 --port 8012；--workspace 可指向有 config.json、data、knowledge 的独立目录。
+轮询中断不会取消服务器任务；重新登录后点击最近任务查看。强制中断按现有 lease 规则标记失败，需重新提交，不宣称中断恢复。--workspace 可指定有 config.json、data、knowledge 的独立目录。
 
 ## Compose / 独立启动
 
@@ -49,6 +66,7 @@ Compose API 容器也提供 `/` 网页，新版本额外挂载 data 与 config.j
 ## 新增接口
 
 - GET / 与 GET /assets/*：中文网页与静态资源。
+- POST /v1/session/bootstrap、GET/DELETE /v1/session：仅本地启动器开启的浏览器会话，开页凭据一次性，刷新恢复、断开撤销。
 - GET /v1/settings：算法配置和数据版本，不含查询全文、标注或服务密钥。
 - GET /v1/jobs、GET /v1/runs：最近任务与运行摘要，数量有上限。
 - GET /v1/jobs/{job_id}：增加 run_id 与实际 workflow.jsonl 阶段事件。
@@ -77,3 +95,9 @@ node scripts/smoke_web.cjs http://127.0.0.1:8010
 真实 Chrome 浏览器向本机网关提交需求，mock 响应下运行禁网 Docker 算法，完成三候选比较、冻结测试与回写。运行 20261013T195942_1359d9f1 选定 TF-IDF r0，最终 Recall@5=1、MRR@5=0.9528、Precision@5=0.2533。记录见 [完整报告](../examples/web-evaluation-demo/report.md)、[浏览器检查](../examples/web_validation.json)、[Docker 网关检查](../examples/web_container_validation.json)。本次未新增 Jetson 实机验证或真实模型成绩。
 
 [桌面截图](images/web-desktop.png) · [手机宽度截图](images/web-mobile.png)。59 项自动测试及浏览器回归通过，安装包已检查包含 HTML、CSS 与 JavaScript。
+
+## 自动登录回归
+
+新增 tests/test_demo_launcher.py 检查凭据重放与过期、同源写入、鉴权保留、端口冲突、SSH 子进程创建/复用及清理。scripts/smoke_local_session.cjs 使用实际 Chrome 检查自动登录、刷新保持连接、退出与 Cookie 鉴权的 Docker 完整流程。测试将启动器的浏览器回调捕获到权限为 0600 的临时文件以供无头 Chrome 打开；不会实际建立 Jetson SSH 连接。
+
+本次真实 Chrome 自动会话回归见 [验证记录](../examples/session_validation.json)，全量 81 项测试通过。该记录为 mock + Docker；隧道创建/复用/清理由进程替身测试覆盖，没有另行连接 Jetson SSH。
