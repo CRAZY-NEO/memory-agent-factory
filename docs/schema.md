@@ -1,4 +1,4 @@
-# 算法能力知识图谱 schema v1.1
+# 算法能力知识图谱 schema v1.2
 
 SQLite 是持久化事实源，NetworkX 从表载入有向图，导出 JSON、GraphML 和离线 HTML。
 能力知识与未来的个人事实/关系图谱分开。示例笔记是被检索的数据，并非能力知识节点。
@@ -9,6 +9,8 @@ SQLite 是持久化事实源，NetworkX 从表载入有向图，导出 JSON、Gr
 | --- | --- | --- |
 | Source | source_内容SHA256 | path、text、sha256 |
 | RepositorySnapshot | repo_snapshot_扫描内容哈希 | repository_key、git_commit、include、limits、source_ids、candidate_ids、issues、limited；仅静态扫描 |
+| GitHubSnapshot | github_snapshot_下载内容哈希 | repository、url、commit、license、files、archive_sha256、download_trace、executed_repository_code=false |
+| AlgorithmRelease | release_运行ID | id、name、version、status=approved、source、hashes、license_hashes、run_id、enabled；对应 workspace 数据清单 |
 | CodeCandidate | code_candidate_抽取内容哈希 | qualified_name、signature、parameters、return_annotation、docstring、comments、imports、source_id、行号、file_sha256、code_sha256、algorithm、status=unvalidated |
 | Capability | 算法名_抽取内容哈希 | name、task、algorithm、inputs、outputs、applicable_conditions、metrics、dependencies、limitations、source_id、evidence、algorithm_plugin_version |
 | Implementation | 运行ID+算法+修订号 | code_hash、code_path、revision、parent、capability_id、explanation |
@@ -21,6 +23,9 @@ SQLite 是持久化事实源，NetworkX 从表载入有向图，导出 JSON、Gr
 
 ```mermaid
 graph LR
+  GitHubSnapshot -->|statically_extracted_as| RepositorySnapshot
+  GitHubSnapshot -->|contains| Derived[Source: derived_algorithm_material]
+  Derived -->|supports| Capability
   RepositorySnapshot -->|contains| RepoSource[Source: python_repository]
   RepoSource -->|declares| CodeCandidate
   Source -->|supports| Capability
@@ -29,6 +34,8 @@ graph LR
   Implementation -->|context_from| CodeCandidate
   Implementation -->|validated_by| ValidationRun
   Implementation -->|tested_by| FinalTest[ValidationRun: test]
+  Implementation -->|approved_as| AlgorithmRelease
+  AlgorithmRelease -->|derived_from| GitHubSnapshot
   Implementation -->|revises| Previous[Implementation: previous revision]
   ValidationRun -->|produced| Lesson
   FactoryRun -->|generated| Implementation
@@ -51,5 +58,7 @@ graph LR
 `CodeCandidate` 与经过材料抽取的 `Capability`、经过执行验证的 `Implementation` 分开。只有操作者显式指定 `--algorithm` 才能进入对应算法的知识检索；该关联不认证正确性，也不注册插件。Planner 收到概要，Coder/Reviewer/Repairer 只收到当前算法至多一条有大小上限的源码摘录。生成版本通过 `context_from` 记录曾收到的参考节点；这条边不证明模型采纳了代码，也不会将候选的 `unvalidated` 状态改成通过。
 
 详情与扫描限制见 [仓库抽取指南](repository-extraction.md)。
+
+`discover` 自动下载公开仓库后调用同一 AST 抽取器，提议新的 Capability 并记录来源证据。评分函数源码与模型归纳分开，后者不是公式认证。生成版本经过实际执行后，只有验证集和最终测试通过才产生 AlgorithmRelease。其 `version` 使用运行 ID，来源固定为不可变提交；活动版本写入 `state/algorithm_registry/active.json`。参考代码、材料、验证记录和许可均进行文件哈希校验，注册表不导入模型生成的注册脚本。详见 [发现指南](github-discovery.md)。
 
 抽取结果见 `knowledge/extracted_capabilities.json`；带验证历史的图见 `examples/demo/knowledge/graph.json`。

@@ -1,0 +1,121 @@
+{
+  "repository": {
+    "repository": "xhluca/bm25s",
+    "url": "https://github.com/xhluca/bm25s",
+    "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+    "license": "MIT"
+  },
+  "source_functions": [
+    {
+      "path": "bm25s/__init__.py",
+      "qualified_name": "BM25._get_top_k_results",
+      "signature": "def _get_top_k_results(self, query_tokens_single: List[str], k: int=1000, backend='auto', sorted: bool=False, weight_mask: np.ndarray=None)",
+      "code": "def _get_top_k_results(\n    self,\n    query_tokens_single: List[str],\n    k: int = 1000,\n    backend=\"auto\",\n    sorted: bool = False,\n    weight_mask: np.ndarray = None,\n):\n    if len(query_tokens_single) == 0:\n        logger.info(\n            msg=\"The query is empty. This will result in a zero score for all documents.\"\n        )\n        scores_q = np.zeros(self.scores[\"num_docs\"], dtype=self.dtype)\n    else:\n        scores_q = self.get_scores(query_tokens_single, weight_mask=weight_mask)\n\n    if backend.startswith(\"numba\"):\n        if NUMBA_AVAILABLE is False:\n            raise ImportError(\n                \"Numba is not installed. Please install numba to use the numba backend.\"\n            )\n        topk_scores, topk_indices = selection_jit.topk(\n            scores_q, k=k, sorted=sorted, backend=backend\n        )\n    else:\n        topk_scores, topk_indices = selection_np.topk(\n            scores_q, k=k, sorted=sorted, backend=backend\n        )\n\n    return topk_scores, topk_indices",
+      "exact_quote_options": [
+        "def _get_top_k_results(",
+        "return topk_scores, topk_indices"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "acfe408d3cafec38b061d055743a4081ab7ce38c93b300815bfbf9a399b7d6eb"
+    },
+    {
+      "path": "bm25s/scoring.py",
+      "qualified_name": "_score_tfc_bm25plus",
+      "signature": "def _score_tfc_bm25plus(tf_array, l_d, l_avg, k1, b, delta)",
+      "code": "def _score_tfc_bm25plus(tf_array, l_d, l_avg, k1, b, delta):\n    num = (k1 + 1) * tf_array\n    den = k1 * (1 - b + b * l_d / l_avg) + tf_array\n    return (num / den) + delta",
+      "exact_quote_options": [
+        "def _score_tfc_bm25plus(tf_array, l_d, l_avg, k1, b, delta):",
+        "return (num / den) + delta"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "859c13bd8e346d0d585b6743aad010b9e9fcbe163b1b3d6f1d67a72e369e2318"
+    },
+    {
+      "path": "bm25s/scoring.py",
+      "qualified_name": "_score_idf_bm25plus",
+      "signature": "def _score_idf_bm25plus(df, N)",
+      "code": "def _score_idf_bm25plus(df, N):\n    return math.log((N + 1) / df)",
+      "exact_quote_options": [
+        "def _score_idf_bm25plus(df, N):",
+        "return math.log((N + 1) / df)"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "859c13bd8e346d0d585b6743aad010b9e9fcbe163b1b3d6f1d67a72e369e2318"
+    },
+    {
+      "path": "bm25s/__init__.py",
+      "qualified_name": "BM25.retrieve",
+      "signature": "def retrieve(self, query_tokens: Union[List[List[str]], tokenization.Tokenized], corpus: List[Any]=None, k: int=10, sorted: bool=True, return_as: str='tuple', show_progress: bool=True, leave_progress: bool=False, n_threads: int=0, chunksize: int=50, backend_selection: str='auto', weight_mask: np.nda",
+      "code": "def retrieve(\n    self,\n    query_tokens: Union[List[List[str]], tokenization.Tokenized],\n    corpus: List[Any] = None,\n    k: int = 10,\n    sorted: bool = True,\n    return_as: str = \"tuple\",\n    show_progress: bool = True,\n    leave_progress: bool = False,\n    n_threads: int = 0,\n    chunksize: int = 50,\n    backend_selection: str = \"auto\",\n    weight_mask: np.ndarray = None,\n):\n    num_docs = self.scores[\"num_docs\"]\n    if k > num_docs:\n        raise ValueError(\n            f\"k of {k} is larger than the number of available scores\"\n            f\", which is {num_docs} (corpus size should be larger than top-k).\"\n            f\" Please set with a smaller k or increase the size of corpus.\"\n        )\n    allowed_return_as = [\"tuple\", \"documents\"]\n\n    if return_as not in allowed_return_as:\n        raise ValueError(\"`return_as` must be either 'tuple' or 'documents'\")\n    else:\n        pass\n\n    if n_threads == -1:\n        n_threads = os.cpu_count()\n\n    # if it's a list of list of tokens ids (int), we remove any integer not in the vocab_dict\n    if is_list_of_list_of_type(query_tokens, type_=int):\n        if not hasattr(self, \"unique_token_ids_set\") or self.unique_token_ids_set is None:\n",
+      "exact_quote_options": [
+        "def retrieve(",
+        "return Results(documents=res[0], scores=res[1])",
+        "return res"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": true,
+      "file_sha256": "acfe408d3cafec38b061d055743a4081ab7ce38c93b300815bfbf9a399b7d6eb"
+    },
+    {
+      "path": "bm25s/__init__.py",
+      "qualified_name": "BM25.build_index_from_tokens",
+      "signature": "def build_index_from_tokens(self, corpus_tokens, show_progress=True, leave_progress=False)",
+      "code": "def build_index_from_tokens(\n    self, corpus_tokens, show_progress=True, leave_progress=False\n):\n    unique_tokens = get_unique_tokens(\n        corpus_tokens,\n        show_progress=show_progress,\n        leave_progress=leave_progress,\n        desc=\"BM25S Create Vocab\",\n    )\n    vocab_dict = {token: i for i, token in enumerate(unique_tokens)}\n    unique_token_ids = [vocab_dict[token] for token in unique_tokens]\n\n    corpus_token_ids = [\n        [vocab_dict[token] for token in tokens]\n        for tokens in tqdm(\n            corpus_tokens,\n            desc=\"BM25S Convert tokens to indices\",\n            leave=leave_progress,\n            disable=not show_progress,\n        )\n    ]\n\n    scores = self.build_index_from_ids(\n        unique_token_ids=unique_token_ids,\n        corpus_token_ids=corpus_token_ids,\n        show_progress=show_progress,\n        leave_progress=leave_progress,\n    )\n\n    return scores, vocab_dict",
+      "exact_quote_options": [
+        "def build_index_from_tokens(",
+        "return scores, vocab_dict"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "acfe408d3cafec38b061d055743a4081ab7ce38c93b300815bfbf9a399b7d6eb"
+    },
+    {
+      "path": "bm25s/__init__.py",
+      "qualified_name": "BM25.get_tokens_ids",
+      "signature": "def get_tokens_ids(self, query_tokens: List[str]) -> List[int]",
+      "code": "def get_tokens_ids(self, query_tokens: List[str]) -> List[int]:\n    return [\n        self.vocab_dict[token] for token in query_tokens if token in self.vocab_dict\n    ]",
+      "exact_quote_options": [
+        "def get_tokens_ids(self, query_tokens: List[str]) -> List[int]:"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": false,
+      "file_sha256": "acfe408d3cafec38b061d055743a4081ab7ce38c93b300815bfbf9a399b7d6eb"
+    },
+    {
+      "path": "bm25s/__init__.py",
+      "qualified_name": "BM25.__init__",
+      "signature": "def __init__(self, k1=1.5, b=0.75, delta=0.5, method='lucene', idf_method=None, dtype='float32', int_dtype='int32', corpus=None, backend='numpy', csc_backend='numpy', auto_compile=True)",
+      "code": "def __init__(\n    self,\n    k1=1.5,\n    b=0.75,\n    delta=0.5,\n    method=\"lucene\",\n    idf_method=None,\n    dtype=\"float32\",\n    int_dtype=\"int32\",\n    corpus=None,\n    backend=\"numpy\",\n    csc_backend=\"numpy\",\n    auto_compile=True,\n):\n    self.k1 = k1\n    self.b = b\n    self.delta = delta\n    self.dtype = dtype\n    self.int_dtype = int_dtype\n    self.method = method\n    self.idf_method = idf_method if idf_method is not None else method\n    self.methods_requiring_nonoccurrence = (\"bm25l\", \"bm25+\")\n    self.corpus = corpus\n    self._original_version = __version__\n    self.csc_backend = csc_backend\n\n    if backend == \"auto\":\n        self.backend = \"numba\" if NUMBA_AVAILABLE else \"numpy\"\n    else:\n        self.backend = backend\n\n    if csc_backend == \"auto\":\n        self.csc_backend = \"scipy\" if SCIPY_AVAILABLE else \"numpy\"\n\n    if self.backend == \"numba\" and not NUMBA_AVAILABLE:\n        raise ImportError(\n            \"Numba is not installed. Please install numba with `pip install numba` to use the numba backend.\"\n        )\n\n    if csc_backend == \"scipy\" and not SCIPY_AVAILABLE:\n        raise ImportError(\n            \"scipy is not installed. Please install scipy to use the scipy csc",
+      "exact_quote_options": [
+        "def __init__("
+      ],
+      "docstrings_removed": true,
+      "code_truncated": true,
+      "file_sha256": "acfe408d3cafec38b061d055743a4081ab7ce38c93b300815bfbf9a399b7d6eb"
+    },
+    {
+      "path": "bm25s/__init__.py",
+      "qualified_name": "BM25.get_scores",
+      "signature": "def get_scores(self, query_tokens_single: List[str], weight_mask=None) -> np.ndarray",
+      "code": "def get_scores(\n    self, query_tokens_single: List[str], weight_mask=None\n) -> np.ndarray:\n    if not isinstance(query_tokens_single, list):\n        raise ValueError(\"The query_tokens must be a list of tokens.\")\n\n    if isinstance(query_tokens_single[0], str):\n        que",
+      "exact_quote_options": [
+        "def get_scores(",
+        "return self.get_scores_from_ids(query_tokens_ids, weight_mask=weight_mask)"
+      ],
+      "docstrings_removed": true,
+      "code_truncated": true,
+      "file_sha256": "acfe408d3cafec38b061d055743a4081ab7ce38c93b300815bfbf9a399b7d6eb"
+    }
+  ],
+  "source_documents": [
+    {
+      "path": "README.md",
+      "text": "                  <a href=\"https://github.com/xhluca/bm25s\">💻 GitHub</a>\n            </td>\n            <td>\n                  <a href=\"https://bm25s.github.io\">🏠 Homepage</a>\n            </td>\n            <td>\n                  <a href=\"https://arxiv.org/abs/2407.03618\">📝 Technical Report</a>\n            </td>\n            <td>\n                  <a href=\"https://huggingface.co/blog/xhluca/bm25s\">🤗 Blog Post</a>\n            </td>\n            <td>\n                  <a href=\"#installation\">🛠️ Installation</a>\n            </td>\n      </tr>\n</table>\n\n<a href=\"https://pepy.tech/projects/bm25s\"><img src=\"https://static.pepy.tech/badge/bm25s\" alt=\"PyPI Downloads\"></a>\n<a href=\"https://pypi.org/project/bm25s/\"><img alt=\"PyPI - Version\" src=\"https://img.shields.io/pypi/v/bm25s\"></a>\n<a href=\"https://github.com/xhluca/bm25s/blob/main/LICENSE\"><img alt=\"GitHub License\" src=\"https://img.shields.io/github/license/xhluca/bm25s?link=https%3A%2F%2Fgithub.com%2Fxhluca%2Fbm25s%2Fblob%2Fmain%2FLICENSE\"></a",
+      "sha256": "9166cd1c822856652c92526802670a1d73976bcc4141e3eb0940af611389a319"
+    }
+  ],
+  "trust": "untrusted_repository_evidence"
+}

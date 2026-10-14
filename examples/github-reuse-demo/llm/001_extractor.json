@@ -1,0 +1,280 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "extractor",
+  "context": {
+    "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+    "text": "# 中文技术记忆检索：TF-IDF\n\n能力标识：char_tfidf。算法：tfidf。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文技术笔记可以使用字符一至三元组 TF-IDF 与余弦相似度进行检索，无须额外标注训练数据。先在记忆文本上拟合向量器，再转换查询；不要把查询加入拟合语料。保留英文技术词并统一大小写。检索分数相同按 ID 排序，空查询、空语料和非正 top_k 返回空列表。\n\n适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：scikit-learn。\n局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。\n来源为本项目编写的演示算法说明，算法接口参考 scikit-learn 官方文档：\nhttps://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html\n",
+    "registered_algorithms": [
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "version": "1.0.1",
+        "task": "memory_retrieval",
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "environment": "retrieval-v1",
+        "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。必须对 texts=[memory[\"text\"] for memory in memories] 拟合，每条完整记忆对应矩阵一行，行数必须等于 len(memories)。禁止把拆分去重的词当成多篇文档，禁止移除中文或过滤行后仍用原列表索引；transform([query]) 后与整个语料计算相似度。",
+        "public_cases": [
+          {
+            "query": "甲乙 alpha beta",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙 alpha beta",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙 alpha gamma",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0000000000000016
+              },
+              {
+                "id": "b",
+                "score": 0.46518071501565006
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。",
+        "public_cases": []
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "version": "1.0.1",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。中文双字必须从原文连续中文片段按相邻位置切分，不能从无序集合取字符再拼接。英文标识符必须整词加入集合，例如 tokens.add(fragment)，禁止 tokens.update(fragment) 将英文拆成字母；alpha 与 beta 的英文词集合没有交集。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。",
+        "public_cases": [
+          {
+            "query": "甲乙",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0
+              },
+              {
+                "id": "b",
+                "score": 0.2
+              }
+            ]
+          },
+          {
+            "query": "ALPHA",
+            "memories": [
+              {
+                "id": "a",
+                "text": "alpha",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "beta",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "registered_metrics": [
+      "mrr_at_k",
+      "p95_ms",
+      "precision_at_k",
+      "recall_at_k"
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "Capability": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "pattern": "^[a-z][a-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "task": {
+            "const": "memory_retrieval",
+            "title": "Task",
+            "type": "string"
+          },
+          "algorithm": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Algorithm",
+            "type": "string",
+            "enum": [
+              "tfidf",
+              "bm25",
+              "jaccard"
+            ]
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "applicable_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Applicable Conditions",
+            "type": "array"
+          },
+          "metrics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "dependencies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "evidence": {
+            "minLength": 10,
+            "title": "Evidence",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "task",
+          "algorithm",
+          "inputs",
+          "outputs",
+          "applicable_conditions",
+          "metrics",
+          "dependencies",
+          "limitations",
+          "source_id",
+          "evidence"
+        ],
+        "title": "Capability",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "capabilities": {
+        "items": {
+          "$ref": "#/$defs/Capability"
+        },
+        "maxItems": 4,
+        "minItems": 1,
+        "title": "Capabilities",
+        "type": "array"
+      }
+    },
+    "required": [
+      "capabilities"
+    ],
+    "title": "Extraction",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "capabilities": [
+      {
+        "id": "char_tfidf",
+        "name": "中文技术记忆 tfidf",
+        "task": "memory_retrieval",
+        "algorithm": "tfidf",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "applicable_conditions": [
+          "小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+        ],
+        "metrics": [
+          "mrr_at_k",
+          "p95_ms",
+          "precision_at_k",
+          "recall_at_k"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "limitations": [
+          "局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。"
+        ],
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "evidence": "适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+      }
+    ]
+  },
+  "duration_seconds": 0.0001207499299198389
+}

@@ -1,0 +1,19 @@
+{
+  "id": "github_bm25plus",
+  "name": "BM25Plus",
+  "guidance": "The BM25Plus algorithm adapts the standard BM25 scoring by incorporating a delta parameter to adjust document relevance scores. It utilizes a unified tokenization pipeline to convert query and corpus tokens into indices before applying the scoring formula. The implementation requires a custom backend selection mechanism to handle different numerical computation backends efficiently.",
+  "applicable_conditions": [
+    "k must be less than or equal to the number of available scores in the corpus",
+    "delta parameter must be provided to adjust the final relevance score"
+  ],
+  "limitations": [
+    "The algorithm assumes a fixed vocabulary size and does not support dynamic vocabulary expansion",
+    "The delta parameter is not automatically calculated and must be explicitly set during initialization"
+  ],
+  "evidence": [
+    {
+      "path": "bm25s/scoring.py",
+      "quote": "return (num / den) + delta"
+    }
+  ]
+}

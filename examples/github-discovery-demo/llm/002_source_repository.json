@@ -1,0 +1,90 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "source_repository",
+  "context": {
+    "description": "请为中文与英文混合技术笔记检索发现并复刻一个尚未登记的 BM25Plus 算法。自动在 GitHub 寻找独立算法实现库，依据外部源码保留评分公式和参数，适配 retrieve(query, memories, top_k=5)。通过统一 Docker 验证和最终测试后登记，供后续工厂任务使用。",
+    "repositories": [
+      {
+        "full_name": "xhluca/bm25s",
+        "description": "Fast BM25 search in Python, powered by Numpy and Numba",
+        "license": "MIT",
+        "stars": 1805,
+        "url": "https://github.com/xhluca/bm25s"
+      },
+      {
+        "full_name": "dorianbrown/rank_bm25",
+        "description": "A Collection of BM25 Algorithms in Python",
+        "license": "Apache-2.0",
+        "stars": 1407,
+        "url": "https://github.com/dorianbrown/rank_bm25"
+      },
+      {
+        "full_name": "nhirakawa/BM25",
+        "description": "A Python implementation of the BM25 ranking function.",
+        "license": "MIT",
+        "stars": 244,
+        "url": "https://github.com/nhirakawa/BM25"
+      },
+      {
+        "full_name": "jxmorris12/bm25_pt",
+        "description": "minimal pytorch implementation of bm25 (with sparse tensors)",
+        "license": "MIT",
+        "stars": 105,
+        "url": "https://github.com/jxmorris12/bm25_pt"
+      },
+      {
+        "full_name": "cognica-io/bayesian-bm25",
+        "description": "Bayesian probability transforms for BM25 retrieval scores",
+        "license": "Apache-2.0",
+        "stars": 77,
+        "url": "https://github.com/cognica-io/bayesian-bm25"
+      }
+    ],
+    "existing_algorithms": [
+      "bm25",
+      "jaccard",
+      "tfidf"
+    ]
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "repository": {
+        "title": "Repository",
+        "type": "string"
+      },
+      "rationale": {
+        "maxLength": 800,
+        "minLength": 1,
+        "title": "Rationale",
+        "type": "string"
+      }
+    },
+    "required": [
+      "repository",
+      "rationale"
+    ],
+    "title": "RepositoryChoice",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "raw_content": "{\"repository\": \"xhluca/bm25s\", \"rationale\": \"该仓库提供了基于NumPy和Numba的Fast BM25实现，支持中文与英文混合检索，符合用户要求的retrieve(query, memories, top_k=5)接口。其开源许可（MIT）和独立算法库属性使其适合作为后续工厂任务的基础。相比其他仓库，它更专注于高性能计算，且未过度依赖PyTorch等框架，便于用户直接复刻和扩展。\"}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 591,
+    "eval_count": 105,
+    "total_duration": 4135718152
+  },
+  "response": {
+    "repository": "xhluca/bm25s",
+    "rationale": "该仓库提供了基于NumPy和Numba的Fast BM25实现，支持中文与英文混合检索，符合用户要求的retrieve(query, memories, top_k=5)接口。其开源许可（MIT）和独立算法库属性使其适合作为后续工厂任务的基础。相比其他仓库，它更专注于高性能计算，且未过度依赖PyTorch等框架，便于用户直接复刻和扩展。"
+  },
+  "duration_seconds": 4.376240540994331
+}

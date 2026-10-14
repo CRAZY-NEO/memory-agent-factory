@@ -1,0 +1,40 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	source_search(source_search)
+	github_search(github_search)
+	pick_repository(pick_repository)
+	download_repository(download_repository)
+	extract_repository(extract_repository)
+	propose_algorithm(propose_algorithm)
+	generate(generate)
+	validate(validate)
+	review(review)
+	select(select)
+	test(test)
+	approve_algorithm(approve_algorithm)
+	persist(persist)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> source_search;
+	approve_algorithm --> persist;
+	download_repository --> extract_repository;
+	extract_repository --> propose_algorithm;
+	generate --> validate;
+	github_search --> pick_repository;
+	pick_repository --> download_repository;
+	propose_algorithm --> generate;
+	review --> generate;
+	select -.-> persist;
+	select -.-> test;
+	source_search --> github_search;
+	test --> approve_algorithm;
+	validate -.-> review;
+	validate -.-> select;
+	persist --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

@@ -47,7 +47,7 @@ class JobStore:
             db.close()
 
     def enqueue(self, kind, payload, max_pending=20):
-        if kind not in {"factory", "search", "ingest"}:
+        if kind not in {"factory", "search", "ingest", "discovery"}:
             raise ValueError("Unsupported job type")
         uid, now = uuid.uuid4().hex, time.time()
         with self.connect() as db:

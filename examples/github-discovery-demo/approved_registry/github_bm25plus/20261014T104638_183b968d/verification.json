@@ -1,0 +1,3134 @@
+{
+  "validation": {
+    "split": "validation",
+    "passed": true,
+    "errors": [],
+    "metrics": {
+      "recall_at_k": 0.9444444444444444,
+      "mrr_at_k": 0.9236111111111112,
+      "precision_at_k": 0.23333333333333334,
+      "p95_ms": 3.9248017710633576
+    },
+    "top_k": 5,
+    "query_count": 36,
+    "memory_count": 48,
+    "execution": {
+      "wall_seconds": 0.6312543749809265,
+      "runner": "docker"
+    },
+    "gates": {
+      "task": "memory_retrieval",
+      "algorithms": [
+        "github_bm25plus"
+      ],
+      "plugin_packages": [],
+      "max_candidates": 1,
+      "compare_all_algorithms": true,
+      "metrics": {
+        "recall_at_k": {
+          "min": 0.75,
+          "max": null
+        },
+        "mrr_at_k": {
+          "min": 0.65,
+          "max": null
+        },
+        "precision_at_k": {
+          "min": 0.2,
+          "max": null
+        },
+        "p95_ms": {
+          "min": null,
+          "max": 1000.0
+        }
+      },
+      "selection_order": [
+        "recall_at_k",
+        "mrr_at_k",
+        "precision_at_k"
+      ],
+      "timeout_seconds": 30.0,
+      "max_repairs": 2
+    },
+    "per_query": [
+      {
+        "query_id": "v01",
+        "query": "MySQL 连接池等待导致请求超时怎么排查",
+        "relevant_ids": [
+          "m01"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m01",
+            "score": 74.30340069969807
+          },
+          {
+            "id": "m26",
+            "score": 47.789799680599124
+          },
+          {
+            "id": "m25",
+            "score": 39.51107981491799
+          },
+          {
+            "id": "m43",
+            "score": 35.10229546431281
+          },
+          {
+            "id": "m09",
+            "score": 32.5643828480094
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v02",
+        "query": "Redis 不存在的 key 一直查数据库",
+        "relevant_ids": [
+          "m03"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m03",
+            "score": 45.31263261710435
+          },
+          {
+            "id": "m27",
+            "score": 40.62686040974787
+          },
+          {
+            "id": "m28",
+            "score": 37.21002000174238
+          },
+          {
+            "id": "m48",
+            "score": 35.35924868652431
+          },
+          {
+            "id": "m04",
+            "score": 31.519688239794217
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v03",
+        "query": "Docker 容器退出 137 内存不足",
+        "relevant_ids": [
+          "m05"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m05",
+            "score": 70.02912435258888
+          },
+          {
+            "id": "m30",
+            "score": 50.61032347789319
+          },
+          {
+            "id": "m06",
+            "score": 36.6774625756386
+          },
+          {
+            "id": "m29",
+            "score": 36.54851540708767
+          },
+          {
+            "id": "m38",
+            "score": 33.12464979320155
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v04",
+        "query": "Git rebase 冲突如何处理",
+        "relevant_ids": [
+          "m07"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m07",
+            "score": 40.857765142514914
+          },
+          {
+            "id": "m32",
+            "score": 32.87334308487378
+          },
+          {
+            "id": "m47",
+            "score": 19.831991353962508
+          },
+          {
+            "id": "m24",
+            "score": 17.70725163727901
+          },
+          {
+            "id": "m34",
+            "score": 17.453202213348717
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v05",
+        "query": "asyncio 同步请求阻塞事件循环",
+        "relevant_ids": [
+          "m09"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m09",
+            "score": 91.22307567833715
+          },
+          {
+            "id": "m19",
+            "score": 40.811301235338824
+          },
+          {
+            "id": "m27",
+            "score": 37.487383562565604
+          },
+          {
+            "id": "m28",
+            "score": 34.58106308801512
+          },
+          {
+            "id": "m42",
+            "score": 34.37411546968621
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v06",
+        "query": "RAG 检索效果用哪些指标评估",
+        "relevant_ids": [
+          "m11"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m11",
+            "score": 38.897920405801514
+          },
+          {
+            "id": "m35",
+            "score": 31.98635032474064
+          },
+          {
+            "id": "m21",
+            "score": 25.416608559919283
+          },
+          {
+            "id": "m23",
+            "score": 24.520781752219
+          },
+          {
+            "id": "m27",
+            "score": 24.04938413913749
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v07",
+        "query": "Jetson Ollama 如何在局域网访问",
+        "relevant_ids": [
+          "m13"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m13",
+            "score": 62.496270737267636
+          },
+          {
+            "id": "m06",
+            "score": 29.968119029825747
+          },
+          {
+            "id": "m46",
+            "score": 25.513999147583903
+          },
+          {
+            "id": "m03",
+            "score": 25.400660125920844
+          },
+          {
+            "id": "m04",
+            "score": 23.925199438326437
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v08",
+        "query": "文本分类类别不平衡不能只看 accuracy",
+        "relevant_ids": [
+          "m16"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m16",
+            "score": 139.83954708121618
+          },
+          {
+            "id": "m40",
+            "score": 57.87743519380733
+          },
+          {
+            "id": "m39",
+            "score": 47.8941674605653
+          },
+          {
+            "id": "m35",
+            "score": 47.272529186682426
+          },
+          {
+            "id": "m45",
+            "score": 46.907610993725136
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v09",
+        "query": "SQLite 并发写事务被阻塞",
+        "relevant_ids": [
+          "m19"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m19",
+            "score": 50.84769487646335
+          },
+          {
+            "id": "m43",
+            "score": 44.54388762048587
+          },
+          {
+            "id": "m09",
+            "score": 38.322797741867944
+          },
+          {
+            "id": "m44",
+            "score": 29.52995154250594
+          },
+          {
+            "id": "m20",
+            "score": 29.340434397137752
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v10",
+        "query": "BM25 和向量检索怎么融合",
+        "relevant_ids": [
+          "m21"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m21",
+            "score": 54.6393571610477
+          },
+          {
+            "id": "m45",
+            "score": 40.971388131424
+          },
+          {
+            "id": "m02",
+            "score": 23.96687712907164
+          },
+          {
+            "id": "m11",
+            "score": 23.551322620330335
+          },
+          {
+            "id": "m35",
+            "score": 23.327505074830494
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v11",
+        "query": "中文 TF-IDF 字符 ngram 余弦相似度",
+        "relevant_ids": [
+          "m22"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m22",
+            "score": 101.28730518361084
+          },
+          {
+            "id": "m35",
+            "score": 35.34818209094595
+          },
+          {
+            "id": "m11",
+            "score": 35.29121703664872
+          },
+          {
+            "id": "m14",
+            "score": 35.055320480228204
+          },
+          {
+            "id": "m38",
+            "score": 35.010178381887876
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v12",
+        "query": "API 超时指数退避与幂等重试",
+        "relevant_ids": [
+          "m18"
+        ],
+        "hard_negative_ids": [],
+        "annotation": "继承 v1 的词面基线查询。",
+        "predictions": [
+          {
+            "id": "m18",
+            "score": 74.74525039253656
+          },
+          {
+            "id": "m42",
+            "score": 37.85398256995271
+          },
+          {
+            "id": "m41",
+            "score": 35.473412460994
+          },
+          {
+            "id": "m01",
+            "score": 33.87960279470129
+          },
+          {
+            "id": "m20",
+            "score": 30.40969455617171
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v13",
+        "query": "MySQL 可借用的连接都占着，请求一直排队，怎样让资源释放",
+        "relevant_ids": [
+          "m01"
+        ],
+        "hard_negative_ids": [
+          "m25",
+          "m26"
+        ],
+        "annotation": "借用连接不释放对应连接池耗尽，认证和行锁不是主因。",
+        "predictions": [
+          {
+            "id": "m01",
+            "score": 54.01015060341916
+          },
+          {
+            "id": "m25",
+            "score": 42.54717995780065
+          },
+          {
+            "id": "m28",
+            "score": 41.992643597727856
+          },
+          {
+            "id": "m27",
+            "score": 40.55661212434637
+          },
+          {
+            "id": "m26",
+            "score": 39.75786485494824
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m25",
+            "rank": 2
+          },
+          {
+            "id": "m26",
+            "rank": 5
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v14",
+        "query": "Redis 查一个根本没有的数据，每次又去后面的数据库，怎么挡住",
+        "relevant_ids": [
+          "m03"
+        ],
+        "hard_negative_ids": [
+          "m27",
+          "m28"
+        ],
+        "annotation": "不存在的数据反复回源是穿透，热门键流量和过期重建是负例。",
+        "predictions": [
+          {
+            "id": "m03",
+            "score": 60.86672574284899
+          },
+          {
+            "id": "m01",
+            "score": 56.60889672451971
+          },
+          {
+            "id": "m27",
+            "score": 56.27026609191243
+          },
+          {
+            "id": "m28",
+            "score": 55.151628843633624
+          },
+          {
+            "id": "m04",
+            "score": 51.83206406902549
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m27",
+            "rank": 3
+          },
+          {
+            "id": "m28",
+            "rank": 4
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v15",
+        "query": "asyncio 里用了同步 HTTP，其他协程全停了，怎样避免等它",
+        "relevant_ids": [
+          "m09"
+        ],
+        "hard_negative_ids": [
+          "m33"
+        ],
+        "annotation": "等待型网络 IO 阻塞事件循环，非 CPU 并行问题。",
+        "predictions": [
+          {
+            "id": "m09",
+            "score": 45.731649539688725
+          },
+          {
+            "id": "m19",
+            "score": 38.064277781125604
+          },
+          {
+            "id": "m33",
+            "score": 32.05163964585913
+          },
+          {
+            "id": "m18",
+            "score": 31.14739000970066
+          },
+          {
+            "id": "m46",
+            "score": 27.57248414333015
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m33",
+            "rank": 3
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v16",
+        "query": "RAG 怎样知道该找的资料有没有被找回来，第一条是否排对了",
+        "relevant_ids": [
+          "m11"
+        ],
+        "hard_negative_ids": [
+          "m35"
+        ],
+        "annotation": "召回和首条排序评估属于检索质量，不是回答忠实性。",
+        "predictions": [
+          {
+            "id": "m35",
+            "score": 57.347964604950356
+          },
+          {
+            "id": "m01",
+            "score": 45.63363806129439
+          },
+          {
+            "id": "m41",
+            "score": 45.3971410512474
+          },
+          {
+            "id": "m34",
+            "score": 40.357294102754636
+          },
+          {
+            "id": "m22",
+            "score": 38.69432170699585
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": null,
+        "missed_relevant_ids": [
+          "m11"
+        ],
+        "hard_negative_hits": [
+          {
+            "id": "m35",
+            "rank": 1
+          }
+        ],
+        "hard_negative_confusions": [
+          {
+            "id": "m35",
+            "rank": 1
+          }
+        ],
+        "failure_types": [
+          "missed_relevance",
+          "hard_negative_confusion"
+        ]
+      },
+      {
+        "query_id": "v17",
+        "query": "Ollama 在 Jetson 自己能用，另一台电脑却连不进去，先查什么",
+        "relevant_ids": [
+          "m13"
+        ],
+        "hard_negative_ids": [
+          "m37",
+          "m38"
+        ],
+        "annotation": "跨机器连通性对应监听和防火墙，非速度或磁盘问题。",
+        "predictions": [
+          {
+            "id": "m30",
+            "score": 27.629453953093847
+          },
+          {
+            "id": "m37",
+            "score": 26.098389722637027
+          },
+          {
+            "id": "m20",
+            "score": 25.898124929327537
+          },
+          {
+            "id": "m13",
+            "score": 25.738951327460775
+          },
+          {
+            "id": "m26",
+            "score": 23.67067422590464
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 4,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m37",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [
+          {
+            "id": "m37",
+            "rank": 2
+          }
+        ],
+        "failure_types": [
+          "ranking_error",
+          "hard_negative_confusion"
+        ]
+      },
+      {
+        "query_id": "v18",
+        "query": "分类样本里少数类别太少，总体命中率很好但漏掉它们怎么评估",
+        "relevant_ids": [
+          "m16"
+        ],
+        "hard_negative_ids": [
+          "m40"
+        ],
+        "annotation": "类别不均衡应查看各类召回与 macro F1，非单纯调概率阈值。",
+        "predictions": [
+          {
+            "id": "m16",
+            "score": 58.82487490455527
+          },
+          {
+            "id": "m40",
+            "score": 45.42347121105369
+          },
+          {
+            "id": "m11",
+            "score": 44.20106723360266
+          },
+          {
+            "id": "m27",
+            "score": 39.31339021285826
+          },
+          {
+            "id": "m35",
+            "score": 35.05524272244023
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m40",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v19",
+        "query": "SQLite 两个人同时保存，后一个一直拿不到写机会，怎样缩短等待",
+        "relevant_ids": [
+          "m19"
+        ],
+        "hard_negative_ids": [
+          "m43"
+        ],
+        "annotation": "并发写者等待对应事务和锁，查询索引不是主因。",
+        "predictions": [
+          {
+            "id": "m26",
+            "score": 58.208677892136734
+          },
+          {
+            "id": "m31",
+            "score": 56.989924390846596
+          },
+          {
+            "id": "m20",
+            "score": 56.92398264052161
+          },
+          {
+            "id": "m28",
+            "score": 56.43430214510906
+          },
+          {
+            "id": "m24",
+            "score": 56.04776473063462
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": null,
+        "missed_relevant_ids": [
+          "m19"
+        ],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": [
+          "missed_relevance"
+        ]
+      },
+      {
+        "query_id": "v20",
+        "query": "检索只看词面常漏掉换种说法的笔记，BM25 怎样配合语义向量",
+        "relevant_ids": [
+          "m21"
+        ],
+        "hard_negative_ids": [
+          "m22",
+          "m45"
+        ],
+        "annotation": "需要融合关键词与语义排名，非单一 TF-IDF 或索引迁移。",
+        "predictions": [
+          {
+            "id": "m21",
+            "score": 73.41522414842497
+          },
+          {
+            "id": "m45",
+            "score": 61.3998937241685
+          },
+          {
+            "id": "m46",
+            "score": 55.35472994045027
+          },
+          {
+            "id": "m16",
+            "score": 50.95507132847186
+          },
+          {
+            "id": "m12",
+            "score": 50.90723729268426
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m45",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v21",
+        "query": "MySQL Access denied，密码或授权主机应该怎样核对",
+        "relevant_ids": [
+          "m25"
+        ],
+        "hard_negative_ids": [
+          "m01"
+        ],
+        "annotation": "明确认证失败，不是连接池耗尽。",
+        "predictions": [
+          {
+            "id": "m25",
+            "score": 80.8800095868792
+          },
+          {
+            "id": "m30",
+            "score": 36.7418068067072
+          },
+          {
+            "id": "m34",
+            "score": 36.47995764525818
+          },
+          {
+            "id": "m42",
+            "score": 33.99187530560159
+          },
+          {
+            "id": "m17",
+            "score": 33.63111344891497
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v22",
+        "query": "Redis 一个热点 key 刚过期就有大量请求回源，互斥重建怎么做",
+        "relevant_ids": [
+          "m28"
+        ],
+        "hard_negative_ids": [
+          "m03",
+          "m04",
+          "m27"
+        ],
+        "annotation": "单键过期击穿，区分穿透、多键雪崩与未过期热键。",
+        "predictions": [
+          {
+            "id": "m28",
+            "score": 102.45447604999927
+          },
+          {
+            "id": "m27",
+            "score": 70.01742154944232
+          },
+          {
+            "id": "m04",
+            "score": 65.19309388527884
+          },
+          {
+            "id": "m41",
+            "score": 51.4916365219486
+          },
+          {
+            "id": "m42",
+            "score": 47.89562687166864
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m27",
+            "rank": 2
+          },
+          {
+            "id": "m04",
+            "rank": 3
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v23",
+        "query": "Docker 拉镜像报 no space left on device，要清理什么",
+        "relevant_ids": [
+          "m29"
+        ],
+        "hard_negative_ids": [
+          "m05",
+          "m30"
+        ],
+        "annotation": "存储空间与 inode 排查，非 OOM 或应用退出。",
+        "predictions": [
+          {
+            "id": "m29",
+            "score": 84.29704254097676
+          },
+          {
+            "id": "m47",
+            "score": 35.37372555187326
+          },
+          {
+            "id": "m05",
+            "score": 33.924590509352136
+          },
+          {
+            "id": "m38",
+            "score": 31.925710623477947
+          },
+          {
+            "id": "m06",
+            "score": 31.323593626753784
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m05",
+            "rank": 3
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v24",
+        "query": "Git 提交已经共享，我想保留历史再产生一笔反向修改",
+        "relevant_ids": [
+          "m08"
+        ],
+        "hard_negative_ids": [
+          "m07",
+          "m31"
+        ],
+        "annotation": "共享提交撤销用 revert，非 rebase 冲突或未跟踪文件保护。",
+        "predictions": [
+          {
+            "id": "m08",
+            "score": 88.71928964904285
+          },
+          {
+            "id": "m24",
+            "score": 59.601828241996564
+          },
+          {
+            "id": "m07",
+            "score": 49.07916482398355
+          },
+          {
+            "id": "m32",
+            "score": 45.73641114352405
+          },
+          {
+            "id": "m38",
+            "score": 42.89139640188047
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m07",
+            "rank": 3
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v25",
+        "query": "Python ImportError cannot import name，锁文件里的包版本不兼容",
+        "relevant_ids": [
+          "m34"
+        ],
+        "hard_negative_ids": [
+          "m10"
+        ],
+        "annotation": "包已存在但接口版本不符，区别模块找不到。",
+        "predictions": [
+          {
+            "id": "m34",
+            "score": 99.62430716833381
+          },
+          {
+            "id": "m45",
+            "score": 44.84198155858096
+          },
+          {
+            "id": "m31",
+            "score": 44.24530653584887
+          },
+          {
+            "id": "m47",
+            "score": 41.86012426641807
+          },
+          {
+            "id": "m24",
+            "score": 40.06123853025137
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v26",
+        "query": "RAG 回答引用了资料却编造结论，应该检查哪种质量",
+        "relevant_ids": [
+          "m35"
+        ],
+        "hard_negative_ids": [
+          "m11"
+        ],
+        "annotation": "检查回答忠实性；找到相关文档不证明回答正确。",
+        "predictions": [
+          {
+            "id": "m35",
+            "score": 65.61269408501632
+          },
+          {
+            "id": "m36",
+            "score": 44.283025086798176
+          },
+          {
+            "id": "m02",
+            "score": 36.13828737478521
+          },
+          {
+            "id": "m11",
+            "score": 35.98167158680262
+          },
+          {
+            "id": "m45",
+            "score": 35.17688102796854
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m11",
+            "rank": 4
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v27",
+        "query": "API 返回 401，Bearer token 已过期还应该一直重试吗",
+        "relevant_ids": [
+          "m41"
+        ],
+        "hard_negative_ids": [
+          "m18",
+          "m42"
+        ],
+        "annotation": "凭据过期需要更新身份，区别超时重试与限流。",
+        "predictions": [
+          {
+            "id": "m41",
+            "score": 61.63520152488293
+          },
+          {
+            "id": "m42",
+            "score": 45.490532391537705
+          },
+          {
+            "id": "m28",
+            "score": 39.85016023993249
+          },
+          {
+            "id": "m18",
+            "score": 39.118827784615476
+          },
+          {
+            "id": "m20",
+            "score": 35.68104561617641
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m42",
+            "rank": 2
+          },
+          {
+            "id": "m18",
+            "rank": 4
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v28",
+        "query": "SQLite SELECT 扫描太多行，怎么用执行计划给 WHERE 建索引",
+        "relevant_ids": [
+          "m43"
+        ],
+        "hard_negative_ids": [
+          "m19"
+        ],
+        "annotation": "读查询扫描和索引问题，非并发写等待。",
+        "predictions": [
+          {
+            "id": "m43",
+            "score": 93.49473238807238
+          },
+          {
+            "id": "m02",
+            "score": 80.06627198441609
+          },
+          {
+            "id": "m33",
+            "score": 46.86173174328726
+          },
+          {
+            "id": "m45",
+            "score": 46.136947625214205
+          },
+          {
+            "id": "m26",
+            "score": 41.64346309289072
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v29",
+        "query": "MySQL 请求超时，如何分别排查连接池耗尽和慢查询索引",
+        "relevant_ids": [
+          "m01",
+          "m02"
+        ],
+        "hard_negative_ids": [
+          "m25"
+        ],
+        "annotation": "两部分分别要求连接释放和执行计划，认证失败不直接回答。",
+        "predictions": [
+          {
+            "id": "m01",
+            "score": 97.79181517704438
+          },
+          {
+            "id": "m43",
+            "score": 69.22687799070678
+          },
+          {
+            "id": "m02",
+            "score": 67.18070947172905
+          },
+          {
+            "id": "m11",
+            "score": 56.60192077445803
+          },
+          {
+            "id": "m25",
+            "score": 55.26622261722679
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m25",
+            "rank": 5
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v30",
+        "query": "Redis 不存在的数据穿透和许多 TTL 同时失效，两种故障如何保护数据库",
+        "relevant_ids": [
+          "m03",
+          "m04"
+        ],
+        "hard_negative_ids": [
+          "m28"
+        ],
+        "annotation": "两种明确故障分别穿透与雪崩，非仅单热键击穿。",
+        "predictions": [
+          {
+            "id": "m03",
+            "score": 88.25223277041117
+          },
+          {
+            "id": "m04",
+            "score": 73.62206847420259
+          },
+          {
+            "id": "m48",
+            "score": 67.59926334839145
+          },
+          {
+            "id": "m27",
+            "score": 67.03585477373116
+          },
+          {
+            "id": "m28",
+            "score": 65.37652718385817
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m28",
+            "rank": 5
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v31",
+        "query": "Docker 容器既出现 OOMKilled 又无法访问外部服务，要从内存与网络两边查",
+        "relevant_ids": [
+          "m05",
+          "m06"
+        ],
+        "hard_negative_ids": [
+          "m29"
+        ],
+        "annotation": "同时询问内存和网络，磁盘负例仅有相同产品名。",
+        "predictions": [
+          {
+            "id": "m06",
+            "score": 93.89051575605407
+          },
+          {
+            "id": "m05",
+            "score": 68.12036393552916
+          },
+          {
+            "id": "m30",
+            "score": 61.51756906778625
+          },
+          {
+            "id": "m14",
+            "score": 49.6841395102471
+          },
+          {
+            "id": "m46",
+            "score": 49.58113146980166
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v32",
+        "query": "Git rebase 冲突解决后如何继续，以及共享的错误提交如何撤销",
+        "relevant_ids": [
+          "m07",
+          "m08"
+        ],
+        "hard_negative_ids": [
+          "m32"
+        ],
+        "annotation": "要求 rebase continue 和 revert，不是 merge 后提交。",
+        "predictions": [
+          {
+            "id": "m08",
+            "score": 96.70166041421263
+          },
+          {
+            "id": "m32",
+            "score": 92.41678603729147
+          },
+          {
+            "id": "m07",
+            "score": 75.04551843197477
+          },
+          {
+            "id": "m38",
+            "score": 52.57047925505945
+          },
+          {
+            "id": "m44",
+            "score": 51.21514188052991
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m32",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v33",
+        "query": "RAG 的文档怎么分块，之后怎么用 Recall 和 MRR 检查检索",
+        "relevant_ids": [
+          "m12",
+          "m11"
+        ],
+        "hard_negative_ids": [
+          "m35"
+        ],
+        "annotation": "需要分块和检索指标，回答忠实性是相近评估主题。",
+        "predictions": [
+          {
+            "id": "m11",
+            "score": 46.00346827022383
+          },
+          {
+            "id": "m35",
+            "score": 39.785603653585845
+          },
+          {
+            "id": "m21",
+            "score": 37.96318364301964
+          },
+          {
+            "id": "m12",
+            "score": 36.4836944786678
+          },
+          {
+            "id": "m46",
+            "score": 35.733364489148606
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m35",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v34",
+        "query": "Jetson Ollama 的局域网访问与模型共享内存不足，分别怎样配置",
+        "relevant_ids": [
+          "m13",
+          "m14"
+        ],
+        "hard_negative_ids": [
+          "m38"
+        ],
+        "annotation": "同时要求连通性和推理内存管理，磁盘不是共享内存。",
+        "predictions": [
+          {
+            "id": "m13",
+            "score": 91.7285008381076
+          },
+          {
+            "id": "m38",
+            "score": 74.69062719823252
+          },
+          {
+            "id": "m14",
+            "score": 73.1225469775518
+          },
+          {
+            "id": "m05",
+            "score": 61.58264593245312
+          },
+          {
+            "id": "m29",
+            "score": 58.84252183659693
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m38",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v35",
+        "query": "API 请求超时怎样做幂等退避，同时日志如何避免保存密钥",
+        "relevant_ids": [
+          "m18",
+          "m17"
+        ],
+        "hard_negative_ids": [
+          "m41"
+        ],
+        "annotation": "要求重试与日志隐私两项，非身份失效处理。",
+        "predictions": [
+          {
+            "id": "m18",
+            "score": 70.02248736291371
+          },
+          {
+            "id": "m17",
+            "score": 66.99778348194121
+          },
+          {
+            "id": "m42",
+            "score": 66.09787149461685
+          },
+          {
+            "id": "m01",
+            "score": 53.29913423085081
+          },
+          {
+            "id": "m09",
+            "score": 51.929041291969206
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "v36",
+        "query": "个人记忆新旧事实冲突如何保留证据，检索又怎样按租户控制访问",
+        "relevant_ids": [
+          "m24",
+          "m46"
+        ],
+        "hard_negative_ids": [
+          "m47"
+        ],
+        "annotation": "要求事实版本与访问权限，刷新页面缓存不足以回答。",
+        "predictions": [
+          {
+            "id": "m24",
+            "score": 107.72132366701055
+          },
+          {
+            "id": "m46",
+            "score": 84.86751345465248
+          },
+          {
+            "id": "m47",
+            "score": 72.53807530640336
+          },
+          {
+            "id": "m07",
+            "score": 60.96149721756155
+          },
+          {
+            "id": "m35",
+            "score": 58.91185803311565
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m47",
+            "rank": 3
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      }
+    ],
+    "metric_plugins": [
+      {
+        "id": "recall_at_k",
+        "name": "Recall@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "mrr_at_k",
+        "name": "MRR@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "precision_at_k",
+        "name": "Precision@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "p95_ms",
+        "name": "P95 ms",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "lower",
+        "minimum": 0,
+        "maximum": null
+      }
+    ],
+    "diagnostics": [],
+    "by_category": {
+      "direct": {
+        "query_count": 12,
+        "metrics": {
+          "recall_at_k": 1.0,
+          "mrr_at_k": 1.0,
+          "precision_at_k": 0.20000000000000004,
+          "p95_ms": 3.5035562148550516
+        },
+        "failure_count": 0,
+        "hard_negative_confusion_count": 0
+      },
+      "hard_negative": {
+        "query_count": 8,
+        "metrics": {
+          "recall_at_k": 1.0,
+          "mrr_at_k": 1.0,
+          "precision_at_k": 0.2,
+          "p95_ms": 3.595866443356498
+        },
+        "failure_count": 0,
+        "hard_negative_confusion_count": 0
+      },
+      "multi_relevance": {
+        "query_count": 8,
+        "metrics": {
+          "recall_at_k": 1.0,
+          "mrr_at_k": 1.0,
+          "precision_at_k": 0.4,
+          "p95_ms": 1.859460849664174
+        },
+        "failure_count": 0,
+        "hard_negative_confusion_count": 0
+      },
+      "paraphrase": {
+        "query_count": 8,
+        "metrics": {
+          "recall_at_k": 0.75,
+          "mrr_at_k": 0.65625,
+          "precision_at_k": 0.15000000000000002,
+          "p95_ms": 3.7952705286443233
+        },
+        "failure_count": 3,
+        "hard_negative_confusion_count": 2
+      }
+    }
+  },
+  "test": {
+    "split": "test",
+    "passed": true,
+    "errors": [],
+    "metrics": {
+      "recall_at_k": 0.9666666666666667,
+      "mrr_at_k": 0.925,
+      "precision_at_k": 0.24666666666666667,
+      "p95_ms": 4.034510592464356
+    },
+    "top_k": 5,
+    "query_count": 30,
+    "memory_count": 48,
+    "execution": {
+      "wall_seconds": 0.2840375420637429,
+      "runner": "docker"
+    },
+    "gates": {
+      "task": "memory_retrieval",
+      "algorithms": [
+        "github_bm25plus"
+      ],
+      "plugin_packages": [],
+      "max_candidates": 1,
+      "compare_all_algorithms": true,
+      "metrics": {
+        "recall_at_k": {
+          "min": 0.75,
+          "max": null
+        },
+        "mrr_at_k": {
+          "min": 0.65,
+          "max": null
+        },
+        "precision_at_k": {
+          "min": 0.2,
+          "max": null
+        },
+        "p95_ms": {
+          "min": null,
+          "max": 1000.0
+        }
+      },
+      "selection_order": [
+        "recall_at_k",
+        "mrr_at_k",
+        "precision_at_k"
+      ],
+      "timeout_seconds": 30.0,
+      "max_repairs": 2
+    },
+    "per_query": [
+      {
+        "query_id": "t01",
+        "query": "MySQL 更新记录等锁，应该怎样定位没有提交的长事务",
+        "relevant_ids": [
+          "m26"
+        ],
+        "hard_negative_ids": [
+          "m01",
+          "m02"
+        ],
+        "annotation": "写操作行锁等待，连接池和慢读索引是相近负例。",
+        "predictions": [
+          {
+            "id": "m26",
+            "score": 95.28250692725072
+          },
+          {
+            "id": "m44",
+            "score": 62.390866336052056
+          },
+          {
+            "id": "m20",
+            "score": 57.66850603427353
+          },
+          {
+            "id": "m01",
+            "score": 52.46277555394803
+          },
+          {
+            "id": "m19",
+            "score": 51.65657350695709
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m01",
+            "rank": 4
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t02",
+        "query": "Redis 未过期的热门键让单个实例负载太高，怎样合并请求",
+        "relevant_ids": [
+          "m27"
+        ],
+        "hard_negative_ids": [
+          "m28",
+          "m04"
+        ],
+        "annotation": "未过期热键流量过高，非缓存失效。",
+        "predictions": [
+          {
+            "id": "m27",
+            "score": 93.88419215520321
+          },
+          {
+            "id": "m28",
+            "score": 56.397971152169916
+          },
+          {
+            "id": "m04",
+            "score": 47.673821912600545
+          },
+          {
+            "id": "m42",
+            "score": 42.00258849151907
+          },
+          {
+            "id": "m32",
+            "score": 41.080389790642165
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m28",
+            "rank": 2
+          },
+          {
+            "id": "m04",
+            "rank": 3
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t03",
+        "query": "Docker exit code 1，要先看应用日志还是 OOMKilled",
+        "relevant_ids": [
+          "m30"
+        ],
+        "hard_negative_ids": [
+          "m05"
+        ],
+        "annotation": "码 1 的应用异常排查，码 137 的内存故障是负例。",
+        "predictions": [
+          {
+            "id": "m30",
+            "score": 61.35376279276351
+          },
+          {
+            "id": "m17",
+            "score": 51.6839607540547
+          },
+          {
+            "id": "m29",
+            "score": 42.213901306358565
+          },
+          {
+            "id": "m05",
+            "score": 36.55066679208725
+          },
+          {
+            "id": "m25",
+            "score": 35.99582160789072
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m05",
+            "rank": 4
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t04",
+        "query": "PDF 跨页表格 OCR 后列对应错乱，怎样保留表头与页码",
+        "relevant_ids": [
+          "m36"
+        ],
+        "hard_negative_ids": [
+          "m12"
+        ],
+        "annotation": "要求恢复表格结构，不能仅调整分块长度。",
+        "predictions": [
+          {
+            "id": "m36",
+            "score": 91.20710489864813
+          },
+          {
+            "id": "m12",
+            "score": 48.59151340876816
+          },
+          {
+            "id": "m17",
+            "score": 42.534463444431495
+          },
+          {
+            "id": "m47",
+            "score": 40.60627879689436
+          },
+          {
+            "id": "m30",
+            "score": 40.31607537866858
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m12",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t05",
+        "query": "Ollama 连接成功但 tokens 每秒很低，怎样检查 GPU 和冷加载",
+        "relevant_ids": [
+          "m37"
+        ],
+        "hard_negative_ids": [
+          "m13"
+        ],
+        "annotation": "已连通，重点生成性能而非监听地址。",
+        "predictions": [
+          {
+            "id": "m37",
+            "score": 81.23036581149692
+          },
+          {
+            "id": "m13",
+            "score": 41.31251357449644
+          },
+          {
+            "id": "m01",
+            "score": 41.220458371039236
+          },
+          {
+            "id": "m26",
+            "score": 39.381776513082954
+          },
+          {
+            "id": "m25",
+            "score": 38.99383692844486
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m13",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t06",
+        "query": "embedding 模型换版本以后，旧文档向量索引能直接继续用吗",
+        "relevant_ids": [
+          "m45"
+        ],
+        "hard_negative_ids": [
+          "m21",
+          "m22"
+        ],
+        "annotation": "要求向量空间迁移，非排名融合或字符检索。",
+        "predictions": [
+          {
+            "id": "m45",
+            "score": 107.12302066755366
+          },
+          {
+            "id": "m35",
+            "score": 56.047186962099396
+          },
+          {
+            "id": "m24",
+            "score": 52.408847276526515
+          },
+          {
+            "id": "m46",
+            "score": 48.60760241903913
+          },
+          {
+            "id": "m21",
+            "score": 48.55793343089831
+          }
+        ],
+        "category": "direct",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m21",
+            "rank": 5
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t07",
+        "query": "SQL 读数据很慢，怎样看执行计划避免翻遍整张表",
+        "relevant_ids": [
+          "m02"
+        ],
+        "hard_negative_ids": [
+          "m26"
+        ],
+        "annotation": "读取慢与索引，不是写事务行锁。",
+        "predictions": [
+          {
+            "id": "m02",
+            "score": 62.37511379632387
+          },
+          {
+            "id": "m36",
+            "score": 33.722092137901136
+          },
+          {
+            "id": "m22",
+            "score": 32.70467902295583
+          },
+          {
+            "id": "m16",
+            "score": 31.649269482143453
+          },
+          {
+            "id": "m18",
+            "score": 31.49229814734558
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t08",
+        "query": "Redis 许多键约好同一时刻失效，后端瞬间被请求打满怎么办",
+        "relevant_ids": [
+          "m04"
+        ],
+        "hard_negative_ids": [
+          "m28",
+          "m03"
+        ],
+        "annotation": "多键同时失效对应雪崩。",
+        "predictions": [
+          {
+            "id": "m27",
+            "score": 45.47372789554026
+          },
+          {
+            "id": "m28",
+            "score": 44.83510437446893
+          },
+          {
+            "id": "m09",
+            "score": 38.90026477821857
+          },
+          {
+            "id": "m48",
+            "score": 36.89796596884803
+          },
+          {
+            "id": "m39",
+            "score": 34.362575414465624
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": null,
+        "missed_relevant_ids": [
+          "m04"
+        ],
+        "hard_negative_hits": [
+          {
+            "id": "m28",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [
+          {
+            "id": "m28",
+            "rank": 2
+          }
+        ],
+        "failure_types": [
+          "missed_relevance",
+          "hard_negative_confusion"
+        ]
+      },
+      {
+        "query_id": "t09",
+        "query": "容器里访问 localhost 找不到宿主的服务，名称解析和映射该怎么查",
+        "relevant_ids": [
+          "m06"
+        ],
+        "hard_negative_ids": [
+          "m13",
+          "m48"
+        ],
+        "annotation": "容器网络地址范围而非外部模型监听或迁移旧域名。",
+        "predictions": [
+          {
+            "id": "m06",
+            "score": 94.245187717908
+          },
+          {
+            "id": "m48",
+            "score": 57.44680308459931
+          },
+          {
+            "id": "m34",
+            "score": 55.45283790794136
+          },
+          {
+            "id": "m23",
+            "score": 48.510480712748794
+          },
+          {
+            "id": "m05",
+            "score": 46.88294913735687
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m48",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t10",
+        "query": "Python 明明装了包却说模块不存在，如何确认是不是用了另一个解释器",
+        "relevant_ids": [
+          "m10"
+        ],
+        "hard_negative_ids": [
+          "m34"
+        ],
+        "annotation": "模块搜索路径/解释器，非已有包版本接口差异。",
+        "predictions": [
+          {
+            "id": "m10",
+            "score": 70.6321871960679
+          },
+          {
+            "id": "m34",
+            "score": 64.31335245657137
+          },
+          {
+            "id": "m03",
+            "score": 55.97279043678291
+          },
+          {
+            "id": "m27",
+            "score": 55.679876882124624
+          },
+          {
+            "id": "m35",
+            "score": 51.891275204253645
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m34",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t11",
+        "query": "检索资料切得太碎看不懂，如何把章节上下文和来源一起保留",
+        "relevant_ids": [
+          "m12"
+        ],
+        "hard_negative_ids": [
+          "m36"
+        ],
+        "annotation": "分块上下文缺失；未询问表格恢复。",
+        "predictions": [
+          {
+            "id": "m12",
+            "score": 54.02344117522563
+          },
+          {
+            "id": "m24",
+            "score": 45.590393243930606
+          },
+          {
+            "id": "m38",
+            "score": 40.17028697269651
+          },
+          {
+            "id": "m21",
+            "score": 39.05651385772036
+          },
+          {
+            "id": "m45",
+            "score": 38.50228475712553
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t12",
+        "query": "模型预处理先看了所有数据，测试成绩会不会被提前的信息影响",
+        "relevant_ids": [
+          "m15"
+        ],
+        "hard_negative_ids": [
+          "m39"
+        ],
+        "annotation": "一般特征拟合污染；未指明未来时序窗口。",
+        "predictions": [
+          {
+            "id": "m40",
+            "score": 60.6380909682447
+          },
+          {
+            "id": "m39",
+            "score": 60.5644626569458
+          },
+          {
+            "id": "m07",
+            "score": 59.91215367410432
+          },
+          {
+            "id": "m15",
+            "score": 59.615166275366676
+          },
+          {
+            "id": "m14",
+            "score": 56.34520911696094
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 4,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m39",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [
+          {
+            "id": "m39",
+            "rank": 2
+          }
+        ],
+        "failure_types": [
+          "ranking_error",
+          "hard_negative_confusion"
+        ]
+      },
+      {
+        "query_id": "t13",
+        "query": "以前记住的结论与今天的证据不同，如何保留出处而不直接抹掉旧记录",
+        "relevant_ids": [
+          "m24"
+        ],
+        "hard_negative_ids": [
+          "m47"
+        ],
+        "annotation": "事实冲突与溯源，而非页面刷新。",
+        "predictions": [
+          {
+            "id": "m24",
+            "score": 61.81418080893629
+          },
+          {
+            "id": "m48",
+            "score": 59.369464182783226
+          },
+          {
+            "id": "m17",
+            "score": 53.14856397370253
+          },
+          {
+            "id": "m47",
+            "score": 52.81021101759239
+          },
+          {
+            "id": "m45",
+            "score": 51.364323730686365
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m47",
+            "rank": 4
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t14",
+        "query": "服务平均响应快但少数请求特别慢，怎么报告尾部耗时与启动成本",
+        "relevant_ids": [
+          "m23"
+        ],
+        "hard_negative_ids": [
+          "m37"
+        ],
+        "annotation": "通用尾延迟和冷启动报告，非只针对 Ollama GPU。",
+        "predictions": [
+          {
+            "id": "m23",
+            "score": 81.03453903244953
+          },
+          {
+            "id": "m37",
+            "score": 71.05868280938665
+          },
+          {
+            "id": "m30",
+            "score": 63.50941506013345
+          },
+          {
+            "id": "m16",
+            "score": 58.904490076778664
+          },
+          {
+            "id": "m27",
+            "score": 57.33130924564871
+          }
+        ],
+        "category": "paraphrase",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m37",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t15",
+        "query": "Git checkout 提示未跟踪文件会被覆盖，如何先把个人文件安全收起来",
+        "relevant_ids": [
+          "m31"
+        ],
+        "hard_negative_ids": [
+          "m07",
+          "m08"
+        ],
+        "annotation": "切分支前保护未跟踪文件，不是解合并冲突或撤销提交。",
+        "predictions": [
+          {
+            "id": "m31",
+            "score": 127.31756903596744
+          },
+          {
+            "id": "m24",
+            "score": 69.58991719396451
+          },
+          {
+            "id": "m34",
+            "score": 65.99293335811004
+          },
+          {
+            "id": "m07",
+            "score": 64.42999594142991
+          },
+          {
+            "id": "m20",
+            "score": 61.94128066281328
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m07",
+            "rank": 4
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t16",
+        "query": "Python 算法全在做 CPU 运算，用 asyncio HTTP 客户端能解决 GIL 并行吗",
+        "relevant_ids": [
+          "m33"
+        ],
+        "hard_negative_ids": [
+          "m09"
+        ],
+        "annotation": "CPU 并行需要多进程，不是等待网络。",
+        "predictions": [
+          {
+            "id": "m33",
+            "score": 70.57988353624901
+          },
+          {
+            "id": "m09",
+            "score": 61.30822972161891
+          },
+          {
+            "id": "m48",
+            "score": 50.31800355085157
+          },
+          {
+            "id": "m10",
+            "score": 46.076611112911024
+          },
+          {
+            "id": "m07",
+            "score": 46.04376646631604
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m09",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t17",
+        "query": "Jetson 模型下载到一半磁盘写满，应清理模型还是缩小上下文",
+        "relevant_ids": [
+          "m38"
+        ],
+        "hard_negative_ids": [
+          "m14"
+        ],
+        "annotation": "模型文件占存储，非推理共享内存不足。",
+        "predictions": [
+          {
+            "id": "m38",
+            "score": 119.6370818903607
+          },
+          {
+            "id": "m14",
+            "score": 92.28256675255707
+          },
+          {
+            "id": "m29",
+            "score": 74.8324851763827
+          },
+          {
+            "id": "m37",
+            "score": 70.52332440306256
+          },
+          {
+            "id": "m45",
+            "score": 66.64719683241638
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m14",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t18",
+        "query": "销量预测的滚动窗口把明天观测加进来了，时间划分该怎么修正",
+        "relevant_ids": [
+          "m39"
+        ],
+        "hard_negative_ids": [
+          "m15"
+        ],
+        "annotation": "未来时间窗口泄漏有专门时间切分约束，通用预处理不足以完整回答。",
+        "predictions": [
+          {
+            "id": "m39",
+            "score": 109.70342606369731
+          },
+          {
+            "id": "m23",
+            "score": 56.03949186096639
+          },
+          {
+            "id": "m15",
+            "score": 51.91761649110794
+          },
+          {
+            "id": "m33",
+            "score": 50.70833208046379
+          },
+          {
+            "id": "m04",
+            "score": 50.69420789444945
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m15",
+            "rank": 3
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t19",
+        "query": "分类概率切分点怎样按误报漏报代价选择，能用最终测试挑吗",
+        "relevant_ids": [
+          "m40"
+        ],
+        "hard_negative_ids": [
+          "m16"
+        ],
+        "annotation": "要求阈值选择与测试隔离，训练类别权重并非同一操作。",
+        "predictions": [
+          {
+            "id": "m40",
+            "score": 124.48344763529794
+          },
+          {
+            "id": "m15",
+            "score": 86.29874805970107
+          },
+          {
+            "id": "m39",
+            "score": 71.47640314129453
+          },
+          {
+            "id": "m16",
+            "score": 66.66468899167549
+          },
+          {
+            "id": "m23",
+            "score": 64.61204038985595
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m16",
+            "rank": 4
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t20",
+        "query": "HTTP 429 有 Retry-After，要降低并发还是重新获取认证凭据",
+        "relevant_ids": [
+          "m42"
+        ],
+        "hard_negative_ids": [
+          "m41"
+        ],
+        "annotation": "限流响应与身份认证不同。",
+        "predictions": [
+          {
+            "id": "m41",
+            "score": 87.37363986781276
+          },
+          {
+            "id": "m42",
+            "score": 87.00584479286779
+          },
+          {
+            "id": "m25",
+            "score": 61.20444030735669
+          },
+          {
+            "id": "m28",
+            "score": 50.606208841492865
+          },
+          {
+            "id": "m01",
+            "score": 49.38604794707237
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 2,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m41",
+            "rank": 1
+          }
+        ],
+        "hard_negative_confusions": [
+          {
+            "id": "m41",
+            "rank": 1
+          }
+        ],
+        "failure_types": [
+          "ranking_error",
+          "hard_negative_confusion"
+        ]
+      },
+      {
+        "query_id": "t21",
+        "query": "知识库私有笔记不能让别的租户检索，只有日志脱敏够吗",
+        "relevant_ids": [
+          "m46"
+        ],
+        "hard_negative_ids": [
+          "m17"
+        ],
+        "annotation": "需要检索前权限过滤，日志规则无法替代。",
+        "predictions": [
+          {
+            "id": "m46",
+            "score": 101.37612137895584
+          },
+          {
+            "id": "m17",
+            "score": 74.56439692553468
+          },
+          {
+            "id": "m47",
+            "score": 60.17815645979229
+          },
+          {
+            "id": "m16",
+            "score": 55.91741906148181
+          },
+          {
+            "id": "m29",
+            "score": 54.62565575438325
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m17",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t22",
+        "query": "知识库网页改好了浏览器还显示旧版，怎样刷新 CDN 和本地缓存",
+        "relevant_ids": [
+          "m47"
+        ],
+        "hard_negative_ids": [
+          "m24"
+        ],
+        "annotation": "页面缓存刷新，与事实冲突存证不同。",
+        "predictions": [
+          {
+            "id": "m47",
+            "score": 133.5821648215635
+          },
+          {
+            "id": "m48",
+            "score": 68.16112981170275
+          },
+          {
+            "id": "m27",
+            "score": 67.70517540634674
+          },
+          {
+            "id": "m12",
+            "score": 65.6226934232805
+          },
+          {
+            "id": "m24",
+            "score": 62.77591738583918
+          }
+        ],
+        "category": "hard_negative",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m24",
+            "rank": 5
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t23",
+        "query": "Redis 一个热键刚失效和多个键一起失效，各自用锁重建还是 TTL 抖动",
+        "relevant_ids": [
+          "m28",
+          "m04"
+        ],
+        "hard_negative_ids": [
+          "m27"
+        ],
+        "annotation": "单键击穿与多键雪崩两种失效方案。",
+        "predictions": [
+          {
+            "id": "m28",
+            "score": 98.06218529691468
+          },
+          {
+            "id": "m27",
+            "score": 81.41795318382681
+          },
+          {
+            "id": "m20",
+            "score": 69.1586525923544
+          },
+          {
+            "id": "m04",
+            "score": 66.87996186833146
+          },
+          {
+            "id": "m18",
+            "score": 66.49263213575915
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m27",
+            "rank": 2
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t24",
+        "query": "Python 模块找不到和包版本不兼容各该怎样排查解释器与锁文件",
+        "relevant_ids": [
+          "m10",
+          "m34"
+        ],
+        "hard_negative_ids": [
+          "m33"
+        ],
+        "annotation": "两种导入失败原因，非 CPU 并行。",
+        "predictions": [
+          {
+            "id": "m34",
+            "score": 143.59009482943839
+          },
+          {
+            "id": "m10",
+            "score": 87.50704072985515
+          },
+          {
+            "id": "m45",
+            "score": 65.62452233825492
+          },
+          {
+            "id": "m47",
+            "score": 61.86419160405108
+          },
+          {
+            "id": "m31",
+            "score": 61.65833833216353
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t25",
+        "query": "RAG 既要衡量相关资料能否找回，也要检查回答有没有脱离引用",
+        "relevant_ids": [
+          "m11",
+          "m35"
+        ],
+        "hard_negative_ids": [
+          "m12"
+        ],
+        "annotation": "检索质量与回答忠实性两类评估。",
+        "predictions": [
+          {
+            "id": "m35",
+            "score": 99.57118336494275
+          },
+          {
+            "id": "m11",
+            "score": 65.79851208355922
+          },
+          {
+            "id": "m01",
+            "score": 58.875055632945184
+          },
+          {
+            "id": "m41",
+            "score": 58.49289320572424
+          },
+          {
+            "id": "m05",
+            "score": 55.67161931796923
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t26",
+        "query": "Jetson 存模型的磁盘不够和运行模型的共享内存不够，应分别怎样处理",
+        "relevant_ids": [
+          "m38",
+          "m14"
+        ],
+        "hard_negative_ids": [
+          "m13"
+        ],
+        "annotation": "存储清理与推理量化/上下文两项，未询问连通性。",
+        "predictions": [
+          {
+            "id": "m38",
+            "score": 94.98656250682046
+          },
+          {
+            "id": "m14",
+            "score": 88.09643742652412
+          },
+          {
+            "id": "m29",
+            "score": 72.14684491381541
+          },
+          {
+            "id": "m07",
+            "score": 69.69476004234781
+          },
+          {
+            "id": "m45",
+            "score": 66.53375889625667
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t27",
+        "query": "API 无效身份返回 401 和请求太多返回 429，如何分别处理",
+        "relevant_ids": [
+          "m41",
+          "m42"
+        ],
+        "hard_negative_ids": [
+          "m18"
+        ],
+        "annotation": "更新身份与尊重限流，单纯超时重试不足以回答。",
+        "predictions": [
+          {
+            "id": "m41",
+            "score": 87.75934259541125
+          },
+          {
+            "id": "m42",
+            "score": 80.55794230430065
+          },
+          {
+            "id": "m22",
+            "score": 52.61621637575269
+          },
+          {
+            "id": "m16",
+            "score": 49.10057124391879
+          },
+          {
+            "id": "m07",
+            "score": 47.56162279237049
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t28",
+        "query": "SQLite 写入等其他事务结束和 SELECT 慢，怎样分别缩短事务与建索引",
+        "relevant_ids": [
+          "m19",
+          "m43"
+        ],
+        "hard_negative_ids": [
+          "m20"
+        ],
+        "annotation": "同一产品的写锁等待与读索引优化，不是 PostgreSQL 死锁。",
+        "predictions": [
+          {
+            "id": "m19",
+            "score": 86.33717190690734
+          },
+          {
+            "id": "m43",
+            "score": 85.55889014974235
+          },
+          {
+            "id": "m26",
+            "score": 71.60777022523143
+          },
+          {
+            "id": "m20",
+            "score": 71.00856196985546
+          },
+          {
+            "id": "m02",
+            "score": 63.767826124214075
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [
+          {
+            "id": "m20",
+            "rank": 4
+          }
+        ],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t29",
+        "query": "检索怎样融合 BM25 与向量，以及换 embedding 模型后索引如何迁移",
+        "relevant_ids": [
+          "m21",
+          "m45"
+        ],
+        "hard_negative_ids": [
+          "m22"
+        ],
+        "annotation": "融合检索与向量版本迁移分别需要两条经验。",
+        "predictions": [
+          {
+            "id": "m45",
+            "score": 84.04771605490548
+          },
+          {
+            "id": "m21",
+            "score": 69.71431691492805
+          },
+          {
+            "id": "m02",
+            "score": 51.13965741179141
+          },
+          {
+            "id": "m43",
+            "score": 48.07838910090518
+          },
+          {
+            "id": "m48",
+            "score": 47.22423598865432
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      },
+      {
+        "query_id": "t30",
+        "query": "应用日志避免暴露用户隐私，私人文档检索怎样按租户权限过滤",
+        "relevant_ids": [
+          "m17",
+          "m46"
+        ],
+        "hard_negative_ids": [
+          "m47"
+        ],
+        "annotation": "日志脱敏和检索授权是两项独立约束。",
+        "predictions": [
+          {
+            "id": "m46",
+            "score": 122.32168824395089
+          },
+          {
+            "id": "m17",
+            "score": 108.72402816956199
+          },
+          {
+            "id": "m21",
+            "score": 69.8264680108066
+          },
+          {
+            "id": "m02",
+            "score": 69.07728000110652
+          },
+          {
+            "id": "m29",
+            "score": 66.28451468221621
+          }
+        ],
+        "category": "multi_relevance",
+        "first_relevant_rank": 1,
+        "missed_relevant_ids": [],
+        "hard_negative_hits": [],
+        "hard_negative_confusions": [],
+        "failure_types": []
+      }
+    ],
+    "metric_plugins": [
+      {
+        "id": "recall_at_k",
+        "name": "Recall@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "mrr_at_k",
+        "name": "MRR@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "precision_at_k",
+        "name": "Precision@k",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "higher",
+        "minimum": 0,
+        "maximum": 1
+      },
+      {
+        "id": "p95_ms",
+        "name": "P95 ms",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "direction": "lower",
+        "minimum": 0,
+        "maximum": null
+      }
+    ],
+    "diagnostics": [],
+    "by_category": {
+      "direct": {
+        "query_count": 6,
+        "metrics": {
+          "recall_at_k": 1.0,
+          "mrr_at_k": 1.0,
+          "precision_at_k": 0.20000000000000004,
+          "p95_ms": 2.0019797375425696
+        },
+        "failure_count": 0,
+        "hard_negative_confusion_count": 0
+      },
+      "hard_negative": {
+        "query_count": 8,
+        "metrics": {
+          "recall_at_k": 1.0,
+          "mrr_at_k": 0.9375,
+          "precision_at_k": 0.2,
+          "p95_ms": 3.4497063461458297
+        },
+        "failure_count": 1,
+        "hard_negative_confusion_count": 1
+      },
+      "multi_relevance": {
+        "query_count": 8,
+        "metrics": {
+          "recall_at_k": 1.0,
+          "mrr_at_k": 1.0,
+          "precision_at_k": 0.4,
+          "p95_ms": 5.455985851585863
+        },
+        "failure_count": 0,
+        "hard_negative_confusion_count": 0
+      },
+      "paraphrase": {
+        "query_count": 8,
+        "metrics": {
+          "recall_at_k": 0.875,
+          "mrr_at_k": 0.78125,
+          "precision_at_k": 0.17500000000000002,
+          "p95_ms": 1.6706705966498703
+        },
+        "failure_count": 2,
+        "hard_negative_confusion_count": 2
+      }
+    }
+  },
+  "code_hash": "a315241e4e438f1eac693ecf13f000b463659cc489c76fc06840c646bb6b0aa7",
+  "run_id": "20261014T104638_183b968d",
+  "provider": "ollama",
+  "runner": "docker",
+  "method_fidelity": "source-grounded model adaptation; no independent mathematical equivalence proof"
+}

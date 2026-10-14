@@ -87,9 +87,22 @@ scripts/run_tests.sh -q
 模块边界和角色交接详见 [架构说明](docs/architecture.md)。
 本版是角色分工明确、串行协作的工作流；没有实现多个自治 Agent 并发协商。
 
+### 从 GitHub 增加新方法
+
+除了复刻已登记的 TF-IDF、BM25、Jaccard，新增 `discover` 工作流可以自动搜索公开 GitHub 算法仓库、下载固定提交、抽取源码证据、生成新检索实现。只有 Docker 验证集和冻结版本最终测试都通过，才将它登记为后续可复用的算法。无需预先添加该方法的模板或 Python 注册模块。
+
+```bash
+.venv/bin/python -m agent_factory --verbose discover \
+  --provider ollama --model qwen3.5:2b --base-url http://127.0.0.1:11435 \
+  --description '发现尚未登记的 BM25Plus 技术笔记检索方法。自动搜索 GitHub 算法源码，保留公式和默认参数，适配 retrieve 接口，验证合格后登记。'
+.venv/bin/python -m agent_factory plugins
+```
+
+Web 的 Ollama 模式也提供“从 GitHub 发现新算法”入口；现有服务需要重启以加载新增代码。新路径的生成上下文不包含内置 BM25 模板，模型生成来源方法的评分函数，框架提供算法无关的分词、统计和接口；最终组合代码完整接受验证。来源源码只被读取，不直接导入或安装。完整步骤、登记目录和边界见 [GitHub 算法发现指南](docs/github-discovery.md)。这里增加的是工厂尚未登记的开源方法；当前仅支持 `memory_retrieval`，其他任务仍需要对应验证器。
+
 ## 3. 能力知识图谱与抽取结果
 
-节点：Source、Capability、Implementation、Environment、ValidationRun、Lesson、FactoryRun。
+节点：Source、Capability、Implementation、Environment、ValidationRun、Lesson、FactoryRun，以及 RepositorySnapshot、CodeCandidate、GitHubSnapshot、AlgorithmRelease。
 关系连接来源证据、能力、代码修订、依赖环境、验证结果及失败经验。
 抽取的 evidence 必须存在于原文；材料与抽取输出使用哈希版本，节点不可覆盖。
 
@@ -178,7 +191,7 @@ FACTORY_DEMO_WORKSPACE=state/ollama-v2-new bash scripts/run_ollama_demo.sh
 ```
 
 使用 Ollama 原生 `/api/chat`，`stream=false`，`think=false`，`format` 为当前角色 JSON schema；schema 同时进入角色提示词。默认上下文 8192、输出上限 4096 token，单次 HTTP 等待上限 600 秒，最多尝试两次。原始响应、结束原因、token 用量和耗时均记录在本次 `llm/` 目录。
-代码角色使用 4096 输出 token 上限，其他角色使用 1024；诊断最多六条建议。生成与修复上下文包含检索到的原始算法材料及对应基线代码示例，模型返回完整复刻代码，系统不以模板替换无效响应。参考示例来源及哈希一同保存，明确区分示例辅助复刻和从零算法创新。
+普通生成/修复角色使用 4096 输出 token，来源评分函数及其他角色使用 1024；诊断最多六条建议。`run` 的生成与修复上下文包含原始算法材料及对应基线示例，模型返回完整复刻代码，系统不以模板替换无效响应。`discover` 不传入内置算法模板，模型生成评分函数后组合通用接口。Qwen3.5 的代码角色采用官方非思考采样参数以减少重复循环，其他结构化角色保持温度 0；实际参数记录在调用 JSON 中，见 [发现与生成说明](docs/github-discovery.md)。
 CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变量。
 每次响应由 Pydantic 验证，无效 JSON、服务错误最多重试一次并保留错误。
 某次调用失败不会自动切换 mock 并宣称 LLM 成功。
@@ -193,7 +206,7 @@ CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变�
 [示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
 
 报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
-当前 81 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
+当前 113 项自动测试通过；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
 真实模型例子见 [Ollama 完整报告](examples/ollama-demo/report.md)、[候选规划](examples/ollama-demo/plan.json)、[BM25 首版与修订](examples/ollama-demo/bm25/)、[模型调用记录](examples/ollama-demo/llm/) 和 [最终插件](examples/ollama-demo/selected_retrieval.py)。2026-10-12 的样例调用八次模型；TF-IDF 首版通过，BM25 首版因缺少 `re` 导入失败，模型根据真实错误修复后通过。选定 BM25 修订版的最终测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；这些数值只描述 24 条模拟记忆与 10 条最终测试查询。
 所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
 显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
@@ -222,6 +235,12 @@ FACTORY_DEMO_WORKSPACE=state/jaccard-demo bash scripts/run_plugin_demo.sh
 **v2 数据的真实模型复验已完成**：[qwen3.5:2b + Docker 报告](examples/ollama-v2-demo/report.md)，运行 `20261014T032846_393cdb11`，共 8 次真实模型调用，包括三份材料抽取、需求理解、规划及三次代码生成。三个算法均首版通过，无故障注入、历史重放或本次修复。选定 TF-IDF 后，在 30 条最终测试上得到 Recall@5=1、MRR@5=0.9528、Precision@5=0.2533、P95=7.08 ms。数据为当前 48/36/30 的 v2，已核对数据哈希、模型响应与产物代码哈希；两条最终测试排序错误仍完整保留。该运行未启用随后新增的仓库参考抽取，仓库集成另以离线端到端测试验证。
 
 GitHub 自动检查见 [CI 说明](docs/ci.md)：无需 Ollama 或密钥，检查代码规范、自动测试、安装包资源，以及 Docker 下的 mock 生成、故障修复、独立最终测试和知识回写。真实模型质量以带模型调用记录的报告为证，不由 mock CI 代替。
+
+**GitHub 新算法真实闭环**：[BM25Plus 发现与登记报告](examples/github-discovery-demo/report.md)，运行 `20261014T104638_183b968d`。实际搜索并下载 `xhluca/bm25s` 的固定提交 `03eac5a8fb3aa4958ce37415a4cf2220d35157f7`，使用 qwen3.5:2b 共 7 次调用；首版被来源公式公开数值检查拒绝，r1 修复后通过并自动登记 `github_bm25plus`。最终测试 Recall@5=0.9667、MRR@5=0.9250、Precision@5=0.2467、P95=4.03 ms；结果仍限定于当前 v2 模拟集。
+
+来源文件与许可、AST 结果、模型记录、数值检查以及已批准的登记清单均归档在该示例中，源码原始字节哈希和登记产物哈希已核对。[后续四候选复用报告](examples/github-reuse-demo/report.md)使用 mock + Docker，未手工写新算法注册模块，自动加载 BM25Plus，与三个原有方法一起通过验证；选定 TF-IDF，不宣称新方法更优。[浏览器检查](examples/github_discovery_web_validation.json)验证真实发现报告、来源与代码下载；浏览器检查没有再次提交真实发现任务。
+
+此次验证使用独立 workspace `state/github-discovery-final-20261014`，默认项目的三算法配置保留。查看这次运行可启动 `scripts/serve_web.py --workspace state/github-discovery-final-20261014 --provider ollama --runner docker`；在默认 workspace 提交发现任务时，登记和配置启用发生在默认目录。
 
 本地演示入口已简化为自动打开浏览器并登录，刷新保留会话，可用 --ssh-target 统一启动 SSH 隧道；[实际 Chrome 验证](examples/session_validation.json)涵盖自动会话和 Cookie 鉴权的 mock/Docker 完整流程。API 密钥保留用于远程分享和 CLI 接入，详见 [Web 指南](docs/web-ui.md)。
 

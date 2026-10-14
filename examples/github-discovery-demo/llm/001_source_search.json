@@ -1,0 +1,195 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "source_search",
+  "context": {
+    "description": "请为中文与英文混合技术笔记检索发现并复刻一个尚未登记的 BM25Plus 算法。自动在 GitHub 寻找独立算法实现库，依据外部源码保留评分公式和参数，适配 retrieve(query, memories, top_k=5)。通过统一 Docker 验证和最终测试后登记，供后续工厂任务使用。",
+    "supported_tasks": [
+      "memory_retrieval"
+    ],
+    "existing_algorithms": [
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。",
+        "public_cases": []
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "version": "1.0.1",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。中文双字必须从原文连续中文片段按相邻位置切分，不能从无序集合取字符再拼接。英文标识符必须整词加入集合，例如 tokens.add(fragment)，禁止 tokens.update(fragment) 将英文拆成字母；alpha 与 beta 的英文词集合没有交集。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。",
+        "public_cases": [
+          {
+            "query": "甲乙",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0
+              },
+              {
+                "id": "b",
+                "score": 0.2
+              }
+            ]
+          },
+          {
+            "query": "ALPHA",
+            "memories": [
+              {
+                "id": "a",
+                "text": "alpha",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "beta",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "version": "1.0.1",
+        "task": "memory_retrieval",
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "environment": "retrieval-v1",
+        "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。必须对 texts=[memory[\"text\"] for memory in memories] 拟合，每条完整记忆对应矩阵一行，行数必须等于 len(memories)。禁止把拆分去重的词当成多篇文档，禁止移除中文或过滤行后仍用原列表索引；transform([query]) 后与整个语料计算相似度。",
+        "public_cases": [
+          {
+            "query": "甲乙 alpha beta",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙 alpha beta",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙 alpha gamma",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0000000000000016
+              },
+              {
+                "id": "b",
+                "score": 0.46518071501565006
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "enum": [
+          "memory_retrieval",
+          "unsupported"
+        ],
+        "title": "Task",
+        "type": "string"
+      },
+      "queries": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 2,
+        "minItems": 1,
+        "title": "Queries",
+        "type": "array"
+      },
+      "family_query": {
+        "maxLength": 100,
+        "minLength": 1,
+        "title": "Family Query",
+        "type": "string"
+      },
+      "top_k": {
+        "default": 5,
+        "maximum": 20,
+        "minimum": 1,
+        "title": "Top K",
+        "type": "integer"
+      },
+      "rationale": {
+        "maxLength": 800,
+        "minLength": 1,
+        "title": "Rationale",
+        "type": "string"
+      }
+    },
+    "required": [
+      "task",
+      "queries",
+      "family_query",
+      "rationale"
+    ],
+    "title": "SearchIntent",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 0,
+    "presence_penalty": 0,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "raw_content": "{\"task\": \"memory_retrieval\", \"queries\": [\"BM25Plus\", \"BM25Plus\"], \"family_query\": \"BM25\", \"rationale\": \"The user requests a new BM25Plus algorithm implementation for memory retrieval. Existing algorithms like Jaccard and TF-IDF are already registered. BM25Plus is a known variant of BM25 that optimizes parameters (k1, b, alpha, beta) for mixed Chinese-English text. Since the task is memory_retrieval and the user explicitly asks for an existing algorithm without fabrication, the queries and family_query are set to BM25Plus and BM25 respectively, with top_k=5 as per default settings.\", \"top_k\": 5}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 1170,
+    "eval_count": 156,
+    "total_duration": 6225767790
+  },
+  "response": {
+    "task": "memory_retrieval",
+    "queries": [
+      "BM25Plus",
+      "BM25Plus"
+    ],
+    "family_query": "BM25",
+    "rationale": "The user requests a new BM25Plus algorithm implementation for memory retrieval. Existing algorithms like Jaccard and TF-IDF are already registered. BM25Plus is a known variant of BM25 that optimizes parameters (k1, b, alpha, beta) for mixed Chinese-English text. Since the task is memory_retrieval and the user explicitly asks for an existing algorithm without fabrication, the queries and family_query are set to BM25Plus and BM25 respectively, with top_k=5 as per default settings.",
+    "top_k": 5
+  },
+  "duration_seconds": 6.440895166946575
+}

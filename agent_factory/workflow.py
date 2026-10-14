@@ -53,7 +53,7 @@ class Factory:
         self.workspace = Path(workspace).resolve()
         self.config = config or ValidationConfig.model_validate(
             json.loads((self.workspace / "config.json").read_text(encoding="utf-8")))
-        self.registry = registry or load_registry(self.config.plugin_packages)
+        self.registry = registry or load_registry(self.config.plugin_packages, workspace=self.workspace)
         self.registry.validate_config(self.config)
         self.runner_mode = runner or ("docker" if provider == "ollama" else "local")
         if provider == "ollama" and self.runner_mode == "local" and not allow_local:
@@ -288,6 +288,7 @@ class Factory:
                    "generation_policy": "focused-repair-v2",
                    "mock_fault_algorithm": self.client.fault_algorithm if self.client.inject_fault else None,
                    "workflow_events": state["events"] + ["persist"]}
+        summary.update(self.report_metadata(state))
         self.store.add_node("run_" + self.run_id, "FactoryRun", summary)
         for attempt in state["attempts"]:
             self.store.add_edge("run_" + self.run_id, attempt["implementation_id"], "generated")
@@ -302,6 +303,9 @@ class Factory:
             (self.directory / "plugin.json").write_text(json.dumps(plugin, ensure_ascii=False, indent=2), encoding="utf-8")
         write_report(self.directory, summary)
         self.store.export(self.directory / "knowledge")
+        return {}
+
+    def report_metadata(self, state):
         return {}
 
     def graph(self):

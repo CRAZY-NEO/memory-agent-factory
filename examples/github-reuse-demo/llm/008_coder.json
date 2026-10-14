@@ -1,0 +1,154 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "coder",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "比较所有已经登记的方法，生成技术笔记检索算法并验证。",
+      "language": "mixed",
+      "top_k": 5
+    },
+    "candidate": {
+      "algorithm": "jaccard",
+      "capability_id": "char_jaccard_00f7e68fbdb0",
+      "rationale": "来自材料的适用条件：适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。"
+    },
+    "algorithm_plugin": {
+      "id": "jaccard",
+      "name": "集合 Jaccard",
+      "version": "1.0.1",
+      "task": "memory_retrieval",
+      "dependencies": [],
+      "environment": "retrieval-v1",
+      "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。中文双字必须从原文连续中文片段按相邻位置切分，不能从无序集合取字符再拼接。英文标识符必须整词加入集合，例如 tokens.add(fragment)，禁止 tokens.update(fragment) 将英文拆成字母；alpha 与 beta 的英文词集合没有交集。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。",
+      "public_cases": [
+        {
+          "query": "甲乙",
+          "memories": [
+            {
+              "id": "a",
+              "text": "甲乙",
+              "source": "public://a"
+            },
+            {
+              "id": "b",
+              "text": "乙丙",
+              "source": "public://b"
+            }
+          ],
+          "top_k": 5,
+          "expected": [
+            {
+              "id": "a",
+              "score": 1.0
+            },
+            {
+              "id": "b",
+              "score": 0.2
+            }
+          ]
+        },
+        {
+          "query": "ALPHA",
+          "memories": [
+            {
+              "id": "a",
+              "text": "alpha",
+              "source": "public://a"
+            },
+            {
+              "id": "b",
+              "text": "beta",
+              "source": "public://b"
+            }
+          ],
+          "top_k": 5,
+          "expected": [
+            {
+              "id": "a",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    "capabilities": [
+      {
+        "node_id": "char_jaccard_00f7e68fbdb0",
+        "algorithm": "jaccard",
+        "algorithm_plugin_version": "1.0.1",
+        "applicable_conditions": [
+          "小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。"
+        ],
+        "dependencies": [
+          "Python stdlib"
+        ],
+        "evidence": "适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。",
+        "id": "char_jaccard_00f7e68fbdb0",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。"
+        ],
+        "metrics": [
+          "mrr_at_k",
+          "p95_ms",
+          "precision_at_k",
+          "recall_at_k"
+        ],
+        "name": "中文技术记忆 jaccard",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+        "text": "# 中文技术记忆检索：Jaccard\n\n能力标识：char_jaccard。算法：jaccard。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文使用单字及相邻双字，英文技术标识使用小写单词，将分词结果去重为集合。查询集合 Q 与文档集合 D 的 Jaccard 相似度为 len(Q & D) / len(Q | D)，并集为空时返回零。词频不参与评分，不需要训练或 IDF。只返回正分结果，分数降序，同分按 ID 排序。空查询、空语料和非正 top_k 返回空列表。标点查询无词项时返回空列表。\n\n适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。\n指标：Recall@k、MRR@k、Precision@k、P95 查询耗时；依赖：Python 标准库。\n局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。\n来源为本项目编写的演示算法说明和可复现基线实现。\n"
+      }
+    ],
+    "validated_lessons": [],
+    "reference_example": {
+      "algorithm": "jaccard",
+      "source": "plugin:jaccard@1.0.1",
+      "sha256": "4fb0baa6a02f22aae5d5a6329794e367342d3c178e437b7c22b8d96b77de0894",
+      "code": "\"\"\"Set Jaccard retrieval with Chinese characters/bigrams and English identifiers.\"\"\"\n\nimport re\n\n\ndef tokenize(text):\n    tokens = set(re.findall(r\"[a-z0-9_]+\", text.lower()))\n    for fragment in re.findall(r\"[\\u4e00-\\u9fff]+\", text):\n        tokens.update(fragment)\n        tokens.update(fragment[index:index + 2] for index in range(len(fragment) - 1))\n    return tokens\n\n\ndef retrieve(query, memories, top_k=5):\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    query_tokens = tokenize(query)\n    if not query_tokens:\n        return []\n    hits = []\n    for memory in memories:\n        document_tokens = tokenize(memory[\"text\"])\n        union = query_tokens | document_tokens\n        score = len(query_tokens & document_tokens) / len(union) if union else 0.0\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": float(score)})\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n"
+    },
+    "repair_strategy": "reproduce_reference"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "maxLength": 40000,
+        "minLength": 30,
+        "title": "Code",
+        "type": "string"
+      },
+      "explanation": {
+        "title": "Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "explanation"
+    ],
+    "title": "CodeArtifact",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "code": "\"\"\"Set Jaccard retrieval with Chinese characters/bigrams and English identifiers.\"\"\"\n\nimport re\n\n\ndef tokenize(text):\n    tokens = set(re.findall(r\"[a-z0-9_]+\", text.lower()))\n    for fragment in re.findall(r\"[\\u4e00-\\u9fff]+\", text):\n        tokens.update(fragment)\n        tokens.update(fragment[index:index + 2] for index in range(len(fragment) - 1))\n    return tokens\n\n\ndef retrieve(query, memories, top_k=5):\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    query_tokens = tokenize(query)\n    if not query_tokens:\n        return []\n    hits = []\n    for memory in memories:\n        document_tokens = tokenize(memory[\"text\"])\n        union = query_tokens | document_tokens\n        score = len(query_tokens & document_tokens) / len(union) if union else 0.0\n        if score > 0:\n            hits.append({\"id\": memory[\"id\"], \"score\": float(score)})\n    return sorted(hits, key=lambda hit: (-hit[\"score\"], hit[\"id\"]))[:top_k]\n",
+    "explanation": "规则模板演示"
+  },
+  "duration_seconds": 7.03341793268919e-05
+}

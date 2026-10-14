@@ -34,6 +34,10 @@ Web、CLI 与鉴权异步 API；多轮有限修复；三个算法候选比较；
 图遍历用于知识检索，没有实现 Beam Search/MCTS 算法搜索。
 检索任务支持算法/指标插件和外部包发现；尚未实现跨任务验证配置。
 
+新增 `discover` 支持自动 GitHub 搜索、固定提交源码下载、AST 能力证据抽取、新方法适配生成和验证后自动登记。新路径不依赖该方法的内置模板，注册采用文件哈希校验的数据清单，并保留来源许可。详见 [发现指南](github-discovery.md)。这拓展了检索任务的算法来源，未把系统扩大为任意任务的通用验证工厂。
+
+实际证据：[qwen3.5:2b 发现 BM25Plus](../examples/github-discovery-demo/report.md)，通过来源公式检查及修复、验证和冻结最终测试后自动登记；[后续四候选复用](../examples/github-reuse-demo/report.md)为 mock + Docker。采样参数、原始响应、来源文件哈希和批准清单均保留。
+
 ## 新数据、真实模型与自动检查
 
 1. 已由 Mac 工厂经 SSH 隧道调用 Jetson qwen3.5:2b 完成真实闭环，历史记录保留。最新 [v2 真实报告](../examples/ollama-v2-demo/report.md)使用 48 条记忆、36 条验证查询与 30 条最终测试，共 8 次真实模型调用，三候选首版通过，选定 TF-IDF；本次无修复，历史修复证据仍见 examples/repair-ollama-demo。

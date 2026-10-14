@@ -25,11 +25,15 @@ class AlgorithmSpec:
     dependencies: tuple[str, ...] = ()
     environment: str = "retrieval-v1"
     public_cases: tuple[dict, ...] = ()
+    provenance: dict | None = None
 
     def metadata(self):
-        return {"id": self.id, "name": self.name, "version": self.version, "task": self.task,
+        result = {"id": self.id, "name": self.name, "version": self.version, "task": self.task,
                 "dependencies": list(self.dependencies), "environment": self.environment,
                 "guidance": self.guidance, "public_cases": list(self.public_cases)}
+        if self.provenance:
+            result['provenance'] = self.provenance
+        return result
 
 
 @dataclass(frozen=True)
@@ -166,8 +170,11 @@ class PluginRegistry:
                 "modules": self.modules.copy()}
 
 
-def load_registry(extra_packages=()):
+def load_registry(extra_packages=(), workspace=None):
     registry = PluginRegistry()
     for package in [*BUILTIN_PACKAGES, *extra_packages]:
         registry.discover(package)
+    if workspace is not None:
+        from .releases import load_releases
+        load_releases(registry, workspace)
     return registry

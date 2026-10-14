@@ -1,0 +1,175 @@
+{
+  "provider": "ollama",
+  "model": "qwen3.5:2b",
+  "role": "source_coder",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "top_k": 5
+    },
+    "algorithm_plugin": {
+      "id": "github_bm25plus",
+      "guidance": "Reproduce the named source method and actual formulas; adapt only the interface and tokenizer."
+    },
+    "repository": {
+      "repository": "xhluca/bm25s",
+      "url": "https://github.com/xhluca/bm25s",
+      "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+      "license": "MIT"
+    },
+    "source_functions": [
+      {
+        "path": "bm25s/scoring.py",
+        "qualified_name": "_score_tfc_bm25plus",
+        "code": "def _score_tfc_bm25plus(tf_array, l_d, l_avg, k1, b, delta):\n    num = (k1 + 1) * tf_array\n    den = k1 * (1 - b + b * l_d / l_avg) + tf_array\n    return (num / den) + delta",
+        "code_truncated": false
+      },
+      {
+        "path": "bm25s/scoring.py",
+        "qualified_name": "_score_idf_bm25plus",
+        "code": "def _score_idf_bm25plus(df, N):\n    return math.log((N + 1) / df)",
+        "code_truncated": false
+      }
+    ],
+    "source_numeric_defaults": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.5
+    },
+    "method_name": "BM25Plus",
+    "scoring_hook": {
+      "signature": "def score_term(tf, df, doc_len, avg_len, N)",
+      "arguments": {
+        "tf": "integer count of this query token in this ONE document",
+        "df": "integer number of corpus documents containing this token",
+        "doc_len": "integer token count of this document",
+        "avg_len": "float mean document token count",
+        "N": "integer total document count"
+      },
+      "return": "scalar term-frequency component TIMES inverse-document-frequency component; framework sums matching terms",
+      "note": "All arguments are numbers, not lists, Counters or arrays. Preserve numeric source defaults."
+    },
+    "public_algorithm_cases": [
+      {
+        "query": "alpha",
+        "memories": [
+          {
+            "id": "a",
+            "text": "alpha alpha beta",
+            "source": "public formula case"
+          },
+          {
+            "id": "b",
+            "text": "alpha beta",
+            "source": "public formula case"
+          },
+          {
+            "id": "c",
+            "text": "gamma",
+            "source": "public formula case"
+          }
+        ],
+        "top_k": 3,
+        "expected": [
+          {
+            "id": "a",
+            "score": 1.1996778125075978
+          },
+          {
+            "id": "b",
+            "score": 1.0397207708399179
+          },
+          {
+            "id": "c",
+            "score": 0.34657359027997264
+          }
+        ]
+      },
+      {
+        "query": "alpha alpha",
+        "memories": [
+          {
+            "id": "a",
+            "text": "alpha alpha beta",
+            "source": "public formula case"
+          },
+          {
+            "id": "b",
+            "text": "alpha beta",
+            "source": "public formula case"
+          },
+          {
+            "id": "c",
+            "text": "gamma",
+            "source": "public formula case"
+          }
+        ],
+        "top_k": 3,
+        "expected": [
+          {
+            "id": "a",
+            "score": 2.3993556250151955
+          },
+          {
+            "id": "b",
+            "score": 2.0794415416798357
+          },
+          {
+            "id": "c",
+            "score": 0.6931471805599453
+          }
+        ]
+      }
+    ],
+    "adapted_source_kernels": "import math\n\ndef source_tf_component(tf_array, l_d, l_avg, k1, b, delta):\n    num = (k1 + 1) * tf_array\n    den = k1 * (1 - b + b * l_d / l_avg) + tf_array\n    return num / den + delta\n\ndef source_idf_component(df, N):\n    return math.log((N + 1) / df)",
+    "source_adapter_hint": "def score_term(tf, df, doc_len, avg_len, N):\n    if avg_len <= 0 or df <= 0:\n        return 0.0\n    return source_tf_component(tf, doc_len, avg_len, 1.5, 0.75, 0.5) * source_idf_component(df, N)",
+    "adaptation_rules": "Use actual source formulas and constructor defaults. Ignore any conflicting proposal claim. Do not import the downloaded library. Use only math, re, collections, or allowed sklearn modules. Tokenize lowercase English words and Chinese single characters plus bigrams. Compute corpus statistics required by the source, not placeholder constants."
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "maxLength": 6000,
+        "minLength": 30,
+        "title": "Code",
+        "type": "string"
+      },
+      "explanation": {
+        "maxLength": 400,
+        "minLength": 1,
+        "title": "Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "explanation"
+    ],
+    "title": "SourceCodeArtifact",
+    "type": "object"
+  },
+  "retry": 0,
+  "options": {
+    "temperature": 1.0,
+    "presence_penalty": 2.0,
+    "num_ctx": 8192,
+    "num_predict": 1024,
+    "top_p": 1.0,
+    "top_k": 20,
+    "min_p": 0.0,
+    "repeat_penalty": 1.0,
+    "seed": 42
+  },
+  "raw_content": "{\"code\":\"import math\\n\\ndef score_term(tf, df, doc_len, avg_len, N):\\n    if avg_len <= 0 or df <= 0:\\n        return 0.0\\n    return (1.5 * tf / ((1.5 * (1 - 0.75 + 0.75 * doc_len / avg_len)) + tf) + 0.5) * math.log((N + 1) / df)\",\"explanation\":\"The function validates input statistics for division by zero and returns 0.0 otherwise. It then multiplies the TF-IDF component, calculated using source defaults k1=1.5 and b=0.75, with the inverse document frequency term from the BM25s formula.\"}",
+  "done_reason": "stop",
+  "usage": {
+    "prompt_eval_count": 1590,
+    "eval_count": 164,
+    "total_duration": 8256064243
+  },
+  "response": {
+    "code": "import math\n\ndef score_term(tf, df, doc_len, avg_len, N):\n    if avg_len <= 0 or df <= 0:\n        return 0.0\n    return (1.5 * tf / ((1.5 * (1 - 0.75 + 0.75 * doc_len / avg_len)) + tf) + 0.5) * math.log((N + 1) / df)",
+    "explanation": "The function validates input statistics for division by zero and returns 0.0 otherwise. It then multiplies the TF-IDF component, calculated using source defaults k1=1.5 and b=0.75, with the inverse document frequency term from the BM25s formula."
+  },
+  "duration_seconds": 8.504207707941532
+}

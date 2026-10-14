@@ -100,4 +100,10 @@ node scripts/smoke_web.cjs http://127.0.0.1:8010
 
 新增 tests/test_demo_launcher.py 检查凭据重放与过期、同源写入、鉴权保留、端口冲突、SSH 子进程创建/复用及清理。scripts/smoke_local_session.cjs 使用实际 Chrome 检查自动登录、刷新保持连接、退出与 Cookie 鉴权的 Docker 完整流程。测试将启动器的浏览器回调捕获到权限为 0600 的临时文件以供无头 Chrome 打开；不会实际建立 Jetson SSH 连接。
 
-本次真实 Chrome 自动会话回归见 [验证记录](../examples/session_validation.json)，全量 81 项测试通过。该记录为 mock + Docker；隧道创建/复用/清理由进程替身测试覆盖，没有另行连接 Jetson SSH。
+本次真实 Chrome 自动会话回归见 [验证记录](../examples/session_validation.json)。该记录为 mock + Docker；隧道创建/复用/清理由进程替身测试覆盖，没有另行连接 Jetson SSH。
+
+## 从 GitHub 发现新算法
+
+以 Ollama + Docker 启动并连接后，勾选“从 GitHub 发现新算法”，使用示例或描述未登记的检索方法。提交将走独立发现工作流，展示实际搜索、固定提交下载、AST、源码适配、验证、有限修复及登记。结果显示来源仓库、提交、许可与是否启用，还可下载搜索、提议与抽取结果。
+
+只有验证及冻结最终测试均通过才登记，之后普通生成任务会将新方法列为候选。离线模式禁用发现入口。正在运行的旧服务需退出启动器再重启，才能加载新增路由和界面。步骤与范围见 [发现指南](github-discovery.md)。

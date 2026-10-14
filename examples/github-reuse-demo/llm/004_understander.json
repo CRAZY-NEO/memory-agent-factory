@@ -1,0 +1,53 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "understander",
+  "context": {
+    "description": "比较所有已经登记的方法，生成技术笔记检索算法并验证。"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "task": {
+        "const": "memory_retrieval",
+        "title": "Task",
+        "type": "string"
+      },
+      "description": {
+        "minLength": 1,
+        "title": "Description",
+        "type": "string"
+      },
+      "language": {
+        "enum": [
+          "zh",
+          "mixed"
+        ],
+        "title": "Language",
+        "type": "string"
+      },
+      "top_k": {
+        "maximum": 20,
+        "minimum": 1,
+        "title": "Top K",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "task",
+      "description",
+      "language",
+      "top_k"
+    ],
+    "title": "Request",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "task": "memory_retrieval",
+    "description": "比较所有已经登记的方法，生成技术笔记检索算法并验证。",
+    "language": "mixed",
+    "top_k": 5
+  },
+  "duration_seconds": 0.00022583408281207085
+}

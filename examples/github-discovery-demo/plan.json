@@ -1,0 +1,10 @@
+{
+  "candidates": [
+    {
+      "algorithm": "github_bm25plus",
+      "capability_id": "cap_github_bm25plus_20261014t104638_183b968d",
+      "rationale": "该仓库提供了基于NumPy和Numba的Fast BM25实现，支持中文与英文混合检索，符合用户要求的retrieve(query, memories, top_k=5)接口。其开源许可（MIT）和独立算法库属性使其适合作为后续工厂任务的基础。相比其他仓库，它更专注于高性能计算，且未过度依赖PyTorch等框架，便于用户直接复刻和扩展。"
+    }
+  ],
+  "design_explanation": "从实际 GitHub 搜索结果下载固定提交，依据来源证据复刻新方法：The BM25Plus algorithm adapts the standard BM25 scoring by incorporating a delta parameter to adjust document relevance scores. It utilizes a unified tokenization pipeline to convert query and corpus tokens into indices before applying the scoring formula. The implementation requires a custom backend selection mechanism to handle different numerical computation backends efficiently."
+}

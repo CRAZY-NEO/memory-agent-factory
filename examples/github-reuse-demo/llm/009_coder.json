@@ -1,0 +1,182 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "coder",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "比较所有已经登记的方法，生成技术笔记检索算法并验证。",
+      "language": "mixed",
+      "top_k": 5
+    },
+    "candidate": {
+      "algorithm": "github_bm25plus",
+      "capability_id": "cap_github_bm25plus_20261014t104242_7d070237",
+      "rationale": "来自材料的适用条件：return (num / den) + delta"
+    },
+    "algorithm_plugin": {
+      "id": "github_bm25plus",
+      "name": "BM25Plus",
+      "version": "20261014T104638_183b968d",
+      "task": "memory_retrieval",
+      "dependencies": [],
+      "environment": "retrieval-v1",
+      "guidance": "Reproduce BM25Plus from the pinned source scoring functions and constructor defaults. Adapt the retrieve interface and tokenizer only; do not mix in unrelated scoring methods or install dependencies.",
+      "public_cases": [
+        {
+          "query": "alpha",
+          "memories": [
+            {
+              "id": "a",
+              "text": "alpha alpha beta",
+              "source": "public formula case"
+            },
+            {
+              "id": "b",
+              "text": "alpha beta",
+              "source": "public formula case"
+            },
+            {
+              "id": "c",
+              "text": "gamma",
+              "source": "public formula case"
+            }
+          ],
+          "top_k": 3,
+          "expected": [
+            {
+              "id": "a",
+              "score": 1.1996778125075978
+            },
+            {
+              "id": "b",
+              "score": 1.0397207708399179
+            },
+            {
+              "id": "c",
+              "score": 0.34657359027997264
+            }
+          ]
+        },
+        {
+          "query": "alpha alpha",
+          "memories": [
+            {
+              "id": "a",
+              "text": "alpha alpha beta",
+              "source": "public formula case"
+            },
+            {
+              "id": "b",
+              "text": "alpha beta",
+              "source": "public formula case"
+            },
+            {
+              "id": "c",
+              "text": "gamma",
+              "source": "public formula case"
+            }
+          ],
+          "top_k": 3,
+          "expected": [
+            {
+              "id": "a",
+              "score": 2.3993556250151955
+            },
+            {
+              "id": "b",
+              "score": 2.0794415416798357
+            },
+            {
+              "id": "c",
+              "score": 0.6931471805599453
+            }
+          ]
+        }
+      ],
+      "provenance": {
+        "repository": "xhluca/bm25s",
+        "url": "https://github.com/xhluca/bm25s",
+        "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+        "license": "MIT"
+      }
+    },
+    "capabilities": [
+      {
+        "node_id": "cap_github_bm25plus_20261014t104242_7d070237",
+        "algorithm": "github_bm25plus",
+        "algorithm_plugin_version": "20261014T104242_7d070237",
+        "applicable_conditions": [
+          "k must be less than or equal to the number of available scores in the corpus",
+          "delta parameter must be provided to adjust the final relevance score"
+        ],
+        "dependencies": [],
+        "evidence": "return (num / den) + delta",
+        "id": "cap_github_bm25plus_20261014t104242_7d070237",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "The algorithm assumes a fixed vocabulary size and does not support dynamic vocabulary expansion",
+          "The delta parameter is not automatically calculated and must be explicitly set during initialization"
+        ],
+        "metrics": [
+          "recall_at_k",
+          "mrr_at_k",
+          "precision_at_k",
+          "p95_ms"
+        ],
+        "name": "BM25Plus",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_github_material_db5e35a4cd85fe281e5919c350548a94532e90025353232317874340860f8857",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_github_material_db5e35a4cd85fe281e5919c350548a94532e90025353232317874340860f8857",
+        "text": "# BM25Plus\n\n算法：github_bm25plus。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序 id、score。\n\nReproduce BM25Plus from the pinned source scoring functions and constructor defaults. Adapt the retrieve interface and tokenizer only; do not mix in unrelated scoring methods or install dependencies.\n\n模型归纳（未独立认证，不作为评分公式）：The BM25Plus algorithm adapts the standard BM25 scoring by incorporating a delta parameter to adjust document relevance scores. It utilizes a unified tokenization pipeline to convert query and corpus tokens into indices before applying the scoring formula. The implementation requires a custom backend selection mechanism to handle different numerical computation backends efficiently.\n\n适用：k must be less than or equal to the number of available scores in the corpus；delta parameter must be provided to adjust the final relevance score\n局限：The algorithm assumes a fixed vocabulary size and does not support dynamic vocabulary expansion；The delta parameter is not automatically calculated and must be explicitly set during initialization\n来源：https://github.com/xhluca/bm25s/tree/03eac5a8fb3aa4958ce37415a4cf2220d35157f7；许可：MIT\n证据 bm25s/scoring.py：return (num / den) + delta"
+      }
+    ],
+    "validated_lessons": [],
+    "reference_example": {
+      "algorithm": "github_bm25plus",
+      "source": "plugin:github_bm25plus@20261014T104638_183b968d",
+      "sha256": "a315241e4e438f1eac693ecf13f000b463659cc489c76fc06840c646bb6b0aa7",
+      "code": "import re\nfrom collections import Counter\n\ndef factory_tokens(text):\n    terms = re.findall(r\"[a-z0-9_]+\", text.lower())\n    for fragment in re.findall(r\"[\\u4e00-\\u9fff]+\", text):\n        terms.extend(fragment)\n        terms.extend(fragment[i:i+2] for i in range(len(fragment)-1))\n    return terms\n\ndef retrieve(query, memories, top_k=5):\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    query_terms = Counter(factory_tokens(query))\n    if not query_terms:\n        return []\n    documents = [Counter(factory_tokens(memory['text'])) for memory in memories]\n    df = Counter()\n    for document in documents:\n        df.update(document.keys())\n    stats = {'N': len(memories), 'avg_len': sum(sum(doc.values()) for doc in documents) / len(memories),\n             'df': dict(df)}\n    hits = []\n    for memory, document in zip(memories, documents):\n        score = sum(float(score_term(document[term], df[term], sum(document.values()), stats['avg_len'], stats['N'])) * query_terms[term] for term in sorted(query_terms) if df[term] > 0)\n        if score != 0:\n            hits.append({'id': memory['id'], 'score': score})\n    return sorted(hits, key=lambda hit: (-hit['score'], hit['id']))[:top_k]\n\n\nimport math\n\ndef source_tf_component(tf_array, l_d, l_avg, k1, b, delta):\n    num = (k1 + 1) * tf_array\n    den = k1 * (1 - b + b * l_d / l_avg) + tf_array\n    return num / den + delta\n\ndef source_idf_component(df, N):\n    return math.log((N + 1) / df)\n\nimport math\n\ndef score_term(tf, df, doc_len, avg_len, N):\n    # Handle edge cases as per contract: return 0.0 if any component is invalid or zero.\n    # Note: Standard BM25Plus handles this implicitly by division with non-zero defaults, but explicit check ensures safety.\n    tf_num = math.ceil(tf) * (1.5 + 1)\n    tf_den = 1.5 * (1 - 0.75 + 0.75 * doc_len / avg_len)\n    term = (tf_num / (tf_den + tf)) + 0.5\n    IDF = math.log((N + 1) / df)\n    return term * IDF\n"
+    },
+    "repair_strategy": "reproduce_reference"
+  },
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "maxLength": 40000,
+        "minLength": 30,
+        "title": "Code",
+        "type": "string"
+      },
+      "explanation": {
+        "title": "Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "explanation"
+    ],
+    "title": "CodeArtifact",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "code": "import re\nfrom collections import Counter\n\ndef factory_tokens(text):\n    terms = re.findall(r\"[a-z0-9_]+\", text.lower())\n    for fragment in re.findall(r\"[\\u4e00-\\u9fff]+\", text):\n        terms.extend(fragment)\n        terms.extend(fragment[i:i+2] for i in range(len(fragment)-1))\n    return terms\n\ndef retrieve(query, memories, top_k=5):\n    if not query.strip() or not memories or top_k <= 0:\n        return []\n    query_terms = Counter(factory_tokens(query))\n    if not query_terms:\n        return []\n    documents = [Counter(factory_tokens(memory['text'])) for memory in memories]\n    df = Counter()\n    for document in documents:\n        df.update(document.keys())\n    stats = {'N': len(memories), 'avg_len': sum(sum(doc.values()) for doc in documents) / len(memories),\n             'df': dict(df)}\n    hits = []\n    for memory, document in zip(memories, documents):\n        score = sum(float(score_term(document[term], df[term], sum(document.values()), stats['avg_len'], stats['N'])) * query_terms[term] for term in sorted(query_terms) if df[term] > 0)\n        if score != 0:\n            hits.append({'id': memory['id'], 'score': score})\n    return sorted(hits, key=lambda hit: (-hit['score'], hit['id']))[:top_k]\n\n\nimport math\n\ndef source_tf_component(tf_array, l_d, l_avg, k1, b, delta):\n    num = (k1 + 1) * tf_array\n    den = k1 * (1 - b + b * l_d / l_avg) + tf_array\n    return num / den + delta\n\ndef source_idf_component(df, N):\n    return math.log((N + 1) / df)\n\nimport math\n\ndef score_term(tf, df, doc_len, avg_len, N):\n    # Handle edge cases as per contract: return 0.0 if any component is invalid or zero.\n    # Note: Standard BM25Plus handles this implicitly by division with non-zero defaults, but explicit check ensures safety.\n    tf_num = math.ceil(tf) * (1.5 + 1)\n    tf_den = 1.5 * (1 - 0.75 + 0.75 * doc_len / avg_len)\n    term = (tf_num / (tf_den + tf)) + 0.5\n    IDF = math.log((N + 1) / df)\n    return term * IDF\n",
+    "explanation": "规则模板演示"
+  },
+  "duration_seconds": 0.0004882090725004673
+}

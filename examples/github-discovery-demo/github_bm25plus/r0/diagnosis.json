@@ -1,0 +1,13 @@
+{
+  "summary": "The BM25Plus scoring hook fails validation because the provided public algorithm cases (alpha, alpha alpha) do not match the expected scores derived from the source formulas and defaults. Specifically, the example 'alpha alpha' yields a score of 2.3993556250151955 in the public case, but the source formula with defaults (k1=1.5, b=0.75, delta=0.5) produces a different result. The current implementation uses hardcoded defaults (1.5, 0.75, 0.5) instead of the actual corpus statistics (N, df, doc_len, avg_len) required by the source contract.",
+  "repair_instructions": [
+    "Replace hardcoded defaults (k1=1.5, b=0.75, delta=0.5) with actual corpus statistics (N, df, doc_len, avg_len) from the corpus statistics section.",
+    "Ensure the `score_term` function correctly applies the source formula: `(num / den) + delta` where `num = (k1 + 1) * tf` and `den = k1 * (1 - b + b * l_d / l_avg) + tf`.",
+    "Verify that the `score_idf_component` uses the correct `N` (total document count) and `df` (document frequency) as defined in the source contract.",
+    "Check the tokenization logic to ensure it matches the source's requirement for lowercase English words and Chinese single characters plus bigrams.",
+    "Re-evaluate the public formula cases against the actual source formulas to ensure the expected scores are mathematically consistent with the provided source code and defaults.",
+    "Ensure the `score_term` function handles edge cases (avg_len <= 0 or df <= 0) as specified in the source contract."
+  ],
+  "trusted_findings": [],
+  "execution_diagnostics": []
+}

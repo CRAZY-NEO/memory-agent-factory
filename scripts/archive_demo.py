@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("run_id")
     parser.add_argument("--workspace", type=Path, default=ROOT)
-    parser.add_argument("--output-name", choices=["demo", "ollama-demo", "plugin-demo", "plugin-ollama-demo", "plugin-jaccard-ollama-demo", "plugin-ollama-failure", "repair-ollama-demo", "repair-ollama-initial", "repair-mock-demo", "web-evaluation-demo", "ollama-v2-demo", "repository-demo"], default="demo")
+    parser.add_argument("--output-name", choices=["demo", "ollama-demo", "plugin-demo", "plugin-ollama-demo", "plugin-jaccard-ollama-demo", "plugin-ollama-failure", "repair-ollama-demo", "repair-ollama-initial", "repair-mock-demo", "web-evaluation-demo", "ollama-v2-demo", "repository-demo", "github-discovery-demo", "github-reuse-demo"], default="demo")
     parser.add_argument("--allow-failure", action="store_true", help="明确归档失败记录，保留真实错误")
     arguments = parser.parse_args()
     if Path(arguments.run_id).name != arguments.run_id:
@@ -27,8 +27,15 @@ def main():
         # Only the repository-owned generated demo is replaced, never user's run history.
         shutil.rmtree(destination)
     shutil.copytree(source, destination)
+    release = (report.get('discovery') or {}).get('release')
+    if release:
+        approved = workspace / 'state' / 'algorithm_registry' / release['id'] / release['version']
+        shutil.copytree(approved, destination / 'approved_registry' / release['id'] / release['version'])
     for path in destination.rglob("*"):
         if path.is_file():
+            # Upstream source and license bytes must keep their recorded hashes.
+            if any(part in {'repository', 'approved_registry'} for part in path.relative_to(destination).parts):
+                continue
             text = path.read_text(encoding="utf-8")
             text = text.replace(str(source), f"examples/{arguments.output_name}")
             text = text.replace(str(workspace), ".").replace(str(ROOT), ".")

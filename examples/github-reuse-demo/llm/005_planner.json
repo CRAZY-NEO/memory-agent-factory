@@ -1,0 +1,566 @@
+{
+  "provider": "mock",
+  "model": "mock-template-v1",
+  "role": "planner",
+  "context": {
+    "request": {
+      "task": "memory_retrieval",
+      "description": "比较所有已经登记的方法，生成技术笔记检索算法并验证。",
+      "language": "mixed",
+      "top_k": 5
+    },
+    "capabilities": [
+      {
+        "node_id": "char_jaccard_00f7e68fbdb0",
+        "algorithm": "jaccard",
+        "algorithm_plugin_version": "1.0.1",
+        "applicable_conditions": [
+          "小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。"
+        ],
+        "dependencies": [
+          "Python stdlib"
+        ],
+        "evidence": "适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。",
+        "id": "char_jaccard_00f7e68fbdb0",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。"
+        ],
+        "metrics": [
+          "mrr_at_k",
+          "p95_ms",
+          "precision_at_k",
+          "recall_at_k"
+        ],
+        "name": "中文技术记忆 jaccard",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+        "task": "memory_retrieval"
+      },
+      {
+        "node_id": "char_bm25_0f592b104c61",
+        "algorithm": "bm25",
+        "algorithm_plugin_version": "1.0.0",
+        "applicable_conditions": [
+          "不同长度的技术笔记、包含明确组件名或故障词的查询。"
+        ],
+        "dependencies": [
+          "Python stdlib"
+        ],
+        "evidence": "适用：不同长度的技术笔记、包含明确组件名或故障词的查询。",
+        "id": "char_bm25_0f592b104c61",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "局限：词面匹配对纯语义改写有限；分词策略影响排序。"
+        ],
+        "metrics": [
+          "mrr_at_k",
+          "p95_ms",
+          "precision_at_k",
+          "recall_at_k"
+        ],
+        "name": "中文技术记忆 bm25",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "task": "memory_retrieval"
+      },
+      {
+        "node_id": "char_tfidf_1c2a193fe7ef",
+        "algorithm": "tfidf",
+        "algorithm_plugin_version": "1.0.1",
+        "applicable_conditions": [
+          "小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+        ],
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "evidence": "适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。",
+        "id": "char_tfidf_1c2a193fe7ef",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。"
+        ],
+        "metrics": [
+          "mrr_at_k",
+          "p95_ms",
+          "precision_at_k",
+          "recall_at_k"
+        ],
+        "name": "中文技术记忆 tfidf",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "task": "memory_retrieval"
+      },
+      {
+        "node_id": "cap_github_bm25plus_20261014t104242_7d070237",
+        "algorithm": "github_bm25plus",
+        "algorithm_plugin_version": "20261014T104242_7d070237",
+        "applicable_conditions": [
+          "k must be less than or equal to the number of available scores in the corpus",
+          "delta parameter must be provided to adjust the final relevance score"
+        ],
+        "dependencies": [],
+        "evidence": "return (num / den) + delta",
+        "id": "cap_github_bm25plus_20261014t104242_7d070237",
+        "inputs": [
+          "query",
+          "memories",
+          "top_k"
+        ],
+        "limitations": [
+          "The algorithm assumes a fixed vocabulary size and does not support dynamic vocabulary expansion",
+          "The delta parameter is not automatically calculated and must be explicitly set during initialization"
+        ],
+        "metrics": [
+          "recall_at_k",
+          "mrr_at_k",
+          "precision_at_k",
+          "p95_ms"
+        ],
+        "name": "BM25Plus",
+        "outputs": [
+          "id",
+          "score"
+        ],
+        "source_id": "source_github_material_db5e35a4cd85fe281e5919c350548a94532e90025353232317874340860f8857",
+        "task": "memory_retrieval"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "source_2e0165dbc2241e8e6701bb3c93fd324a4cb82a2bc106ba30445793252228a40e",
+        "text": "# 中文技术记忆检索：TF-IDF\n\n能力标识：char_tfidf。算法：tfidf。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文技术笔记可以使用字符一至三元组 TF-IDF 与余弦相似度进行检索，无须额外标注训练数据。先在记忆文本上拟合向量器，再转换查询；不要把查询加入拟合语料。保留英文技术词并统一大小写。检索分数相同按 ID 排序，空查询、空语料和非正 top_k 返回空列表。\n\n适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：scikit-learn。\n局限：难以解决同义改写和缺少词面重合的查询；原型每次查询重建索引。\n来源为本项目编写的演示算法说明，算法接口参考 scikit-learn 官方文档：\nhttps://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html\n"
+      },
+      {
+        "source_id": "source_73dc209272ade0aa5768dce22a7c5777c2656a069e0632e332818278ab745e5a",
+        "text": "# 中文技术记忆检索：Jaccard\n\n能力标识：char_jaccard。算法：jaccard。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\n中文使用单字及相邻双字，英文技术标识使用小写单词，将分词结果去重为集合。查询集合 Q 与文档集合 D 的 Jaccard 相似度为 len(Q & D) / len(Q | D)，并集为空时返回零。词频不参与评分，不需要训练或 IDF。只返回正分结果，分数降序，同分按 ID 排序。空查询、空语料和非正 top_k 返回空列表。标点查询无词项时返回空列表。\n\n适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。\n指标：Recall@k、MRR@k、Precision@k、P95 查询耗时；依赖：Python 标准库。\n局限：不考虑词频与逆文档频率，长文档的并集会稀释得分；无法解决缺少词面重合的语义改写。\n来源为本项目编写的演示算法说明和可复现基线实现。\n"
+      },
+      {
+        "source_id": "source_aeefc74e1816d705ef03e8895b782beb5f9bb86c0ef1b731c1874ebefb27c5c2",
+        "text": "# 中文技术记忆检索：BM25\n\n能力标识：char_bm25。算法：bm25。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序的 memory id 和 score。\n\nBM25 结合词频、逆文档频率与文档长度归一化进行检索。中文使用单字和相邻双字，英文技术标识按小写单词分割。使用非负 IDF 公式 log(1 + (N - df + 0.5)/(df + 0.5))，k1=1.5、b=0.75。相同分数按 ID 排序。空查询、空语料和非正 top_k 返回空列表。\n\n适用：不同长度的技术笔记、包含明确组件名或故障词的查询。\n指标：Recall@k、MRR@k、P95 查询耗时；依赖：Python 标准库。\n局限：词面匹配对纯语义改写有限；分词策略影响排序。\n来源为本项目编写的演示算法说明，研究背景：\nhttps://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf\n"
+      },
+      {
+        "source_id": "source_github_material_db5e35a4cd85fe281e5919c350548a94532e90025353232317874340860f8857",
+        "text": "# BM25Plus\n\n算法：github_bm25plus。任务：memory_retrieval。\n输入 query、memories、top_k；输出有序 id、score。\n\nReproduce BM25Plus from the pinned source scoring functions and constructor defaults. Adapt the retrieve interface and tokenizer only; do not mix in unrelated scoring methods or install dependencies.\n\n模型归纳（未独立认证，不作为评分公式）：The BM25Plus algorithm adapts the standard BM25 scoring by incorporating a delta parameter to adjust document relevance scores. It utilizes a unified tokenization pipeline to convert query and corpus tokens into indices before applying the scoring formula. The implementation requires a custom backend selection mechanism to handle different numerical computation backends efficiently.\n\n适用：k must be less than or equal to the number of available scores in the corpus；delta parameter must be provided to adjust the final relevance score\n局限：The algorithm assumes a fixed vocabulary size and does not support dynamic vocabulary expansion；The delta parameter is not automatically calculated and must be explicitly set during initialization\n来源：https://github.com/xhluca/bm25s/tree/03eac5a8fb3aa4958ce37415a4cf2220d35157f7；许可：MIT\n证据 bm25s/scoring.py：return (num / den) + delta"
+      }
+    ],
+    "lessons": [
+      {
+        "node_id": "outcome_20261014T104242_7d070237_github_bm25plus_r0",
+        "algorithm": "github_bm25plus",
+        "diagnosis": null,
+        "evidence": {
+          "code_hash": "ce370d7c6bf1f8305af31d70ca32e5d3b6f50b477b50dfd0c0f75aaa63e93517",
+          "validation_id": "validation_20261014T104242_7d070237_github_bm25plus_r0"
+        },
+        "implementation_id": "implementation_20261014T104242_7d070237_github_bm25plus_r0",
+        "parent": null,
+        "scope": "memory_retrieval",
+        "summary": "algorithm contract: github_bm25plus public example 0 scores or ranking mismatch; algorithm contract: github_bm25plus public example 1 scores or ranking mismatch",
+        "validated_fix": false
+      },
+      {
+        "node_id": "outcome_20261014T104242_7d070237_github_bm25plus_r1",
+        "algorithm": "github_bm25plus",
+        "diagnosis": {
+          "execution_diagnostics": [],
+          "repair_instructions": [
+            "Update the `num` calculation to match the source: `num = (k1 + 1) * tf / doc_len` (already correct in implementation, but verify if `k1` should be passed as a parameter or use the default 1.5 consistently).",
+            "Update the `den` calculation to match the source formula exactly: `den = k1 * (1 - b + b * doc_len / avg_len) + tf`. Ensure `k1`, `b`, `doc_len`, and `avg_len` are used as variables rather than hardcoded constants.",
+            "Remove hardcoded defaults for `k1`, `b`, and `delta` if they are not explicitly required by the source's `l_d` and `l_avg` logic, or ensure the implementation passes these values correctly to the scoring function.",
+            "Verify that the `score_term` function correctly handles the `tf` (term frequency) and `df` (document frequency) inputs as integers, and that the return value is a scalar float.",
+            "Ensure the `score_idf_bm25plus` function correctly uses the `df` parameter from the `score_term` context or passes it appropriately if it needs to be recomputed.",
+            "Re-run the scoring logic against the provided public formula cases to confirm that the scores now match the expected values (e.g., 1.1996778125075978 for 'alpha' with query 'alpha' and top_k=3)."
+          ],
+          "summary": "The BM25Plus scoring hook implementation in `score_term` deviates from the source formulas provided in `scoring.py`. Specifically, the implementation uses hardcoded defaults (k1=1.5, b=0.75) and a simplified denominator formula that does not account for the `l_d` (document length) and `l_avg` (average document length) parameters correctly as defined in the source code. The source code explicitly calculates `den = k1 * (1 - b + b * l_d / l_avg) + tf_array`, whereas the implementation calculates `den = 1.5 * (1 - 0.75 + 0.75 * doc_len / avg_len) + tf`. This mismatch causes the scores to differ from the expected values in the public formula cases, leading to ranking mismatches.",
+          "trusted_findings": []
+        },
+        "evidence": {
+          "code_hash": "6ffc289f5dcf6e07ff22b6298f93ef5924fae73ceedfc5fac813884dbcf8c1e8",
+          "validation_id": "validation_20261014T104242_7d070237_github_bm25plus_r1"
+        },
+        "implementation_id": "implementation_20261014T104242_7d070237_github_bm25plus_r1",
+        "parent": "implementation_20261014T104242_7d070237_github_bm25plus_r0",
+        "scope": "memory_retrieval",
+        "summary": "algorithm contract: github_bm25plus public example 0 scores or ranking mismatch; algorithm contract: github_bm25plus public example 1 scores or ranking mismatch",
+        "validated_fix": false
+      },
+      {
+        "node_id": "outcome_20261014T104242_7d070237_github_bm25plus_r2",
+        "algorithm": "github_bm25plus",
+        "diagnosis": {
+          "execution_diagnostics": [],
+          "repair_instructions": [
+            "Correct the TF calculation in `score_term` by dividing `tf` by `doc_len` instead of using `doc_len` directly in the numerator.",
+            "Ensure the denominator calculation correctly reflects the standard BM25Plus formula: `k1 * (1 - b + b * l_d / l_avg) + tf`. The current implementation has `tf` added to the denominator term incorrectly.",
+            "Verify that the `num` variable in the source code is `(k1 + 1) * tf / doc_len` to match the expected output for the provided test cases.",
+            "Re-run the scoring logic with the corrected formula to ensure scores match the expected values for queries like 'alpha' and 'alpha alpha'.",
+            "Update any internal documentation or comments referencing the TF calculation to reflect the corrected division by `doc_len`. Ensure no other parts of the codebase rely on the incorrect `doc_len` usage in the TF numerator.",
+            "Test the fixed implementation against the provided public algorithm cases to confirm that all scores now match the expected values within a negligible margin of error."
+          ],
+          "summary": "The BM25Plus scoring hook implementation contains a critical formula error in the term frequency (TF) calculation. The source code uses `doc_len` in the numerator of the TF component, whereas the public algorithm cases and expected results are derived from the correct formula where TF is `tf / doc_len`. This discrepancy causes the generated scores to be significantly higher than the expected values, violating the algorithm contract.",
+          "trusted_findings": []
+        },
+        "evidence": {
+          "code_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "validation_id": "validation_20261014T104242_7d070237_github_bm25plus_r2"
+        },
+        "implementation_id": "implementation_20261014T104242_7d070237_github_bm25plus_r2",
+        "parent": "implementation_20261014T104242_7d070237_github_bm25plus_r1",
+        "scope": "memory_retrieval",
+        "summary": "interface: missing top-level retrieve function; Expected one score_term(tf, df, doc_len, avg_len, N) function",
+        "validated_fix": false
+      }
+    ],
+    "historical_validations": [
+      {
+        "node_id": "validation_20261014T104242_7d070237_github_bm25plus_r0",
+        "passed": false,
+        "metrics": {
+          "mrr_at_k": 0.9222222222222223,
+          "p95_ms": 1.5931770321913064,
+          "precision_at_k": 0.23888888888888887,
+          "recall_at_k": 0.9722222222222222
+        },
+        "errors": [
+          "algorithm contract: github_bm25plus public example 0 scores or ranking mismatch",
+          "algorithm contract: github_bm25plus public example 1 scores or ranking mismatch"
+        ]
+      },
+      {
+        "node_id": "validation_20261014T104242_7d070237_github_bm25plus_r1",
+        "passed": false,
+        "metrics": {
+          "mrr_at_k": 0.9222222222222223,
+          "p95_ms": 3.208458030712791,
+          "precision_at_k": 0.23888888888888887,
+          "recall_at_k": 0.9722222222222222
+        },
+        "errors": [
+          "algorithm contract: github_bm25plus public example 0 scores or ranking mismatch",
+          "algorithm contract: github_bm25plus public example 1 scores or ranking mismatch"
+        ]
+      },
+      {
+        "node_id": "validation_20261014T104242_7d070237_github_bm25plus_r2",
+        "passed": false,
+        "metrics": {},
+        "errors": [
+          "interface: missing top-level retrieve function",
+          "Expected one score_term(tf, df, doc_len, avg_len, N) function"
+        ]
+      }
+    ],
+    "repository_candidates": [],
+    "algorithm_catalog": [
+      {
+        "id": "tfidf",
+        "name": "字符 TF-IDF",
+        "version": "1.0.1",
+        "task": "memory_retrieval",
+        "dependencies": [
+          "scikit-learn"
+        ],
+        "environment": "retrieval-v1",
+        "guidance": "使用 sklearn 字符 1 至 3 元组 TF-IDF 与余弦相似度。必须对 texts=[memory[\"text\"] for memory in memories] 拟合，每条完整记忆对应矩阵一行，行数必须等于 len(memories)。禁止把拆分去重的词当成多篇文档，禁止移除中文或过滤行后仍用原列表索引；transform([query]) 后与整个语料计算相似度。",
+        "public_cases": [
+          {
+            "query": "甲乙 alpha beta",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙 alpha beta",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙 alpha gamma",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0000000000000016
+              },
+              {
+                "id": "b",
+                "score": 0.46518071501565006
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bm25",
+        "name": "字符 BM25",
+        "version": "1.0.0",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用原文中的非负 IDF、k1=1.5 和 b=0.75。中文单字/双字及英文词分词；将去重的查询词排序后累加，保持跨进程浮点结果一致。",
+        "public_cases": []
+      },
+      {
+        "id": "jaccard",
+        "name": "集合 Jaccard",
+        "version": "1.0.1",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "使用中文单字/双字及英文词的集合交并比 len(Q & D)/len(Q | D)。中文双字必须从原文连续中文片段按相邻位置切分，不能从无序集合取字符再拼接。英文标识符必须整词加入集合，例如 tokens.add(fragment)，禁止 tokens.update(fragment) 将英文拆成字母；alpha 与 beta 的英文词集合没有交集。不使用词频、TF-IDF 或 BM25；只返回正分结果，处理空集合。",
+        "public_cases": [
+          {
+            "query": "甲乙",
+            "memories": [
+              {
+                "id": "a",
+                "text": "甲乙",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "乙丙",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0
+              },
+              {
+                "id": "b",
+                "score": 0.2
+              }
+            ]
+          },
+          {
+            "query": "ALPHA",
+            "memories": [
+              {
+                "id": "a",
+                "text": "alpha",
+                "source": "public://a"
+              },
+              {
+                "id": "b",
+                "text": "beta",
+                "source": "public://b"
+              }
+            ],
+            "top_k": 5,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "github_bm25plus",
+        "name": "BM25Plus",
+        "version": "20261014T104638_183b968d",
+        "task": "memory_retrieval",
+        "dependencies": [],
+        "environment": "retrieval-v1",
+        "guidance": "Reproduce BM25Plus from the pinned source scoring functions and constructor defaults. Adapt the retrieve interface and tokenizer only; do not mix in unrelated scoring methods or install dependencies.",
+        "public_cases": [
+          {
+            "query": "alpha",
+            "memories": [
+              {
+                "id": "a",
+                "text": "alpha alpha beta",
+                "source": "public formula case"
+              },
+              {
+                "id": "b",
+                "text": "alpha beta",
+                "source": "public formula case"
+              },
+              {
+                "id": "c",
+                "text": "gamma",
+                "source": "public formula case"
+              }
+            ],
+            "top_k": 3,
+            "expected": [
+              {
+                "id": "a",
+                "score": 1.1996778125075978
+              },
+              {
+                "id": "b",
+                "score": 1.0397207708399179
+              },
+              {
+                "id": "c",
+                "score": 0.34657359027997264
+              }
+            ]
+          },
+          {
+            "query": "alpha alpha",
+            "memories": [
+              {
+                "id": "a",
+                "text": "alpha alpha beta",
+                "source": "public formula case"
+              },
+              {
+                "id": "b",
+                "text": "alpha beta",
+                "source": "public formula case"
+              },
+              {
+                "id": "c",
+                "text": "gamma",
+                "source": "public formula case"
+              }
+            ],
+            "top_k": 3,
+            "expected": [
+              {
+                "id": "a",
+                "score": 2.3993556250151955
+              },
+              {
+                "id": "b",
+                "score": 2.0794415416798357
+              },
+              {
+                "id": "c",
+                "score": 0.6931471805599453
+              }
+            ]
+          }
+        ],
+        "provenance": {
+          "repository": "xhluca/bm25s",
+          "url": "https://github.com/xhluca/bm25s",
+          "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+          "license": "MIT"
+        }
+      }
+    ],
+    "max_candidates": 4,
+    "required_algorithms": [
+      "tfidf",
+      "bm25",
+      "jaccard",
+      "github_bm25plus"
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Algorithm",
+            "type": "string",
+            "enum": [
+              "tfidf",
+              "bm25",
+              "jaccard",
+              "github_bm25plus"
+            ]
+          },
+          "capability_id": {
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "algorithm",
+          "capability_id",
+          "rationale"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/Candidate"
+        },
+        "maxItems": 4,
+        "minItems": 4,
+        "title": "Candidates",
+        "type": "array"
+      },
+      "design_explanation": {
+        "title": "Design Explanation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "candidates",
+      "design_explanation"
+    ],
+    "title": "Plan",
+    "type": "object"
+  },
+  "retry": 0,
+  "response": {
+    "candidates": [
+      {
+        "algorithm": "tfidf",
+        "capability_id": "char_tfidf_1c2a193fe7ef",
+        "rationale": "来自材料的适用条件：适用：小规模中文与英文混合笔记、词面相近的排错记录和项目决策。"
+      },
+      {
+        "algorithm": "bm25",
+        "capability_id": "char_bm25_0f592b104c61",
+        "rationale": "来自材料的适用条件：适用：不同长度的技术笔记、包含明确组件名或故障词的查询。"
+      },
+      {
+        "algorithm": "jaccard",
+        "capability_id": "char_jaccard_00f7e68fbdb0",
+        "rationale": "来自材料的适用条件：适用：小规模中文与英文混合技术笔记、需要轻量且可解释的词集合重合检索。"
+      },
+      {
+        "algorithm": "github_bm25plus",
+        "capability_id": "cap_github_bm25plus_20261014t104242_7d070237",
+        "rationale": "来自材料的适用条件：return (num / den) + delta"
+      }
+    ],
+    "design_explanation": "比较注册算法 tfidf, bm25, jaccard, github_bm25plus，按配置的可信验证集指标选择通过检查的方案。"
+  },
+  "duration_seconds": 7.204199209809303e-05
+}

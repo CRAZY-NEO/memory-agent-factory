@@ -49,6 +49,12 @@ def parser():
     repository.add_argument("--max-file-bytes", type=int, default=262144)
     repository.add_argument("--max-total-bytes", type=int, default=5242880)
     repository.add_argument("--max-symbols", type=int, default=1000)
+    discover = commands.add_parser('discover', help='GitHub 搜索 → 下载源码 → 复刻新算法 → Docker 验证 → 自动登记')
+    provider_options(discover)
+    discover.set_defaults(provider=os.getenv('FACTORY_PROVIDER', 'ollama'),
+                          model=os.getenv('OLLAMA_CHAT_MODEL', 'qwen3.5:2b'),
+                          base_url=os.getenv('OLLAMA_URL', 'http://127.0.0.1:11435'))
+    discover.add_argument('--description', required=True, help='描述要发现的新检索方法；不需要预先编写插件')
     run = commands.add_parser("run", help="需求 → 检索知识 → 生成 → 验证 → 修复 → 沉淀")
     provider_options(run)
     request = run.add_mutually_exclusive_group(required=True)
@@ -83,11 +89,21 @@ def main(argv=None):
     try:
         config_path = arguments.config or workspace / "config.json"
         config = ValidationConfig.model_validate(json.loads(config_path.read_text(encoding="utf-8")))
-        registry = load_registry(config.plugin_packages)
+        registry = load_registry(config.plugin_packages, workspace=workspace)
         registry.validate_config(config)
         if arguments.command == "plugins":
             print(json.dumps(registry.catalog(), ensure_ascii=False, indent=2))
             return 0
+        if arguments.command == 'discover':
+            if arguments.provider != 'ollama':
+                raise ValueError('GitHub 新算法发现需要真实 LLM；离线网络与模型替身只用于自动测试')
+            from .discovery import DiscoveryFactory
+            factory = DiscoveryFactory(workspace, arguments.provider, resolve_model(arguments), arguments.base_url,
+                                       config=config, registry=registry)
+            result = factory.run(arguments.description)
+            result['report'] = str(factory.directory / 'report.md')
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0 if result['status'] == 'passed' else 1
         if arguments.command == "run":
             description = arguments.description or arguments.request_file.read_text(encoding="utf-8")
             factory = Factory(workspace, arguments.provider, resolve_model(arguments), arguments.base_url,

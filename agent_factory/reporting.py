@@ -70,5 +70,13 @@ def write_report(directory, summary):
               "- 所有报告指标由可信验证器计算，mock 只替代 LLM 响应。",
               "- Precision@k 使用固定分母 k，不足 k 条的返回位置计为不相关；多查询取平均。",
               "- P95 包含查询内索引构建，不包含解释器和依赖导入，小样本结果不代表生产性能。",
-              "- 插件由开发者编写，真实模型代码默认在禁网 Docker 容器运行；local 不构成可靠安全沙箱。", ""]
+              "- 算法目录来自可信开发者模块或验证后登记清单；真实模型代码默认在禁网 Docker 容器运行，local 不构成可靠安全沙箱。", ""]
+    if summary.get('discovery'):
+        discovery = summary['discovery']
+        source = discovery['source']
+        lines += ['## GitHub 算法发现与登记', '',
+                  f"来源：{source['url']}；固定提交：`{source['commit']}`；许可：{source['license']}",
+                  '搜索词：' + ', '.join(discovery['search_queries']),
+                  f"登记结果：{bool(discovery['release'])}；使用内置算法模板：False", '',
+                  '下载仓库未导入或执行，模型根据来源片段复刻代码。验证证明当前数据与接口上的表现，不构成源码数学等价性证明。', '']
     (directory / "report.md").write_text("\n".join(lines), encoding="utf-8")

@@ -21,6 +21,16 @@ LOGGER = logging.getLogger(__name__)
 
 def execute_job(workspace, job, provider, model, base_url, runner, store=None):
     kind, payload = job["kind"], job["payload"]
+    if kind == 'discovery':
+        if provider != 'ollama' or runner != 'docker':
+            raise ValueError('Repository discovery requires a real model and Docker')
+        from .discovery import DiscoveryFactory
+        factory = DiscoveryFactory(workspace, provider, model, base_url)
+        if store:
+            store.attach_run(job['id'], factory.run_id)
+        result = factory.run(payload['description'])
+        result.pop('directory', None)
+        return {**result, 'report_url': f'/v1/runs/{factory.run_id}/report'}
     if kind == "factory":
         factory = Factory(workspace, provider, model, base_url, runner)
         if store:
@@ -31,7 +41,7 @@ def execute_job(workspace, job, provider, model, base_url, runner, store=None):
                 "report_url": f"/v1/runs/{result['run_id']}/report"}
     if kind == "ingest":
         config = ValidationConfig.model_validate(json.loads((workspace / "config.json").read_text(encoding="utf-8")))
-        registry = load_registry(config.plugin_packages)
+        registry = load_registry(config.plugin_packages, workspace=workspace)
         registry.validate_config(config)
         client = LLMClient(provider, model, base_url, workspace / "state" / "ingest" / job["id"],
                            registry=registry)

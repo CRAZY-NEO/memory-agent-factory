@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "run_id": "20261014T104638_183b968d",
+  "provider": "ollama",
+  "runner": "docker",
+  "test_metrics": {
+    "recall_at_k": 0.9666666666666667,
+    "mrr_at_k": 0.925,
+    "precision_at_k": 0.24666666666666667,
+    "p95_ms": 4.034510592464356
+  },
+  "source": {
+    "repository": "xhluca/bm25s",
+    "url": "https://github.com/xhluca/bm25s",
+    "commit": "03eac5a8fb3aa4958ce37415a4cf2220d35157f7",
+    "license": "MIT"
+  },
+  "registered_algorithm": "github_bm25plus",
+  "scope": "Browser views a completed actual CLI discovery; no new discovery job is submitted by this smoke script.",
+  "checks": [
+    "unauthorized report access rejected",
+    "discovery enabled in real mode",
+    "example selection",
+    "actual report and source provenance",
+    "downloaded code SHA-256",
+    "AST JSON download",
+    "source formula contract download",
+    "mobile layout",
+    "no JavaScript errors"
+  ]
+}

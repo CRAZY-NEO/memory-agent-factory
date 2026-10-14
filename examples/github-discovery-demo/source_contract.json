@@ -1,0 +1,95 @@
+{
+  "status": "derived_scalar_formula_cases",
+  "cases": [
+    {
+      "query": "alpha",
+      "memories": [
+        {
+          "id": "a",
+          "text": "alpha alpha beta",
+          "source": "public formula case"
+        },
+        {
+          "id": "b",
+          "text": "alpha beta",
+          "source": "public formula case"
+        },
+        {
+          "id": "c",
+          "text": "gamma",
+          "source": "public formula case"
+        }
+      ],
+      "top_k": 3,
+      "expected": [
+        {
+          "id": "a",
+          "score": 1.1996778125075978
+        },
+        {
+          "id": "b",
+          "score": 1.0397207708399179
+        },
+        {
+          "id": "c",
+          "score": 0.34657359027997264
+        }
+      ]
+    },
+    {
+      "query": "alpha alpha",
+      "memories": [
+        {
+          "id": "a",
+          "text": "alpha alpha beta",
+          "source": "public formula case"
+        },
+        {
+          "id": "b",
+          "text": "alpha beta",
+          "source": "public formula case"
+        },
+        {
+          "id": "c",
+          "text": "gamma",
+          "source": "public formula case"
+        }
+      ],
+      "top_k": 3,
+      "expected": [
+        {
+          "id": "a",
+          "score": 2.3993556250151955
+        },
+        {
+          "id": "b",
+          "score": 2.0794415416798357
+        },
+        {
+          "id": "c",
+          "score": 0.6931471805599453
+        }
+      ]
+    }
+  ],
+  "kernel_helpers": "import math\n\ndef source_tf_component(tf_array, l_d, l_avg, k1, b, delta):\n    num = (k1 + 1) * tf_array\n    den = k1 * (1 - b + b * l_d / l_avg) + tf_array\n    return num / den + delta\n\ndef source_idf_component(df, N):\n    return math.log((N + 1) / df)",
+  "adapter_hint": "def score_term(tf, df, doc_len, avg_len, N):\n    if avg_len <= 0 or df <= 0:\n        return 0.0\n    return source_tf_component(tf, doc_len, avg_len, 1.5, 0.75, 0.5) * source_idf_component(df, N)",
+  "kernels": [
+    {
+      "path": "bm25s/scoring.py",
+      "qualified_name": "_score_tfc_bm25plus",
+      "code": "def _score_tfc_bm25plus(tf_array, l_d, l_avg, k1, b, delta):\n    num = (k1 + 1) * tf_array\n    den = k1 * (1 - b + b * l_d / l_avg) + tf_array\n    return (num / den) + delta"
+    },
+    {
+      "path": "bm25s/scoring.py",
+      "qualified_name": "_score_idf_bm25plus",
+      "code": "def _score_idf_bm25plus(df, N):\n    return math.log((N + 1) / df)"
+    }
+  ],
+  "defaults": {
+    "k1": 1.5,
+    "b": 0.75,
+    "delta": 0.5
+  },
+  "scope": "Small public numeric examples; not a proof of full repository equivalence"
+}
