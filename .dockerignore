@@ -8,3 +8,7 @@ data
 knowledge
 __pycache__
 *.egg-info
+
+.env
+*.env
+.env.*

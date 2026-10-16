@@ -4,9 +4,11 @@
 
 工厂输入是自然语言算法需求，产物为 Python 代码、依赖说明、验证报告、版本历史与可独立运行的 ZIP。检索产物提供 `retrieve(query, memories, top_k=5)`；分类产物提供 `classify(texts, training_examples)`。两项任务复用同一套 LangGraph 编排、知识库、候选比较与有限修复。
 
-**当前可运行模式**：离线 mock/规则模板演示，以及远端 Ollama 原生 API 接入。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。已通过本机 11435 转发接口调用 `qwen3.5:2b`，在 v2 评估集上完成真实模型抽取、三候选生成、Docker 验证及知识回写，见 [三候选真实模型报告](examples/ollama-v2-demo/report.md)；历史运行保留真实代码修复记录。工厂和算法执行容器运行在 Mac；远端硬件由用户管理，SSH 隧道可通过本地启动器的 --ssh-target 一起启动。
+**当前可运行模式**：离线 mock/规则模板演示、远端 Ollama 原生 API，以及 DeepSeek 云端 API。DeepSeek 已完成不提供完整模板的分类扩展验收及历史经验开／关对照，见 [DeepSeek 接入与验收](docs/deepseek-api.md) 和 [历史经验对照](docs/history-ablation.md)。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。已通过本机 11435 转发接口调用 `qwen3.5:2b`，在 v2 评估集上完成真实模型抽取、三候选生成、Docker 验证及知识回写，见 [三候选真实模型报告](examples/ollama-v2-demo/report.md)；历史运行保留真实代码修复记录。工厂和算法执行容器运行在 Mac；远端硬件由用户管理，SSH 隧道可通过本地启动器的 --ssh-target 一起启动。
 
 ## 1. 快速开始
+
+**生成证据说明**：网页统一按“需求 → 检索知识 → 生成 → 验证”提交任务，无须选择有模板或无模板。内部按规格生成（`spec`），不向 Coder/Reviewer/Repairer 提供完整模板；CLI/API 保留 `reference` 高级参数，用于明确需要完整参考实现的复刻或审计。报告记录各版本实际收到的参考和产物来源；系统尚未自动判断何时应提供完整模板。此前归档的真实分类和三算法样例使用完整参考实现，部分输出去除注释后与模板相同，不能据此声称模型独立实现了算法。新增业务要求和历史经验开关对照工具见 [规格生成与实验指南](docs/spec-generation-and-experiments.md)。mock 是模板基线，确定性源码适配是复用，两者均不计为模型独立编程。
 
 已有本地环境可直接使用网页入口，详见 [Web 启动指南](docs/web-ui.md)：
 
@@ -14,7 +16,8 @@
 cd ~/Downloads/agent-factory
 .venv/bin/python scripts/serve_web.py
 # 自动打开浏览器并登录，刷新保持连接，无须手动复制密钥
-# 默认 mock + Docker；真模型可一个终端管理隧道、网页和 worker
+# 未配置 FACTORY_PROVIDER 时默认 mock + Docker；.env 可指定 deepseek
+# Ollama 可一个终端管理隧道、网页和 worker
 .venv/bin/python scripts/serve_web.py --provider ollama --ssh-target kylon@JETSON_IP
 ```
 
@@ -81,6 +84,7 @@ python -m agent_factory export --run-id YOUR_RUN_ID
 | Python | 将算法、评估与编排放在同一语言，降低原型复杂度 |
 | LangGraph | 显式状态图、条件分支和有限修复循环，工作流容易审计 |
 | Ollama + httpx | 对接已有 Jetson 模型服务；原生 chat 支持 JSON schema，无须额外模型部署框架 |
+| DeepSeek + httpx | 提供云端生成与修复接口，减少本地模型资源限制；沿用同一套验证门槛 |
 | Pydantic | 校验需求、能力抽取、候选方案、代码产物、诊断和插件输出 |
 | SQLite | 无额外数据库服务，保存不可覆盖的能力与验证版本 |
 | NetworkX | 图遍历、能力到历史经验的关系检索、JSON/GraphML 导出 |
@@ -118,7 +122,7 @@ python -m agent_factory export --run-id YOUR_RUN_ID
 .venv/bin/python -m agent_factory plugins
 ```
 
-Web、CLI `run` 与工厂 API 默认自动判断：已有能力优先复用，指定未登记方法时自动发现；无须勾选 GitHub。混合需求先发现登记，再比较请求的方法，保留两份报告。高级选项仍可限制执行路径。现有服务需重启，详见 [自动路由](docs/automatic-routing.md)。新路径的生成上下文不包含内置 BM25 模板，模型生成来源方法的评分函数，框架提供算法无关的分词、统计和接口；最终组合代码完整接受验证。来源源码只被读取，不直接导入或安装。完整步骤、登记目录和边界见 [GitHub 算法发现指南](docs/github-discovery.md)。这里增加的是工厂尚未登记的开源方法；这条 GitHub 发现路径仅支持 `memory_retrieval`；分类已有独立标准工作流适配，尚未接入来源发现。
+Web、CLI `run` 与工厂 API 默认自动判断：已有能力优先复用，指定未登记方法时自动发现；无须勾选 GitHub。混合需求先发现登记，再比较请求的方法，保留两份报告。高级选项仍可限制执行路径。现有服务需重启，详见 [自动路由](docs/automatic-routing.md)。发现路径不提供内置 BM25 模板：能够从固定来源源码静态提取评分核与适配器时，系统直接组装实现，标记为确定性来源适配或复用，不调用模型回传已有代码；其他受支持的来源生成路径由模型实现评分函数。框架提供算法无关的分词、统计和接口，最终组合代码完整接受验证。来源仓库只被静态读取，不直接导入或安装；提取并适配的代码在执行器中接受检查。完整步骤、登记目录和边界见 [GitHub 算法发现指南](docs/github-discovery.md)。这里增加的是工厂尚未登记的开源方法；这条 GitHub 发现路径仅支持 `memory_retrieval`；分类已有独立标准工作流适配，尚未接入来源发现。
 
 ## 3. 能力知识图谱与抽取结果
 
@@ -143,11 +147,11 @@ agent-factory ingest-repo . --include 'agent_factory/templates/jaccard.py' --alg
 agent-factory run --request-file examples/request.txt
 ```
 
-输出函数/方法、签名、参数与返回类型、docstring、注释、import、源码行号、文件/代码哈希与 Git HEAD，写入 RepositorySnapshot → Source → CodeCandidate。`--algorithm` 为人工关联，候选始终标记为未验证；不会自动安装依赖或注册执行插件。规划使用概要，生成/修复使用当前算法的限长源码参考，生成版本保留 `context_from` 来源边。详见 [仓库抽取指南](docs/repository-extraction.md)、[实际抽取结果](examples/repository-demo/extracted_repository.json)和 [AST + mock/Docker 闭环报告](examples/repository-demo/report.md)。
+输出函数/方法、签名、参数与返回类型、docstring、注释、import、源码行号、文件/代码哈希与 Git HEAD，写入 RepositorySnapshot → Source → CodeCandidate。`--algorithm` 为人工关联，候选始终标记为未验证；不会自动安装依赖或注册执行插件。默认 `spec` 模式只向生成角色提供规格，不传仓库源码或完整模板；抽取证据仍保存在知识库。显式选择 `reference` 模式时，规划使用概要，生成/修复接收当前算法的限长源码参考，并为使用这些参考的生成版本保存 `context_from` 来源边。详见 [仓库抽取指南](docs/repository-extraction.md)、[实际抽取结果](examples/repository-demo/extracted_repository.json)和 [AST + mock/Docker 闭环报告](examples/repository-demo/report.md)；归档报告保留其原有参考复刻方式。
 
 ## 4. 工作流与生成算法
 
-Extractor 从材料抽取结构化能力；Understander 理解开发需求；Planner 引用检索到的能力，在配置预算内规划候选（当前三个，最多八个）；Coder 生成 Python；Reviewer 诊断可信错误；Repairer 返回修复后的完整代码。
+Extractor 从材料抽取结构化能力；Understander 理解开发需求；Planner 引用检索到的能力，在配置预算内规划候选（当前三个，最多八个）；Coder 生成 Python；Reviewer 的诊断保存在审计记录中；Repairer 根据可信执行错误、静态发现和公开规格返回完整修订代码，不接收 Reviewer 未验证的自由文本建议。
 
 统一插件接口：
 
@@ -160,10 +164,13 @@ def retrieve(query: str, memories: list[dict], top_k: int = 5) -> list[dict]:
 
 候选：字符 TF-IDF + 余弦相似度；中文单字/双字与英文词的 BM25、Jaccard 集合相似度。
 每个候选最多两次代码修复。只有通过验证者能被选中；按配置的指标顺序及插件声明的高低方向比较，同分优先依赖更少，再按配置算法顺序与修订次数选择。
+有源码时优先定点修复，保留已经实现的行为；无可用源码、上一轮实现仍未改变，或最后一轮确认最近两次执行没有可观测验证进展时，按当前 `spec` / `reference` 模式重建。定点修复请求先提供上一版源码，再提供可信失败反馈；定点修复与重建都合并重复反馈，同时保留全部失败条件与检查编号，完整证据另存日志。新增需求异常保留安全处理后的类别与源码位置。Coder / Repairer 的连接失败或模型服务错误耗尽响应重试后停止工作流，保留 `failed_generation`，不会继续调用审查和修复来处理断线。已进入算法检查但未通过的情况保留 `failed_validation`。
 最终测试失败即停止，不利用测试结果修复或重新选择方案。
 
 可查看 [完整生成代码样例](examples/demo/selected_retrieval.py)、[角色调用记录](examples/demo/llm/) 与 [流程图](examples/demo/workflow.mmd)。
 mock 使用仓库内可检查模板，不宣称其能够泛化理解任意需求或自由创作代码。
+
+当前能力边界：2026-10-16 的 DeepSeek 无模板“过滤＋去重”分类验收已通过，一轮代码修复后独立最终测试 Accuracy 91.67%、Macro-F1 0.9167，扩展业务规则全部通过，部署 ZIP 已验证。此前 7B 失败记录仍保留；另已完成 18 次 DeepSeek 历史开／关对照：首版通过为关闭 6/9、开启 9/9，最终均 9/9。小样本显示减少修复，不能推断普遍效果，见 [对照结果](docs/history-ablation.md)。具体条件与全部尝试见 [DeepSeek 验收结果](docs/deepseek-api.md#结果与实验边界)和 [历史实验状态](docs/spec-generation-and-experiments.md#2026-10-16-验收状态)。
 
 ## 5. 数据与验证机制
 
@@ -194,7 +201,23 @@ agent-factory validate --code examples/demo/selected_retrieval.py --runner local
 
 新评估集已经包含自然改写与相近负例，但仍为小型模拟数据。真实场景还需要业务专家审核、无答案查询、更大语料及真实用户评估。
 
-## 6. 接入 Jetson Ollama
+## 6. 接入真实模型
+
+### DeepSeek API（无需 Jetson）
+
+项目已支持 `--provider deepseek`，默认 `deepseek-v4-pro`。Mac 直接调用官方接口，代码仍在本机 Docker 中执行验证。把 `DEEPSEEK_API_KEY=你的密钥` 保存在项目根 `.env`，不要提交密钥。CLI、Web 启动器与 worker 自动读取 `.env`，已导出的环境变量优先。设置 `FACTORY_PROVIDER=deepseek` 可使普通启动默认使用它。
+
+```bash
+# 启动网页；先停止旧网页启动器及其 worker，避免竞争同一队列
+.venv/bin/python scripts/serve_web.py --provider deepseek --runner docker
+
+# 新工作空间：完整抽取、规格生成“过滤＋去重”、Docker 验证、有限修复及结果沉淀
+.venv/bin/python scripts/run_deepseek_demo.py
+```
+
+演示默认不提供模板、关闭跨运行历史，最多两轮修复；通过独立最终测试后才发布插件和 ZIP。失败保留原始结果，不切换 mock。DeepSeek 使用无固定采样 seed 的重复配对协议（`--repeats`）；Ollama 继续使用固定 seed / digest 协议。真实开关对照结果与复验方法见 [历史经验实验](docs/history-ablation.md)。配置、调用边界与验收记录说明见 [DeepSeek 指南](docs/deepseek-api.md)。
+
+### Jetson Ollama（仍可使用）
 
 电脑负责工作流、Docker 验证和知识库，Jetson 只运行 Ollama 模型服务。当前通过 SSH 隧道访问已安装的 `qwen3.5:2b`，本机转发端口为 11435。详细说明见 [Mac + Jetson Ollama 运行指南](docs/mac-jetson-ollama.md)。
 
@@ -210,10 +233,12 @@ bash scripts/run_ollama_demo.sh
 FACTORY_DEMO_WORKSPACE=state/ollama-v2-new bash scripts/run_ollama_demo.sh
 ```
 
-使用 Ollama 原生 `/api/chat`，`stream=false`，`think=false`，`format` 为当前角色 JSON schema；schema 同时进入角色提示词。默认上下文 8192、输出上限 4096 token，单次 HTTP 等待上限 600 秒，最多尝试两次。原始响应、结束原因、token 用量和耗时均记录在本次 `llm/` 目录。
-检索完整生成/修复角色使用 4096 输出 token，分类完整生成/修复使用 2048 且温度 0；来源评分函数及其他角色使用 1024；已能静态适配的纯算术源码使用温度 0 的短包装生成角色，避免重新推导公式；诊断最多六条建议。`run` 的生成与修复上下文包含原始算法材料及对应基线示例，模型返回完整复刻代码，系统不以模板替换无效响应。`discover` 不传入内置算法模板，模型生成评分函数后组合通用接口。Qwen3.5 的检索完整代码角色采用官方非思考采样参数以减少重复循环；分类使用精简上下文与确定性参考复刻，其他结构化角色保持温度 0；实际参数记录在调用 JSON 中，见 [发现与生成说明](docs/github-discovery.md)。
+使用 Ollama 原生 `/api/chat`，`stream=false`，`think=false`。完整 Coder / Repairer 使用 `python_source_v1`：直接返回 Python 源码，不再把整段代码序列化为 JSON 字符串，也不设置 `format`；其他结构化角色及来源评分函数角色继续使用 JSON schema。默认上下文 8192，单次 HTTP 等待上限 600 秒，每次角色调用最多尝试两次（首次加一次重试）。`llm/` 保留原始响应、响应协议、结束原因、token 用量、耗时和重试错误。
+Ollama 上下文容量可通过 `OLLAMA_NUM_CTX` 配置，默认 8192；内存有限时可尝试 4096，并结合实际调用日志核查输入和输出是否完整。该设置调整内存需求，不保证代码正确。
+
+在 Ollama 路径中，当前检索与分类的完整生成/修复角色均使用 4096 输出 token、温度 0.3 和记录的随机种子；`spec`/`reference` 及历史经验 on/off 使用相同采样设置。来源评分函数及其他角色使用 1024 输出 token；Qwen3.5 来源评分函数角色使用温度 1.0，其他结构化角色为温度 0；诊断最多六条建议。默认 `run` 的 `spec` 模式向 Coder、Reviewer、Repairer 提供算法规格、公开行为要求、经筛选的历史经验及本轮反馈，不传原始材料全文、仓库源码或完整模板；显式 `reference` 模式才提供原始材料与完整基线作为复刻辅助。两种模式均要求模型返回完整代码，系统不以模板替换无效响应。`discover` 能静态适配的来源实现直接确定性组装，不调用模型生成包装；其余受支持路径生成评分函数后组合通用接口。实际参数与输入记录在本次调用 JSON 中；此前归档报告反映各自运行时的参考模式和采样设置，不能作为当前默认规格生成的证据。见 [规格生成与实验指南](docs/spec-generation-and-experiments.md)及 [发现与生成说明](docs/github-discovery.md)。
 CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变量。
-每次响应由 Pydantic 验证，无效 JSON、服务错误最多重试一次并保留错误。
+源码响应仅接受原文或一个完整 Python 代码围栏；解包保留内部源码，不改写算法。响应解析后仍由 Pydantic 和 AST 检查，截断、格式或契约错误最多重试一次；重试收到上一份响应及实际错误。拒绝的源码保留供审计和后续修复，但不会执行，也不计为通过验证。历史经验冻结时按声明的协议重新解析原始响应，与记录的响应及源码哈希严格核对；旧 JSON 调用记录仍按旧协议核验。
 某次调用失败不会自动切换 mock 并宣称 LLM 成功。
 若电脑无法访问，先检查监听地址、局域网连接与防火墙；服务地址和模型未给定前，不能报告真实模型实测结果。
 若明确接受本机代码执行边界，可加 `--runner local --allow-local`；默认推荐 Docker。
@@ -226,7 +251,7 @@ CLI 也读取 `OLLAMA_URL`、`OLLAMA_CHAT_MODEL`、`FACTORY_PROVIDER` 环境变�
 [示例需求](examples/request.txt) → [规划](examples/demo/plan.json) → [初版及修复代码](examples/demo/bm25/) → [最终插件](examples/demo/selected_retrieval.py) → [验证报告](examples/demo/report.md)。
 
 报告包括提供方（mock/ollama）、实际指标、所有候选/修订、失败原因、选定代码哈希、独立最终测试与运行环境。
-当前 218 项自动测试通过，覆盖两类任务、验证、修复、知识、接口、仓库抽取、自动路由和部署包；另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
+自动测试覆盖两类任务、验证、修复、知识、接口、仓库抽取、自动路由、部署包、规格与参考模式隔离、扩展行为和历史经验对照协议；运行 `bash scripts/run_tests.sh` 可查看当前结果。另有 [算法 Docker 执行记录](examples/docker_validation.json) 和 [实际 HTTP 网关容器验证](examples/api_validation.json)。这两份历史记录使用 mock，真实模型运行使用独立工作目录并记录实际结果。
 真实模型例子见 [Ollama 完整报告](examples/ollama-demo/report.md)、[候选规划](examples/ollama-demo/plan.json)、[BM25 首版与修订](examples/ollama-demo/bm25/)、[模型调用记录](examples/ollama-demo/llm/) 和 [最终插件](examples/ollama-demo/selected_retrieval.py)。2026-10-12 的样例调用八次模型；TF-IDF 首版通过，BM25 首版因缺少 `re` 导入失败，模型根据真实错误修复后通过。选定 BM25 修订版的最终测试 Recall@5=1.0、MRR@5=1.0、P95=4.65 ms；这些数值只描述 24 条模拟记忆与 10 条最终测试查询。
 所有 JSON 报告可供程序读取；`runs/<run_id>/` 保存新运行；仓库内 `examples/demo/` 保存真实执行后的固定样例。
 显式故障注入首版返回空结果，修复后重新执行检查；报告不会预填成功分数。
@@ -246,9 +271,9 @@ FACTORY_DEMO_WORKSPACE=state/jaccard-demo bash scripts/run_plugin_demo.sh
 
 三算法真实模型运行 `20261013T172815_22ac726c` 共调用模型 13 次，复用已由真实模型抽取的三份能力知识。TF-IDF 三版索引越界，Jaccard 三版错误地切片集合，都被可信验证器拒绝；BM25 首版通过并被选定，最终测试 Recall@5=1、MRR@5=1、Precision@5=0.22、P95=1.15 ms。真实模型的不同次运行可能产生不同质量的代码，单个 Jaccard 通过样例不代表它每次生成都能通过。
 
-针对上述失败，新增算法专属上下文、错误源码定位、无效修复检测、第二轮参考实现重新复刻及中英文公开算法契约。[改进后的真实复验](examples/repair-ollama-demo/report.md)共 12 次模型调用：重放旧失败代码后，TF-IDF/Jaccard 都在 r2 通过验证，BM25 本次新生成 r0 通过；选定 BM25 的最终测试 Recall@5=1、MRR@5=1、Precision@5=0.22、P95=0.7026 ms。历史重放明确标注，只有修复版本属于本次模型输出。首次复验曾遗漏英文拆字缺陷，记录单独保留；原因、契约补齐过程及命令见 [生成与修复说明](docs/generation-repair.md)。
+2026-10-13 的旧版针对上述失败，增加算法专属上下文、错误源码定位、无效修复检测、第二轮参考实现重新复刻及中英文公开算法契约。[当时的真实复验](examples/repair-ollama-demo/report.md)共 12 次模型调用：重放旧失败代码后，TF-IDF/Jaccard 都在 r2 通过验证，BM25 本次新生成 r0 通过；选定 BM25 的最终测试 Recall@5=1、MRR@5=1、Precision@5=0.22、P95=0.7026 ms。历史重放明确标注，只有修复版本属于本次模型输出。首次复验曾遗漏英文拆字缺陷，记录单独保留；原因、契约补齐过程及当前修复策略见 [生成与修复说明](docs/generation-repair.md)。这些归档成绩不代表当前规格生成流程的验收结果。
 
-三算法演示启用 `compare_all_algorithms=true`，规划及可信检查均要求覆盖全部启用算法，避免模型漏掉候选。新增算法只需材料、参考实现与注册模块；新增指标只需可信计算函数和注册模块。也可通过配置接入已安装的外部插件包，详见 [插件接入指南](docs/plugins.md)。当前支持检索任务及已审查的执行环境，其他任务或新依赖环境需要扩展契约和镜像。
+三算法演示启用 `compare_all_algorithms=true`，规划及可信检查均要求覆盖全部启用算法，避免模型漏掉候选。新增算法只需材料、参考实现与注册模块；新增指标只需可信计算函数和注册模块。也可通过配置接入已安装的外部插件包，详见 [插件接入指南](docs/plugins.md)。当前支持检索与文本分类及已审查的执行环境，其他任务或新依赖环境需要扩展契约和镜像。
 
 新版网页完整运行见 [v2 评估报告](examples/web-evaluation-demo/report.md)和 [真实浏览器验证记录](examples/web_validation.json)，提供方明确为 mock，算法在 Docker 中实际执行。三候选验证 Recall/MRR 分别为 TF-IDF 1.0000/0.9537、BM25 0.9722/0.9083、Jaccard 0.9306/0.8958，按原规则选定 TF-IDF。最终测试 Recall@5=1、MRR@5=0.9528、Precision@5=0.2533；同义改写仍存在排序与负例混淆。分组和失败明细保留，不修改历史 v1 结果。另有 [新版 Docker 网关验证](examples/web_container_validation.json)，该独立测试的 worker 为 mock/local，与浏览器测试的 mock/Docker 区分。
 

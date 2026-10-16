@@ -31,10 +31,12 @@ class Runner:
                 if not isinstance(case["texts"], list) or any(not isinstance(text, str) for text in case["texts"]):
                     raise ValueError("Classification texts must be a list of strings")
                 if not isinstance(case["training_examples"], list) or any(
-                        not isinstance(row, dict) or set(row) != {"text", "label"}
+                        not isinstance(row, dict) or not {"text", "label"} <= set(row)
+                        or not set(row) <= {"text", "label", "enabled"}
+                        or ("enabled" in row and not isinstance(row["enabled"], bool))
                         or not isinstance(row["text"], str) or not isinstance(row["label"], str)
                         for row in case["training_examples"]):
-                    raise ValueError("Training examples must contain text and label only")
+                    raise ValueError("Training examples require text and label, with optional boolean enabled only")
         elif any(set(case) != {"case_id", "query", "memories", "top_k"} for case in cases):
             raise ValueError("Only unlabelled inputs may enter the worker")
         start = time.perf_counter()

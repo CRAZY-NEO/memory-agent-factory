@@ -1,5 +1,7 @@
 import json
+import shutil
 import sqlite3
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -153,3 +155,77 @@ def test_symlink_artifacts_cannot_escape_run(workspace, tmp_path):
     client = TestClient(create_app(workspace, TOKEN))
     for suffix in ['report', 'artifacts/selected_retrieval.py']:
         assert client.get(f'/v1/runs/{directory.name}/{suffix}', headers=HEADERS).status_code == 404
+
+
+def test_browser_uses_spec_despite_reference_workspace_and_reports_actual_sources(workspace):
+    """Exercise the shipped submit handler, then execute its payload through the queue."""
+    node_binary = shutil.which('node')
+    if node_binary is None:
+        pytest.skip('Node.js is needed to execute the browser submission handler')
+    script = r"""
+const fs = require('fs');
+const vm = require('vm');
+const elements = new Map();
+function element(id) {
+  if (id === 'generation-mode') throw new Error('Ordinary submission must not read a template selector');
+  if (!elements.has(id)) elements.set(id, {
+    value: '', listeners: {}, classList: { toggle() {} },
+    addEventListener(name, callback) { this.listeners[name] = callback; }
+  });
+  return elements.get(id);
+}
+const context = vm.createContext({
+  document: { getElementById: element },
+  location: { hash: '', pathname: '/', search: '' }, history: { replaceState() {} },
+  window: { addEventListener() {} }, URLSearchParams, AbortController,
+  fetch: async () => ({ ok: false }), setTimeout() {}, clearTimeout() {},
+});
+vm.runInContext(fs.readFileSync(process.argv[1], 'utf8'), context);
+element('description').value = '用 Jaccard 生成技术记忆检索算法';
+element('mode').value = 'auto';
+element('history-mode').value = 'off';
+element('requirement-profile').value = '';
+vm.runInContext(`
+  connected = true;
+  request = async (path, options) => {
+    globalThis.submission = JSON.parse(options.body);
+    return { job_id: 'test-job' };
+  };
+  selectJob = () => {};
+  refreshHistory = async () => {};
+`, context);
+(async () => {
+  await element('factory-form').listeners.submit({ preventDefault() {} });
+  const evidence = vm.runInContext(`[
+    generationEvidence({backend:'llm', reference_provided:false}, 'spec'),
+    generationEvidence({backend:'llm', reference_provided:true}, 'reference'),
+    generationEvidence({backend:'deterministic_source_adapter'}, 'spec'),
+    generationEvidence({backend:'mock_template_baseline'}, 'spec'),
+    generationEvidence({}, 'reference')
+  ]`, context);
+  process.stdout.write(JSON.stringify({ submission:context.submission, evidence }));
+})().catch(error => { console.error(error); process.exitCode = 1; });
+"""
+    browser = subprocess.run([node_binary, '-e', script, str(ROOT / 'agent_factory/web/app.js')],
+                             capture_output=True, text=True, check=True, timeout=10)
+    result = json.loads(browser.stdout)
+    spec, reference, reused, mock, legacy = result['evidence']
+    assert '未提供完整参考实现' in spec
+    assert '完整参考实现' in reference and '未提供' not in reference
+    assert '确定性复用' in reused and '未调用模型生成' in reused
+    assert '非模型生成' in mock
+    assert '实际参考记录未保存' in legacy
+    config_file = workspace / 'config.json'
+    config = json.loads(config_file.read_text())
+    config['generation_mode'] = 'reference'
+    config_file.write_text(json.dumps(config))
+    client = TestClient(create_app(workspace, TOKEN))
+    assert 'id="generation-mode"' not in client.get('/').text
+    queued = client.post('/v1/factory/runs', json=result['submission'], headers=HEADERS)
+    assert queued.status_code == 202
+    assert process_one(JobStore(workspace), workspace)
+    job = client.get(queued.json()['status_url'], headers=HEADERS).json()
+    assert job['status'] == 'succeeded'
+    report = client.get(job['result']['report_url'], headers=HEADERS).json()
+    assert report['generation_mode'] == 'spec' and report['history_mode'] == 'off'
+    assert all(attempt['generation']['reference_provided'] is False for attempt in report['attempts'])

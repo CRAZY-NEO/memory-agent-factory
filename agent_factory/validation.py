@@ -85,19 +85,48 @@ def check_result(observation, case):
     return hits
 
 
+def evaluation_memories(memories, queries, requirements=()):
+    """Derive the evaluator's eligible IDs without changing the worker inputs.
+
+    Gold relevance is never silently dropped or remapped. A labelled dataset
+    that targets archived or discarded duplicate IDs must be corrected by its
+    owner before generation starts.
+    """
+    eligible = list(memories)
+    if "retrieval_exclude_archived" in requirements:
+        eligible = [row for row in eligible if row.get("archived") is not True]
+    if "retrieval_deduplicate_text" in requirements:
+        representatives = {}
+        for row in eligible:
+            key = row["text"].strip().casefold()
+            if key not in representatives or row["id"] < representatives[key]["id"]:
+                representatives[key] = row
+        eligible = list(representatives.values())
+    if not eligible:
+        raise ValueError("Retrieval evaluation requires at least one eligible memory after business requirements")
+    eligible_ids = {row["id"] for row in eligible}
+    for query in queries:
+        labelled = set(query["relevant_ids"]) | set(query.get("hard_negative_ids", []))
+        if not labelled <= eligible_ids:
+            raise ValueError("Retrieval evaluation labels conflict with archived/deduplicated memory requirements "
+                             "for query " + query["id"] + "; labels must reference eligible representative IDs")
+    return eligible
+
+
 def validate(code, runner, memories, queries, top_k, config, split="validation", registry=None, algorithm=None):
     """The worker never sees labels. Gates cannot be changed by reviewer/coder agents."""
     registry = registry or load_registry(config.plugin_packages)
     registry.validate_config(config)
     if not isinstance(top_k, int) or isinstance(top_k, bool) or top_k <= 0:
         raise ValueError("Evaluation top_k must be a positive integer")
+    eligible = evaluation_memories(memories, queries, config.requirements)
 
     def case(uid, query, data=memories, k=top_k):
         return {"case_id": uid, "query": query, "memories": data, "top_k": k}
 
     cases = [case(query["id"], query["query"]) for query in queries]
     # Exact text must retrieve the corresponding ID first, regardless of gold query labels.
-    anchor = memories[0]
+    anchor = eligible[0]
     cases.extend([case("contract:exact", anchor["text"], k=1),
                   case("contract:empty_query", "  "), case("contract:empty_corpus", "查询", []),
                   case("contract:zero_k", "查询", k=0), case("contract:negative_k", "查询", k=-1),

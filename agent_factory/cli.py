@@ -12,6 +12,7 @@ from .exporting import export_run
 from .knowledge import KnowledgeStore, ingest_sources
 from .llm import LLMClient
 from .models import ValidationConfig
+from .providers import PROVIDERS, REAL_PROVIDERS, load_project_env, resolve_settings
 from .registry import load_registry
 from .repair import load_failed_codes
 from .repository import ingest_repository
@@ -22,15 +23,13 @@ from .visualization import write_graph_html
 
 
 def provider_options(parser):
-    parser.add_argument("--provider", choices=["mock", "ollama"], default=os.getenv("FACTORY_PROVIDER", "mock"))
-    parser.add_argument("--model", default=os.getenv("OLLAMA_CHAT_MODEL"), help="Ollama 中已安装的准确模型名称")
-    parser.add_argument("--base-url", default=os.getenv("OLLAMA_URL", "http://localhost:11434"), help="Jetson Ollama 服务地址")
+    parser.add_argument("--provider", choices=PROVIDERS, default=os.getenv("FACTORY_PROVIDER", "mock"))
+    parser.add_argument("--model", help="模型名称；默认读取对应 provider 的环境配置")
+    parser.add_argument("--base-url", help="模型服务地址；默认读取对应 provider 的环境配置")
 
 
 def resolve_model(arguments):
-    if arguments.provider == "ollama" and not arguments.model:
-        raise ValueError("Ollama 模式必须指定 --model；本项目不假设你的 Jetson 已安装哪一种模型。")
-    return arguments.model or "mock-template-v1"
+    return resolve_settings(arguments.provider, arguments.model, arguments.base_url)[0]
 
 
 def parser():
@@ -53,21 +52,23 @@ def parser():
     repository.add_argument("--max-symbols", type=int, default=1000)
     discover = commands.add_parser('discover', help='GitHub 搜索 → 下载源码 → 复刻新算法 → Docker 验证 → 自动登记')
     provider_options(discover)
-    discover.set_defaults(provider=os.getenv('FACTORY_PROVIDER', 'ollama'),
-                          model=os.getenv('OLLAMA_CHAT_MODEL', 'qwen3.5:2b'),
-                          base_url=os.getenv('OLLAMA_URL', 'http://127.0.0.1:11435'))
+    discover.set_defaults(provider=os.getenv('FACTORY_PROVIDER', 'ollama'))
     discover.add_argument('--description', required=True, help='描述要发现的新检索方法；不需要预先编写插件')
     run = commands.add_parser("run", help="需求 → 检索知识 → 生成 → 验证 → 修复 → 沉淀")
     provider_options(run)
     request = run.add_mutually_exclusive_group(required=True)
     request.add_argument("--description", help="自然语言算法开发需求")
     request.add_argument("--request-file", type=Path, help="UTF-8 算法开发需求文件")
-    run.add_argument("--runner", choices=["local", "docker"], help="mock 默认 local；Ollama 默认 docker")
+    run.add_argument("--runner", choices=["local", "docker"], help="mock 默认 local；真实模型默认 docker")
     run.add_argument("--allow-local", action="store_true", help="明确接受本地执行边界，允许真实模型代码在本机子进程运行")
     run.add_argument("--repair-from", type=Path, help="重放该运行目录中哈希校验通过的历史失败代码并修复")
     run.add_argument("--inject-fault", action="store_true", help="仅 mock：故意破坏 BM25 首版，演示真实检测和修复")
     run.add_argument('--mode', choices=['auto', 'reuse', 'discover'], default='auto',
                      help='默认自动判断：已有能力优先，缺少方法时发现；可手动限制模式')
+    run.add_argument('--generation-mode', choices=['spec', 'reference'], help='spec 根据规格生成；reference 提供完整参考实现')
+    run.add_argument('--history-mode', choices=['on', 'off'], help='是否提供跨运行历史经验；不影响本轮错误反馈')
+    run.add_argument('--seed', type=int, help='Ollama 采样种子；DeepSeek 不支持，报告标注未应用')
+    run.add_argument('--requirement', action='append', help='启用可信业务扩展要求 ID，可重复指定')
     query = commands.add_parser("query", help="调用已验证插件，供未来个人记忆应用复用")
     query.add_argument("text")
     query.add_argument("--run", default="latest", help="运行 ID，默认最近一次通过并发布插件的运行")
@@ -84,15 +85,33 @@ def parser():
     check.add_argument("--split", choices=["validation", "test"], default="validation")
     check.add_argument("--runner", choices=["local", "docker"], default="docker", help="local 不提供 OS 安全隔离")
     check.add_argument("--top-k", type=int, default=5)
+    check.add_argument('--requirement', action='append', help='额外验证的可信业务要求 ID，可重复指定')
     return root
 
 
 def main(argv=None):
+    workspace_options = argparse.ArgumentParser(add_help=False)
+    workspace_options.add_argument('--workspace', type=Path, default=Path.cwd())
+    preliminary, _ = workspace_options.parse_known_args(argv)
+    try:
+        load_project_env(preliminary.workspace.resolve())
+    except (ValueError, OSError) as error:
+        print(f'ERROR: {error}', file=sys.stderr)
+        return 1
     arguments = parser().parse_args(argv)
     logging.basicConfig(level=logging.INFO if arguments.verbose else logging.WARNING,
                         format="%(levelname)s %(message)s")
     workspace = arguments.workspace.resolve()
     try:
+        if hasattr(arguments, 'provider'):
+            if arguments.command == 'discover' and arguments.provider == 'ollama' and not arguments.base_url:
+                arguments.base_url = os.getenv('OLLAMA_URL') or 'http://127.0.0.1:11435'
+            arguments.model, arguments.base_url = resolve_settings(
+                arguments.provider, arguments.model, arguments.base_url)
+        if arguments.command == 'run' and arguments.provider == 'deepseek':
+            if arguments.runner == 'local' or arguments.allow_local:
+                raise ValueError('DeepSeek 生成的代码必须使用 Docker 执行')
+            arguments.runner = 'docker'
         # Export is based on the frozen run, independent of today's workspace config.
         if arguments.command == 'export' and arguments.run_id:
             output = export_run(workspace, arguments.run_id)
@@ -140,7 +159,7 @@ def main(argv=None):
             print(json.dumps(registry.catalog(), ensure_ascii=False, indent=2))
             return 0
         if arguments.command == 'discover':
-            if arguments.provider != 'ollama':
+            if arguments.provider not in REAL_PROVIDERS:
                 raise ValueError('GitHub 新算法发现需要真实 LLM；离线网络与模型替身只用于自动测试')
             from .discovery import DiscoveryFactory
             factory = DiscoveryFactory(workspace, arguments.provider, resolve_model(arguments), arguments.base_url,
@@ -154,7 +173,11 @@ def main(argv=None):
             seeds = load_failed_codes(arguments.repair_from, config.algorithms) if arguments.repair_from else None
             factory = AutomaticFactory(workspace, arguments.provider, resolve_model(arguments), arguments.base_url,
                               arguments.runner, arguments.inject_fault, arguments.allow_local,
-                              config=config, registry=registry, mode=arguments.mode)
+                              config=config, registry=registry, mode=arguments.mode,
+                              policy_overrides={'generation_mode': arguments.generation_mode,
+                                                'history_mode': arguments.history_mode,
+                                                'model_seed': arguments.seed,
+                                                'requirements': arguments.requirement})
             result = factory.run(description, initial_codes=seeds, expected_task=history_task)
             print(json.dumps({"status": result["status"], "run_id": result["run_id"],
                               "report": str(Path(result["directory"]) / "report.md"),
@@ -207,13 +230,24 @@ def main(argv=None):
             print(json.dumps([{**hit, "text": lookup[hit["id"]]["text"], "source": lookup[hit["id"]]["source"]}
                               for hit in hits], ensure_ascii=False, indent=2))
         elif arguments.command == "validate":
+            from .requirements import requirement_contracts, validate_requirements
             from .runner import Runner
+            requirements = arguments.requirement if arguments.requirement is not None else config.requirements
+            requirement_contracts(config.task, requirements)
             task = task_spec(config.task)
-            task.preflight(workspace / 'data')
-            inputs, examples = task.load(workspace / 'data', arguments.split)
-            result = task.evaluate(arguments.code.read_text(encoding="utf-8"),
-                                   Runner(arguments.runner, config.timeout_seconds), inputs, examples,
+            if arguments.requirement is not None:
+                config = config.model_copy(update={'requirements': requirements})
+            task.preflight(workspace / 'data', config)
+            inputs, examples = task.load(workspace / 'data', arguments.split, config)
+            code = arguments.code.read_text(encoding="utf-8")
+            runner = Runner(arguments.runner, config.timeout_seconds)
+            result = task.evaluate(code, runner, inputs, examples,
                                    {'top_k': arguments.top_k}, config, registry, arguments.algorithm, arguments.split)
+            if requirements:
+                checks = validate_requirements(code, runner, config.task, requirements, split=arguments.split)
+                result['requirement_checks'] = checks
+                result['errors'].extend(checks['errors'])
+                result['passed'] = result['passed'] and checks['passed']
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0 if result["passed"] else 1
         return 0

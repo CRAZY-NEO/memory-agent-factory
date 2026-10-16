@@ -8,6 +8,7 @@ services:
     environment:
       FACTORY_API_TOKEN: ${FACTORY_API_TOKEN:?Set a private random token in .env}
       FACTORY_WORKSPACE: /workspace
+      FACTORY_PROVIDER: ${FACTORY_PROVIDER:-ollama}
     user: "${FACTORY_UID:-1000}:${FACTORY_GID:-1000}"
     volumes:
       - ./state/jobs:/workspace/state/jobs
@@ -25,4 +26,5 @@ services:
     mem_limit: 512m
     restart: unless-stopped
     # API 只收发任务，不调用模型，也不接入 Docker socket。
-    # Ollama 与算法执行由 Jetson 宿主机的可信 job_worker 负责。
+    # Ollama / DeepSeek 调用与算法执行由宿主机的可信 job_worker 负责。
+    # DEEPSEEK_API_KEY 只配置在宿主 worker，不传给网关容器。

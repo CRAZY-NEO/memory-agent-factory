@@ -4,7 +4,7 @@ import httpx
 import pytest
 
 from agent_factory.knowledge import KnowledgeStore, ingest_sources
-from agent_factory.llm import LLMClient, LLMError
+from agent_factory.llm import JSON_ARTIFACT_PROTOCOL, PYTHON_SOURCE_PROTOCOL, LLMClient, LLMError
 from agent_factory.models import CodeArtifact, Extraction, Request
 
 
@@ -26,6 +26,7 @@ def test_ollama_native_chat_schema_and_usage(tmp_path):
     assert client.ask("understander", {"description": "检索记忆"}, Request).top_k == 3
     trace = json.loads(next(tmp_path.glob("*.json")).read_text())
     assert trace["provider"] == "ollama" and trace["usage"]["eval_count"] == 20
+    assert trace['response_protocol'] == JSON_ARTIFACT_PROTOCOL
 
 
 def test_provider_failure_bounded_and_no_mock_fallback(tmp_path):
@@ -41,8 +42,7 @@ def test_real_generated_syntax_consumes_bounded_retry_and_keeps_raw_trace(tmp_pa
                'def retrieve(query, memories, top_k=5):\n    return []']
 
     def respond(request):
-        return httpx.Response(200, json={'message': {'content': json.dumps(
-            {'code': outputs.pop(0), 'explanation': 'HTTP fixture, not a live model response'})}})
+        return httpx.Response(200, json={'message': {'content': outputs.pop(0)}})
 
     client = LLMClient('ollama', 'fixture-model', 'http://fixture', tmp_path,
                        transport=httpx.MockTransport(respond))
@@ -50,6 +50,8 @@ def test_real_generated_syntax_consumes_bounded_retry_and_keeps_raw_trace(tmp_pa
     assert '\n' in artifact.code and client.calls == 2
     first = json.loads((tmp_path / '001_coder.json').read_text())
     assert 'error' in first and first['response']['code'] == r'def retrieve(query, memories, top_k=5):\n    return []'
+    assert first['raw_content'] == first['response']['code']
+    assert first['response_protocol'] == PYTHON_SOURCE_PROTOCOL
 
 
 def test_source_adapter_must_use_provided_kernels_with_bounded_retry(tmp_path):
@@ -91,19 +93,29 @@ def test_qwen_code_sampling_and_actual_options_are_auditable(tmp_path, role):
     def respond(request):
         payload = json.loads(request.content)
         sent.append(payload['options'])
-        response = ({'task': 'memory_retrieval', 'description': '检索记忆', 'language': 'mixed', 'top_k': 5}
-                    if role == 'understander' else
-                    {'code': 'def score_document(query_terms, document_terms, corpus_stats):\n    return 0.0',
-                     'explanation': 'Known HTTP fixture, not live model generation'})
-        return httpx.Response(200, json={'message': {'content': json.dumps(response)}})
+        if role == 'coder':
+            content = 'def retrieve(query, memories, top_k=5):\n    return []'
+            assert 'format' not in payload
+        else:
+            response = ({'task': 'memory_retrieval', 'description': '检索记忆', 'language': 'mixed', 'top_k': 5}
+                        if role == 'understander' else
+                        {'code': 'def score_document(query_terms, document_terms, corpus_stats):\n    return 0.0',
+                         'explanation': 'Known HTTP fixture, not live model generation'})
+            content = json.dumps(response)
+            assert 'format' in payload
+        return httpx.Response(200, json={'message': {'content': content}})
 
     client = LLMClient('ollama', 'qwen3.5:2b', 'http://fixture', tmp_path,
                        transport=httpx.MockTransport(respond))
     client.ask(role, {}, Request if role == 'understander' else CodeArtifact)
     trace = json.loads(next(tmp_path.glob('*.json')).read_text())
     assert trace['options'] == sent[0]
+    assert trace['response_protocol'] == (PYTHON_SOURCE_PROTOCOL if role == 'coder' else JSON_ARTIFACT_PROTOCOL)
     if role == 'understander':
         assert sent[0]['temperature'] == 0
+    elif role == 'coder':
+        assert sent[0]['temperature'] == 0.3 and sent[0]['presence_penalty'] == 0
+        assert 'seed' in sent[0]
     else:
         assert sent[0]['temperature'] > 0 and sent[0]['presence_penalty'] > 0
         assert 'seed' in sent[0]
@@ -193,7 +205,7 @@ def test_classifier_codegen_uses_own_contract_and_retries_wrong_entrypoint(tmp_p
         payload = json.loads(request.content)
         sent.append(payload)
         code = 'def retrieve(query, memories, top_k=5): return []' if len(sent) == 1 else reference
-        return httpx.Response(200, json={'message': {'content': json.dumps({'code': code, 'explanation': 'fixture'})}})
+        return httpx.Response(200, json={'message': {'content': code}})
 
     client = LLMClient('ollama', 'qwen3.5:2b', 'http://fixture', tmp_path,
                       transport=httpx.MockTransport(respond))
@@ -201,5 +213,5 @@ def test_classifier_codegen_uses_own_contract_and_retries_wrong_entrypoint(tmp_p
     assert artifact.code == reference and client.calls == 2
     assert 'def classify(texts, training_examples)' in sent[0]['messages'][0]['content']
     assert 'def retrieve' not in sent[0]['messages'][0]['content']
-    assert sent[0]['options']['temperature'] == 0
+    assert sent[0]['options']['temperature'] == 0.3
     assert 'missing top-level classify' in json.loads((tmp_path / '001_coder.json').read_text())['error']

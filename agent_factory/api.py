@@ -16,6 +16,7 @@ from .demo_session import DemoSession
 from .exporting import export_run
 from .jobs import JobStore, QueueFull
 from .models import Contract, Memory
+from .providers import REAL_PROVIDERS
 
 RUN_PATTERN = r"^\d{8}T\d{6}_[0-9a-f]{8}$"
 
@@ -23,6 +24,16 @@ RUN_PATTERN = r"^\d{8}T\d{6}_[0-9a-f]{8}$"
 class FactorySubmission(Contract):
     description: str = Field(min_length=5, max_length=6000)
     mode: Literal['auto', 'reuse', 'discover'] = 'auto'
+    generation_mode: Literal['spec', 'reference'] | None = None
+    history_mode: Literal['on', 'off'] | None = None
+    model_seed: int | None = Field(default=None, ge=0, le=2147483647)
+    requirements: list[str] | None = Field(default=None, max_length=4)
+
+
+class DiscoverySubmission(Contract):
+    """Source discovery has its own policy; do not silently accept factory controls."""
+
+    description: str = Field(min_length=5, max_length=6000)
 
 
 class BrowserOpening(Contract):
@@ -218,12 +229,14 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
         return {'algorithms': config.get('algorithms', []), 'metrics': config.get('metrics', {}),
                 'dataset': dataset, 'classification_dataset': classification_dataset,
                 'tasks': ['memory_retrieval', 'memory_classification'],
-                'discovery_available': os.getenv('FACTORY_PROVIDER', 'mock') == 'ollama'}
+                'generation_mode': config.get('generation_mode', 'spec'),
+                'history_mode': config.get('history_mode', 'on'),
+                'discovery_available': os.getenv('FACTORY_PROVIDER', 'mock') in REAL_PROVIDERS}
 
     @app.post('/v1/algorithms/discover', status_code=202, dependencies=[Depends(authenticate)])
-    def discover_algorithm(body: FactorySubmission):
-        if os.getenv('FACTORY_PROVIDER', 'mock') != 'ollama':
-            raise HTTPException(status_code=400, detail='GitHub algorithm discovery requires Ollama mode')
+    def discover_algorithm(body: DiscoverySubmission):
+        if os.getenv('FACTORY_PROVIDER', 'mock') not in REAL_PROVIDERS:
+            raise HTTPException(status_code=400, detail='GitHub algorithm discovery requires Ollama or DeepSeek mode')
         return submit('discovery', {'description': body.description})
 
     @app.get('/v1/jobs', dependencies=[Depends(authenticate)])

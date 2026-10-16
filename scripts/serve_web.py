@@ -14,6 +14,14 @@ from urllib.parse import urlencode, urlsplit
 
 import httpx
 
+from agent_factory.providers import (
+    PROVIDERS,
+    REAL_PROVIDERS,
+    load_project_env,
+    resolve_settings,
+    validate_deepseek_url,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -36,6 +44,23 @@ def check_model(base_url, model):
         raise ConnectionError('无法连接 Ollama；请保持 SSH 隧道，或用 --ssh-target 指定 Jetson 地址。') from error
     if model not in names:
         raise ValueError(f'Ollama 中没有模型 {model}，请检查 OLLAMA_CHAT_MODEL。')
+
+
+def check_deepseek(base_url, model):
+    """Check cloud credentials without starting a paid generation or exposing them."""
+    base_url = validate_deepseek_url(base_url)
+    key = os.getenv('DEEPSEEK_API_KEY', '').strip()
+    if not key:
+        raise ValueError('请在项目 .env 或环境变量中设置 DEEPSEEK_API_KEY。')
+    try:
+        with httpx.Client(timeout=10, trust_env=False, follow_redirects=False) as client:
+            response = client.get(base_url + '/models', headers={'Authorization': 'Bearer ' + key})
+            response.raise_for_status()
+            names = {item['id'] for item in response.json()['data']}
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as error:
+        raise ConnectionError('DeepSeek API 预检失败，请检查网络、API Key 和账户模型权限。') from error
+    if model not in names:
+        raise ValueError('DeepSeek 账户未返回配置的模型，请检查 DEEPSEEK_MODEL。')
 
 
 def ssh_command(target, base_url):
@@ -103,28 +128,38 @@ def stop_children(children):
 
 
 def main(argv=None):
+    workspace_options = argparse.ArgumentParser(add_help=False)
+    workspace_options.add_argument('--workspace', type=Path, default=Path(os.getenv('FACTORY_WORKSPACE', ROOT)))
+    preliminary, _ = workspace_options.parse_known_args(argv)
+    try:
+        load_project_env(preliminary.workspace.resolve())
+    except (ValueError, OSError) as error:
+        print(f'启动失败：{error}', file=sys.stderr)
+        return 1
     parser = argparse.ArgumentParser(description='一个终端启动隧道、网页和后台执行器，并自动登录')
     parser.add_argument('--workspace', type=Path, default=Path(os.getenv('FACTORY_WORKSPACE', ROOT)))
     parser.add_argument('--port', type=int, default=8010)
-    parser.add_argument('--provider', choices=['mock', 'ollama'], default=os.getenv('FACTORY_PROVIDER', 'mock'))
+    parser.add_argument('--provider', choices=PROVIDERS, default=os.getenv('FACTORY_PROVIDER', 'mock'))
+    parser.add_argument('--model', help='覆盖对应 provider 的模型名称')
+    parser.add_argument('--base-url', help='覆盖对应 provider 的服务地址')
     parser.add_argument('--runner', choices=['local', 'docker'], default=os.getenv('FACTORY_RUNNER', 'docker'))
-    parser.add_argument('--ssh-target', default=os.getenv('FACTORY_SSH_TARGET'), help='SSH 别名或 用户名@Jetson地址；沿用已有连接，否则由本启动器创建隧道')
+    parser.add_argument('--ssh-target', help='SSH 别名或 用户名@Jetson地址；沿用已有连接，否则由本启动器创建隧道')
     parser.add_argument('--no-open-browser', action='store_true', help='保留手动打开网页和输入密钥的方式')
     args = parser.parse_args(argv)
     if not 1 <= args.port <= 65535:
         parser.error('port must be between 1 and 65535')
-    if args.provider == 'ollama' and args.runner != 'docker':
+    if args.provider in REAL_PROVIDERS and args.runner != 'docker':
         parser.error('真实模型代码必须使用 Docker 执行')
     if args.ssh_target and args.provider != 'ollama':
         parser.error('--ssh-target 只用于 ollama 模式')
+    if args.provider == 'ollama' and not args.ssh_target:
+        args.ssh_target = os.getenv('FACTORY_SSH_TARGET')
     workspace = args.workspace.resolve()
     if not all((workspace / path).exists() for path in ['config.json', 'data/memories.json']):
         parser.error('workspace needs config.json and data/memories.json')
     env = os.environ.copy()
     env.pop('FACTORY_BOOTSTRAP_TICKET', None)
-    env.update(FACTORY_WORKSPACE=str(workspace), FACTORY_PROVIDER=args.provider, FACTORY_RUNNER=args.runner,
-               OLLAMA_CHAT_MODEL=(env.get('OLLAMA_CHAT_MODEL', 'qwen3.5:2b') if args.provider == 'ollama' else 'mock-template-v1'),
-               OLLAMA_URL=env.get('OLLAMA_URL', 'http://127.0.0.1:11435'))
+    env.update(FACTORY_WORKSPACE=str(workspace), FACTORY_PROVIDER=args.provider, FACTORY_RUNNER=args.runner)
     children = []
 
     def stop(signum, frame):
@@ -132,6 +167,15 @@ def main(argv=None):
 
     previous_handler = signal.signal(signal.SIGTERM, stop)
     try:
+        # Preserve the one-terminal Mac tunnel default only for Ollama.
+        local_url = args.base_url
+        if args.provider == 'ollama' and not local_url:
+            local_url = env.get('OLLAMA_URL') or 'http://127.0.0.1:11435'
+        model, base_url = resolve_settings(args.provider, args.model, local_url)
+        if args.provider == 'deepseek':
+            env.update(DEEPSEEK_MODEL=model, DEEPSEEK_BASE_URL=base_url)
+        elif args.provider == 'ollama':
+            env.update(OLLAMA_CHAT_MODEL=model, OLLAMA_URL=base_url)
         # Reject conflicts BEFORE starting a second worker against the same queue.
         ensure_port_free(args.port)
         if args.provider == 'ollama':
@@ -147,9 +191,14 @@ def main(argv=None):
                 tunnel = subprocess.Popen(command)
                 children.append(tunnel)
                 wait_ready(tunnel, lambda: check_model(env['OLLAMA_URL'], env['OLLAMA_CHAT_MODEL']), seconds=60)
+        elif args.provider == 'deepseek':
+            check_deepseek(base_url, model)
+            print('DeepSeek API 已连接。', flush=True)
         load_token(workspace, env)
         browser_url = f'http://127.0.0.1:{args.port}'
         api_env = env.copy()
+        # The gateway only queues jobs; model credentials belong to the worker.
+        api_env.pop('DEEPSEEK_API_KEY', None)
         if not args.no_open_browser:
             api_env['FACTORY_BOOTSTRAP_TICKET'] = secrets.token_urlsafe(32)
         api = subprocess.Popen([sys.executable, '-m', 'uvicorn', 'agent_factory.api:create_app', '--factory',

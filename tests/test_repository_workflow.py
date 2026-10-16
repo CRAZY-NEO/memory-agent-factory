@@ -14,7 +14,7 @@ from agent_factory.workflow import Factory
 def test_repository_evidence_reaches_roles_and_keeps_unvalidated_status(workspace):
     root = Path(__file__).resolve().parents[1]
     factory = Factory(workspace, config=ValidationConfig(
-        algorithms=['jaccard'], max_candidates=1), inject_fault=True)
+        algorithms=['jaccard'], max_candidates=1, generation_mode='reference'), inject_fault=True)
     result = ingest_repository(factory.store, root, workspace / 'repository.json',
                                algorithm='jaccard', include=['agent_factory/templates/jaccard.py'])
     assert result['candidates']

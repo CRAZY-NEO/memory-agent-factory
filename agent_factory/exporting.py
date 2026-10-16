@@ -15,6 +15,9 @@ import uuid
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
+from .classification import effective_training_examples
+from .requirements import requirement_contracts
+
 IDENTIFIER = re.compile(r"[A-Za-z0-9_-]{1,100}")
 TASK_FILES = {
     "memory_retrieval": ("selected_retrieval.py", "retrieve"),
@@ -57,6 +60,11 @@ def _evaluation(report):
         thresholds[name] = {"min": rule.get("min"), "max": rule.get("max")}
     if thresholds:
         result["thresholds"] = thresholds
+    checks = report.get("requirement_checks")
+    if checks is not None:
+        result["business_requirements"] = {"passed": checks.get("passed") is True,
+                                           "ids": checks.get("requirements", []),
+                                           "case_count": checks.get("case_count", 0)}
     return result
 
 
@@ -172,11 +180,20 @@ def invoke(payload, manifest):
         if not isinstance(texts, list) or any(not isinstance(text, str) for text in texts):
             raise ValueError("texts must be a list of strings")
         training = json.loads(read_verified("training_examples.json", manifest["training_data_hash"]))
+        if not isinstance(training, list) or not training or any(
+                not isinstance(row, dict) or not {"text", "label"} <= set(row)
+                or not set(row) <= {"text", "label", "enabled"}
+                or any(not isinstance(row[key], str) or not row[key].strip() for key in ("text", "label"))
+                or ("enabled" in row and type(row["enabled"]) is not bool) for row in training):
+            raise ValueError("Invalid frozen training examples or enabled flag")
+        if (any(row.get("enabled") is False for row in training)
+                and "classification_ignore_disabled" not in manifest.get("business_requirements", [])):
+            raise ValueError("Disabled training examples require the ignore-disabled business contract")
         before = copy.deepcopy((texts, training))
         result = module.classify(texts, training)
         if (texts, training) != before:
             raise ValueError("Algorithm mutated classification inputs")
-        labels = {row["label"] for row in training}
+        labels = {row["label"] for row in training if row.get("enabled") is not False}
         if (not isinstance(result, list) or len(result) != len(texts)
                 or any(not isinstance(label, str) or label not in labels for label in result)):
             raise ValueError("Classification output violates the label contract")
@@ -185,7 +202,8 @@ def invoke(payload, manifest):
     if not isinstance(query, str) or type(top_k) is not int or not isinstance(memories, list):
         raise ValueError("Expected query: string, memories: list, top_k: integer")
     if any(not isinstance(row, dict) or not isinstance(row.get("id"), str)
-           or not row["id"] or not isinstance(row.get("text"), str) or not row["text"] for row in memories):
+           or not row["id"] or not isinstance(row.get("text"), str) or not row["text"]
+           or ("archived" in row and type(row["archived"]) is not bool) for row in memories):
         raise ValueError("Each memory needs nonempty string id and text")
     ids = {row["id"] for row in memories}
     if len(ids) != len(memories):
@@ -243,17 +261,19 @@ ENTRYPOINT ["python", "-B", "run.py"]
 
 
 def _readme(task):
-    training = ("分类包包含验证时使用的全部训练样本 `training_examples.json`（文本及标签）。"
+    training = ("分类包包含验证时使用的全部训练样本 `training_examples.json`（文本、标签及可选 enabled 标记）。"
                 "运行时基于这些样本训练后预测，不需要下载数据。分享 ZIP 会同时分享训练文本；"
+                "禁用样本也会随包保存，enabled=false 表示不参与训练，不表示已从包中删除。"
                 "没有打包验证集或最终测试集。\n\n"
                 "输入格式：`{\"texts\": [\"待分类的技术记忆\"]}`，输出与输入等长的标签列表。"
                 if task == "memory_classification" else
-                "输入包含 `query`、`memories`（每条含 `id`、`text`，可含 `source`）、`top_k`；"
+                "输入包含 `query`、`memories`（每条含 `id`、`text`，可含 `source`、布尔 archived）、`top_k`；"
                 "输出为按分数降序排列的 `{id, score}` 列表。包内示例为合成数据，未包含工作区的记忆库。")
     return f"""# 冻结算法部署包
 
 本包导出的是已经通过验证集和最终测试的选定算法。运行不需要安装 Agent Factory、连接 Ollama 或 Jetson。
 代码、接口、训练样本（分类任务）及指标摘要见 `plugin.json` 和 `report.json`。
+`plugin.json` 的 `business_requirements` 记录经过验证的扩展行为；`requirements` 指向 Python 依赖文件。
 
 ## 本地运行
 
@@ -325,11 +345,36 @@ def export_run(workspace, run_id):
     if algorithm.get("id") != selected.get("algorithm") or algorithm.get("task") != task:
         raise ValueError("Selected algorithm metadata mismatch")
     requirements = _requirements(code, plugin, report)
+    business_requirements = plugin.get("requirements", [])
+    requirement_contracts(task, business_requirements)
+    if report.get("requirements", []) != business_requirements:
+        raise ValueError("Business requirements differ between plugin and report")
+    if business_requirements:
+        for evidence, split in ((validation, "validation"), (final_test, "test")):
+            checks = evidence.get("requirement_checks", {})
+            if (checks.get("passed") is not True or checks.get("split") != split
+                    or checks.get("requirements") != business_requirements
+                    or type(checks.get("case_count")) is not int or checks["case_count"] <= 0):
+                raise ValueError("Business requirements lack matching validation/final-test evidence")
+    generation = {}
+    for key in ("generation_policy", "generation_mode", "history_mode", "generation_backend", "model_seed"):
+        value = report.get(key, plugin.get(key))
+        if value is not None:
+            if key == "model_seed":
+                if type(value) is not int:
+                    raise ValueError("Invalid generation seed evidence")
+            elif not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,100}", value):
+                raise ValueError("Invalid generation policy evidence")
+            generation[key] = value
+    for key in ("generation_mode", "history_mode", "model_seed"):
+        if key in plugin and key in report and plugin[key] != report[key]:
+            raise ValueError("Generation policy differs between plugin and report")
     manifest = {"task": task, "entrypoint": entrypoint, "interface_version": "1",
                 "run_id": run_id, "code_hash": code_hash, "code_path": "algorithm.py",
                 "validation_report": "report.json", "algorithm": {
                     key: algorithm[key] for key in ("id", "name", "version")},
-                "requirements": "requirements.txt"}
+                "requirements": "requirements.txt", "business_requirements": business_requirements,
+                **generation}
     files = {"algorithm.py": code, "run.py": STANDALONE_RUNNER.encode(),
              "requirements.txt": requirements.encode(), "Dockerfile": DOCKERFILE.encode(),
              ".dockerignore": b".venv\n__pycache__\n*.zip\n.git\n", "README.md": _readme(task).encode()}
@@ -341,15 +386,14 @@ def export_run(workspace, run_id):
                 or _hash(training_bytes) != report.get("training_data_hash")):
             raise ValueError("Frozen training data hash mismatch")
         training = json.loads(training_bytes)
-        if not isinstance(training, list) or not training or any(
-                not isinstance(row, dict) or set(row) != {"text", "label"}
-                or any(not isinstance(row[key], str) or not row[key].strip() for key in ("text", "label"))
-                for row in training):
-            raise ValueError("Invalid frozen training examples")
+        effective = effective_training_examples(training, business_requirements, nonempty=True, nonblank=True)
+        if (any(row.get("enabled") is False for row in training)
+                and "classification_ignore_disabled" not in business_requirements):
+            raise ValueError("Disabled training examples require the ignore-disabled business contract")
         manifest.update(training_data="training_examples.json", training_data_hash=_hash(training_bytes),
                         includes_training_text=True)
         files["training_examples.json"] = training_bytes
-        example = {"texts": [row["text"] for row in training[:3]]}
+        example = {"texts": [row["text"] for row in effective[:3]]}
     else:
         example = {"query": "Python 日志排查", "top_k": 2, "memories": [
             {"id": "example_1", "text": "Python 日志记录错误堆栈，帮助排查问题", "source": "synthetic://example"},
@@ -360,6 +404,7 @@ def export_run(workspace, run_id):
         "run_id": run_id, "status": "passed", "task": task, "code_hash": code_hash,
         "algorithm": manifest["algorithm"], "validation": _evaluation(validation), "test": _evaluation(final_test),
         "runner": report.get("runner"), "dataset_hashes": report.get("dataset_hashes", {}),
+        "business_requirements": business_requirements, **generation,
         "note": "Aggregate evidence only; evaluation text, labels and model traces are not exported.",
     })
     files.update(_source_files(workspace, algorithm))

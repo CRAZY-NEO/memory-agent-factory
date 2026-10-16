@@ -14,6 +14,7 @@ from .github_sources import GitHubSources
 from .knowledge import digest
 from .llm import LLMError
 from .models import CodeArtifact, Contract, Diagnosis, Request
+from .providers import REAL_PROVIDERS
 from .registry import AlgorithmSpec
 from .releases import approve_algorithm
 from .repair import code_fingerprint, static_findings, validation_feedback
@@ -70,8 +71,8 @@ def compact_function(code):
 
 
 class DiscoveryFactory(Factory):
-    def __init__(self, workspace, provider='ollama', model='qwen3.5:2b',
-                 base_url='http://127.0.0.1:11435', github=None, config=None, registry=None):
+    def __init__(self, workspace, provider='ollama', model=None,
+                 base_url=None, github=None, config=None, registry=None):
         super().__init__(workspace, provider, model, base_url, runner='docker', config=config, registry=registry)
         self._initialize_discovery(github)
 
@@ -84,6 +85,8 @@ class DiscoveryFactory(Factory):
         return instance
 
     def _initialize_discovery(self, github):
+        if self.config.requirements:
+            raise ValueError('Discover and register source algorithms before requesting business extensions in spec mode')
         self.github = github or GitHubSources()
         self.source = None
         self.proposal = None
@@ -341,6 +344,7 @@ class DiscoveryFactory(Factory):
                     'return': 'scalar term-frequency component TIMES inverse-document-frequency component; framework sums matching terms',
                     'note': 'All arguments are numbers, not lists, Counters or arrays. Preserve numeric source defaults.'}
         return {'request': {'task': 'memory_retrieval', 'top_k': state['request']['top_k']},
+                'generation_mode': 'source_adaptation',
                 'algorithm_plugin': {'id': self.proposal.id,
                                      'guidance': 'Reproduce the named source method and actual formulas; adapt only the interface and tokenizer.'},
                 'repository': self.source_context['repository'], 'source_functions': functions,
@@ -360,19 +364,22 @@ class DiscoveryFactory(Factory):
     def _generate(self, state):
         context = self._code_context(state)
         role = 'source_coder' if not state['revision'] else 'source_repairer'
-        if context['source_adapter_hint']:
-            # Formula generation is unnecessary when the pinned source already
-            # yields pure arithmetic kernels. Keep the model's task to a short,
-            # deterministic wrapper, without competing formula descriptions.
-            role = 'source_adapter' if not state['revision'] else 'source_adapter_repairer'
-            context = {key: context[key] for key in ['method_name', 'scoring_hook', 'source_adapter_hint',
-                                                     'required_source_calls', 'source_numeric_defaults']}
+        deterministic = bool(context['source_adapter_hint'])
         if state['revision']:
             context.update(validation=validation_feedback(state['validation']), diagnosis=state['diagnosis'],
                            previous_code=self.last_scorer if state['revision'] == 1 else '',
                            repair_strategy='targeted_repair' if state['revision'] == 1 else 'rebuild_from_source')
         try:
-            artifact = self.client.ask(role, context, SourceCodeArtifact)
+            if deterministic:
+                artifact = SourceCodeArtifact(code=context['source_adapter_hint'],
+                    explanation='Deterministic adaptation of pinned source kernels; no LLM code-generation call.')
+                (self.directory / 'deterministic-adaptation.json').write_text(json.dumps({
+                    'backend': 'deterministic_source_adapter', 'llm_code_generated': False,
+                    'source_commit': self.source['commit'], 'wrapper_hash': digest(artifact.code),
+                    'kernel_hash': digest(self.source_contract.get('kernel_helpers', '')),
+                }, indent=2), encoding='utf-8')
+            else:
+                artifact = self.client.ask(role, context, SourceCodeArtifact)
             self.last_scorer = artifact.code
             code = compose_retrieval(artifact.code, self.scoring_mode, self.source_contract.get('kernel_helpers', ''))
         except (LLMError, ValueError) as error:
@@ -390,7 +397,9 @@ class DiscoveryFactory(Factory):
         except SyntaxError:
             pass
         return {'code': code, 'code_explanation': artifact.explanation, 'generation_error': None,
-                'generation': {'strategy': 'external_source_adaptation',
+                'generation': {'strategy': 'deterministic_source_adaptation' if deterministic else 'external_source_adaptation',
+                               'backend': 'deterministic_source_adapter' if deterministic else self.client.provider,
+                               'llm_code_generated': not deterministic and self.client.provider in REAL_PROVIDERS,
                                'unchanged': bool(state['revision'] and code_fingerprint(code) == code_fingerprint(state['code'])),
                                'semantic_hash': code_fingerprint(code), 'repository_candidate_ids': [],
                                'scaffold': 'algorithm-independent lexical interface v1', 'scoring_mode': self.scoring_mode,
@@ -449,6 +458,7 @@ class DiscoveryFactory(Factory):
             builder.add_edge(first[0], second[0])
         builder.add_edge('review', 'generate')
         builder.add_conditional_edges('validate', lambda state: 'review' if not state['validation']['passed']
+                                     and state.get('generation', {}).get('backend') != 'deterministic_source_adapter'
                                      and state['revision'] < self.config.max_repairs else 'select',
                                      {'review': 'review', 'select': 'select'})
         builder.add_conditional_edges('select', lambda state: 'test' if state['selected'] else 'persist',

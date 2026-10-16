@@ -17,20 +17,27 @@ class TaskSpec:
     def selected_filename(self):
         return 'selected_' + self.filename
 
-    def load(self, directory, split):
+    def load(self, directory, split, config=None):
         if self.id == 'memory_classification':
             from .classification import load_dataset
-            return load_dataset(Path(directory) / 'classification', split)
+            return load_dataset(Path(directory) / 'classification', split, allow_training_duplicates=bool(
+                config and 'classification_deduplicate_training' in config.requirements))
         from .validation import load_dataset
         return load_dataset(directory, split)
 
-    def preflight(self, directory):
+    def preflight(self, directory, config=None):
         if self.id == 'memory_classification':
             from .classification import check_dataset_split
-            check_dataset_split(Path(directory) / 'classification')
+            check_dataset_split(Path(directory) / 'classification', allow_training_duplicates=bool(
+                config and 'classification_deduplicate_training' in config.requirements))
         else:
-            _, validation = self.load(directory, 'validation')
+            from .validation import evaluation_memories
+
+            memories, validation = self.load(directory, 'validation')
             _, test = self.load(directory, 'test')
+            requirements = config.requirements if config else []
+            evaluation_memories(memories, validation, requirements)
+            evaluation_memories(memories, test, requirements)
             if {row['query'] for row in validation} & {row['query'] for row in test}:
                 raise ValueError('Validation and final-test queries must be disjoint')
 

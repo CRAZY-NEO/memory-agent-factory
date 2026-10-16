@@ -12,6 +12,7 @@ from .jobs import JobStore
 from .knowledge import KnowledgeStore, ingest_sources
 from .llm import LLMClient
 from .models import ValidationConfig
+from .providers import PROVIDERS, REAL_PROVIDERS, load_project_env, resolve_settings
 from .registry import load_registry
 from .routing import AutomaticFactory, RoutingError
 from .runtime import MemoryRetriever
@@ -21,8 +22,10 @@ LOGGER = logging.getLogger(__name__)
 
 def execute_job(workspace, job, provider, model, base_url, runner, store=None):
     kind, payload = job["kind"], job["payload"]
+    if provider in REAL_PROVIDERS and runner != 'docker':
+        raise ValueError('The API worker requires Docker for real generated code')
     if kind == 'discovery':
-        if provider != 'ollama' or runner != 'docker':
+        if provider not in REAL_PROVIDERS or runner != 'docker':
             raise ValueError('Repository discovery requires a real model and Docker')
         from .discovery import DiscoveryFactory
         factory = DiscoveryFactory(workspace, provider, model, base_url)
@@ -34,6 +37,8 @@ def execute_job(workspace, job, provider, model, base_url, runner, store=None):
     if kind == "factory":
         factory = AutomaticFactory(workspace, provider, model, base_url, runner,
                                    mode=payload.get('mode', 'auto'),
+                                   policy_overrides={key: payload.get(key) for key in
+                                                     ['generation_mode', 'history_mode', 'model_seed', 'requirements']},
                                    on_run=(lambda run_id: store.attach_run(job['id'], run_id)) if store else None)
         result = factory.run(payload["description"])
         return {"status": result["status"], "run_id": result["run_id"],
@@ -103,21 +108,27 @@ def process_one(store, workspace, provider="mock", model="mock-template-v1",
     return True
 
 
-def main():
-    parser = argparse.ArgumentParser(description="算法工厂后台任务 worker，建议在 Jetson 宿主机运行")
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="算法工厂后台任务 worker")
     parser.add_argument("--workspace", type=Path, default=Path(os.getenv("FACTORY_WORKSPACE", ".")))
     parser.add_argument("--once", action="store_true", help="处理一个任务后退出，供演示和测试")
-    arguments = parser.parse_args()
+    arguments = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     workspace = arguments.workspace.resolve()
+    try:
+        load_project_env(workspace)
+    except (ValueError, OSError) as error:
+        parser.error(str(error))
     provider = os.getenv("FACTORY_PROVIDER", "ollama")
-    model = os.getenv("OLLAMA_CHAT_MODEL", "qwen3.5:2b" if provider == "ollama" else "mock-template-v1")
-    base_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
-    runner = os.getenv("FACTORY_RUNNER", "docker" if provider == "ollama" else "local")
-    if provider not in {"mock", "ollama"} or runner not in {"local", "docker"}:
+    runner = os.getenv("FACTORY_RUNNER", "docker" if provider in REAL_PROVIDERS else "local")
+    if provider not in PROVIDERS or runner not in {"local", "docker"}:
         parser.error("Invalid FACTORY_PROVIDER or FACTORY_RUNNER")
-    if provider == "ollama" and runner != "docker":
+    if provider in REAL_PROVIDERS and runner != "docker":
         parser.error("The API worker requires Docker for real generated code")
+    try:
+        model, base_url = resolve_settings(provider)
+    except ValueError as error:
+        parser.error(str(error))
     store = JobStore(workspace)
     stop = threading.Event()
     for sig in [signal.SIGTERM, signal.SIGINT]:

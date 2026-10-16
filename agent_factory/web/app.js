@@ -1,6 +1,6 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
-const names = { queued:"排队中", running:"执行中", succeeded:"已完成", failed:"失败", passed:"通过", failed_validation:"验证未通过", failed_test:"最终测试未通过", prepare:"准备材料", understand:"理解需求", retrieve:"检索能力知识", plan:"规划候选", generate:"生成 / 修复代码", validate:"自动验证", review:"诊断问题", advance:"切换候选", select:"选择并冻结版本", test:"独立最终测试", persist:"报告与知识回写" };
+const names = { queued:"排队中", running:"执行中", succeeded:"已完成", failed:"失败", passed:"通过", failed_validation:"验证未通过", failed_generation:"代码生成中断或响应不合格", failed_test:"最终测试未通过", prepare:"准备材料", understand:"理解需求", retrieve:"检索能力知识", plan:"规划候选", generate:"生成 / 修复代码", validate:"自动验证", review:"诊断问题", advance:"切换候选", select:"选择并冻结版本", test:"独立最终测试", persist:"报告与知识回写" };
 Object.assign(names, { route:"判断能力与执行路径", source_search:"理解新能力与搜索规划", github_search:"搜索 GitHub", pick_repository:"选择来源仓库", download_repository:"下载固定提交源码", extract_repository:"AST 抽取源码", propose_algorithm:"提议新算法能力", approve_algorithm:"验证后登记算法" });
 const categories = { direct:"词面基线", paraphrase:"同义改写", hard_negative:"相近负例", multi_relevance:"多相关文档", lexical:"词面基线", near_boundary:"相近类别" };
 const metricNames = { recall_at_k:"Recall@k", mrr_at_k:"MRR@k", precision_at_k:"Precision@k", p95_ms:"P95 ms", accuracy:"Accuracy", macro_f1:"Macro F1", classification_p95_ms:"P95 ms" };
@@ -107,12 +107,22 @@ function categoryTable(title, evaluation, metrics, classification) {
   for (const [category, group] of Object.entries(evaluation.by_category)) { const row = node("tr"); for (const value of [categories[category] || category, group.example_count ?? group.query_count ?? group.count ?? "—", ...metrics.map((metric) => format(group.metrics?.[metric.id])), group.failure_count ?? "—", ...(classification ? [] : [group.hard_negative_confusion_count ?? "—"])]) row.append(node("td", value)); body.append(row); }
   table.append(body); box.append(table); return box;
 }
+function generationEvidence(generation = {}, mode) {
+  if (generation.backend === "mock_template_baseline") return "产物来源：离线模板基线（非模型生成）";
+  if (generation.backend === "deterministic_source_adapter") return "产物来源：来源代码确定性复用（未调用模型生成）";
+  if (generation.backend === "historical_replay") return "产物来源：历史代码重放（非本轮生成）";
+  if (generation.reference_provided === true) return "模型输入：算法规格与完整参考实现";
+  if (generation.reference_provided === false) return "模型输入：算法规格（未提供完整参考实现）";
+  const strategy = { spec:"按规格生成", reference:"参考复刻", source_adaptation:"来源代码适配" }[mode];
+  return strategy ? `输入策略：${strategy}；实际参考记录未保存` : "实际参考输入：旧记录未保存";
+}
 function renderReport(report) {
+  const policy = report.validation_config || {};
   $("result").hidden = false; badge("run-status", report.status);
   const selected = report.selected;
   const classification = report.request?.task === "memory_classification";
   const metrics = reportMetrics(report);
-  $("run-caption").textContent = `${report.run_id} · ${taskNames[report.request?.task] || "记忆检索"} · ${report.provider} / ${report.model} · ${report.runner} · ${selected ? "选定 " + selected.algorithm + " r" + selected.revision : "无可发布候选"}`;
+  $("run-caption").textContent = `${report.run_id} · ${taskNames[report.request?.task] || "记忆检索"} · ${report.provider} / ${report.model} · ${report.runner} · ${selected ? "选定 " + selected.algorithm + " r" + selected.revision : "无可发布候选"}` + ` · ${generationEvidence(selected?.generation || { backend:report.generation_backend }, report.generation_mode || policy.generation_mode)} · 历史经验：${policy.history_mode || "旧版"} · 扩展要求：${(policy.requirements || []).join(", ") || "无"}`;
   $("design").textContent = report.plan?.design_explanation || "";
   const routing = $("routing-evidence"); routing.replaceChildren(); routing.hidden = !report.routing;
   if (report.routing) {
@@ -137,7 +147,7 @@ function renderReport(report) {
   const body = $("candidates").querySelector("tbody"); body.replaceChildren();
   for (const attempt of report.attempts) { const row = node("tr"); const values = attempt.validation.metrics;
     for (const value of [`${attempt.algorithm} r${attempt.revision}`, attempt.validation.passed ? "通过" : "未通过", ...metrics.map((metric) => format(values?.[metric.id]))]) row.append(node("td", value));
-    const info = node("td"); if (attempt.validation.errors.length) { const details = node("details"); details.append(node("summary", `${attempt.validation.errors.length} 条问题`), node("pre", attempt.validation.errors.join("\n"))); info.append(details); }
+    const info = node("td"); info.append(node("p", generationEvidence(attempt.generation, report.generation_mode || policy.generation_mode), "muted")); if (attempt.validation.errors.length) { const details = node("details"); details.append(node("summary", `${attempt.validation.errors.length} 条问题`), node("pre", attempt.validation.errors.join("\n"))); info.append(details); }
     info.append(downloadButton("下载该版本代码", `/v1/runs/${report.run_id}/code/${attempt.algorithm}/${attempt.revision}`, `${attempt.algorithm}-r${attempt.revision}.py`, true)); row.append(info); body.append(row);
   }
   $("category-analysis").replaceChildren();
@@ -197,7 +207,10 @@ async function restoreSession(ticket = null) {
 }
 window.addEventListener("hashchange", () => { const ticket = takeOpeningTicket(); if (ticket) restoreSession(ticket); });
 restoreSession(openingTicket);
-$("factory-form").addEventListener("submit", async (event) => { event.preventDefault(); const description = $("description").value.trim(); if (description.length < 5) { notice("请至少输入 5 个字符的能力描述。"); return; } $("submit").disabled = true; notice(""); try { const job = await request("/v1/factory/runs", { method:"POST", body:JSON.stringify({ description, mode:$("mode").value }) }); selectJob(job.job_id); await refreshHistory(); } catch (error) { notice(error.message); } finally { $("submit").disabled = !connected; } });
+$("factory-form").addEventListener("submit", async (event) => { event.preventDefault(); const description = $("description").value.trim(); if (description.length < 5) { notice("请至少输入 5 个字符的能力描述。"); return; } $("submit").disabled = true; notice(""); try { const job = await request("/v1/factory/runs", { method:"POST", body:JSON.stringify({ description, mode:$("mode").value,
+  // The ordinary UI always generates from specifications; full-reference runs remain an advanced API/CLI control.
+  generation_mode:"spec", history_mode:$("history-mode").value,
+  requirements:$("requirement-profile").value === "retrieval" ? ["retrieval_exclude_archived", "retrieval_deduplicate_text"] : $("requirement-profile").value === "classification" ? ["classification_ignore_disabled", "classification_deduplicate_training"] : [] }) }); selectJob(job.job_id); await refreshHistory(); } catch (error) { notice(error.message); } finally { $("submit").disabled = !connected; } });
 $("description").addEventListener("input", () => { $("character-count").textContent = `${$("description").value.length} / 6000`; });
 $("example").addEventListener("click", () => { $("description").value = "为个人技术记忆库分别复刻 TF-IDF、BM25、Jaccard 三种检索算法并比较。输入 query、memories、top_k，返回前 5 条相关记忆的 ID 与分数。保留中文单字/双字及英文词的算法规则，处理空输入，按配置验证 Recall、MRR、Precision 和稳定性；修复失败版本，选择通过验证的候选并回写知识库。"; if ($("mode").value === "discover") $("description").value = "为中文与英文混合技术笔记检索寻找当前能力目录尚未登记的 BM25Plus 方法。请自动搜索 GitHub 中的算法源码，保留其评分公式与默认参数，改造成 retrieve(query, memories, top_k=5)，在 Docker 中验证，合格后登记供以后使用。"; $("description").dispatchEvent(new Event("input")); });
 $("refresh").addEventListener("click", async () => { notice(""); try { await refreshHistory(); if (selectedJob) selectJob(selectedJob); } catch (error) { notice(error.message); } });

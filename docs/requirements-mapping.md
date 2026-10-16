@@ -1,19 +1,21 @@
 # 笔试要求实现情况清单
 
-核对日期：2026-10-15。按笔试原文逐项对照现有代码、文档和归档运行证据。
+核对日期：2026-10-16。按笔试原文逐项对照现有代码、文档和归档运行证据。
 
 状态说明：勾选 `[x]` 表示已实现并有对应证据；未勾选 `[ ]` 配合“部分实现”或“未实现”说明缺口。这里的“已实现”指原型范围内完成，不代表生产级能力或任意输入下的正确性保证。进阶要求、加分项与基础要求分开统计。
 
 当前支持**技术记忆检索**与**个人文本记忆分类**，任务为 `memory_retrieval` / `memory_classification`，产出 `retrieve(...)` / `classify(...)`。两任务复用同一 Factory 状态图与知识库，各自使用独立数据契约和验证配置；未实现任意功能代码的通用验证。
 
-本次核对补充了检索→文本分类的真实模型完整运行和 ZIP 独立执行。证据：[分类报告](../examples/classification-demo/report.md)、[迁移验收](../examples/transfer_validation.json)、[浏览器验收](../examples/classification_web_validation.json)。之前的自动发现/比较/复用证据继续保留。
+归档证据包括检索→文本分类的参考辅助真实模型运行和 ZIP 独立执行。证据：[分类报告](../examples/classification-demo/report.md)、[迁移验收](../examples/transfer_validation.json)、[浏览器验收](../examples/classification_web_validation.json)。之前的自动发现/比较/复用证据继续保留。
+
+新增业务需求的无模板生成已有一次 DeepSeek 完整验收通过：过滤＋去重、关闭历史、一轮修复、最终 Accuracy 91.67% / Macro-F1 0.9167；此前 7B 失败记录仍保留。此前小模型历史开关对照均为 0/6；新增 18 次 DeepSeek 配对中，首版通过为关闭 6/9、开启 9/9，最终均 9/9。只观察到本样本减少修复，不能推断普遍效果，见 [新对照结果](history-ablation.md)；见 [DeepSeek 验收记录](deepseek-api.md#结果与实验边界)和 [历史实验状态](spec-generation-and-experiments.md#2026-10-16-验收状态)。
 
 ## 1. 任务要求
 
-- [x] **1. 使用开源模型或 LLM 接口完成理解、抽取、生成或修复。** 接入 Ollama `qwen3.5:2b`，保留实际模型调用与运行报告；另有离线 mock 演示。证据：[LLM 接入](../agent_factory/llm.py)、[真实模型三候选报告](../examples/ollama-v2-demo/report.md)、[真实模型发现与修复报告](../examples/github-discovery-demo/report.md)。
+- [x] **1. 使用开源模型或 LLM 接口完成理解、抽取、生成或修复。** 支持 Ollama 与 DeepSeek API，保留实际模型调用与运行报告；另有离线 mock 演示。DeepSeek 接入说明见 [配置指南](deepseek-api.md)，各次真实验收状态单独记录。证据：[LLM 接入](../agent_factory/llm.py)、[真实模型三候选报告](../examples/ollama-v2-demo/report.md)、[真实模型发现与修复报告](../examples/github-discovery-demo/report.md)。
 - [x] **2. 选择一个具体行业场景。** 选择软件研发与运维知识管理，使用故障排查、工具经验和项目决策笔记作为模拟材料。题目中的场景是举例，并非必须从列举的六种任务中选择。证据：[项目说明](../README.md)、[数据说明](../data/README.md)。
 - [x] **3. 构建算法能力知识库或知识图谱。** SQLite 保存能力与历史，NetworkX 表达图关系；包含输入输出、适用条件、指标、依赖、代码版本、验证与失败经验。证据：[schema](schema.md)、[知识存储与检索](../agent_factory/knowledge.py)、[抽取结果](../knowledge/extracted_capabilities.json)。
-- [x] **4. 从自然语言描述复刻可运行算法代码。** 已登记方法通过知识与参考模板生成；新方法可通过 GitHub 源码发现路径适配生成，无须预先添加该方法的模板。标准复刻已支持检索与分类；GitHub 新方法发现仍限检索。证据：[标准工作流](../agent_factory/workflow.py)、[发现工作流](../agent_factory/discovery.py)、[生成代码样例](../examples/github-discovery-demo/selected_retrieval.py)。
+- [x] **4. 从自然语言描述复刻可运行算法代码。** 网页统一按算法规格生成；CLI/API 保留高级完整参考复刻参数；真实输出仍须验证，功能支持不等于每次生成成功。新方法可通过 GitHub 源码发现路径适配；确定性源码组装单独标记为复用，不计作模型独立生成。标准流程支持检索与分类；GitHub 新方法发现仍限检索。证据：[标准工作流](../agent_factory/workflow.py)、[发现工作流](../agent_factory/discovery.py)、[生成证据说明](spec-generation-and-experiments.md)。
 - [x] **5. 统一验证功能、指标、稳定性和接口规范。** 可信验证器执行生成代码，检查接口、边界输入、输出规范、一致性与指标门槛；最终测试前冻结选定代码。证据：[验证器](../agent_factory/validation.py)、[执行器](../agent_factory/runner.py)、[验证测试](../tests/test_validation.py)。
 - [x] **6. 提供 UI、CLI 或 API。** 三者均有：Web 提交与结果展示、命令行生成与验证、FastAPI 异步任务接口。证据：[Web 指南](web-ui.md)、[CLI](../agent_factory/cli.py)、[API](../agent_factory/api.py)。
 
@@ -68,7 +70,7 @@
 - [ ] **部分实现：多智能体协作，而非单次 prompt。** 已有 Extractor、Understander、Planner、Coder、Reviewer、Repairer 的多轮交接，但由同一模型串行承担角色。尚无独立自治 Agent 的工具协商、消息协调或冲突解决。证据：[架构说明](architecture.md)、[工作流](../agent_factory/workflow.py)。
 - [x] **从真实仓库抽取函数、依赖和能力描述。** `ingest-repo` 静态提取 Python 函数/方法、签名、注释、import、行号、Git 提交与哈希。import 是依赖线索，不代表已解析所有传递依赖；抽取候选仍为未验证证据。证据：[AST 抽取器](../agent_factory/repository.py)、[指南](repository-extraction.md)、[实际结果](../examples/repository-demo/extracted_repository.json)。
 - [x] **代码安全检查与沙箱执行。** AST 检查限制危险行为，真实模型代码使用禁网、只读、非 root、资源受限的 Docker 执行。隔离机制不是绝对安全证明，local 执行器也不是安全沙箱。证据：[安全检查](../agent_factory/safety.py)、[执行器](../agent_factory/runner.py)。
-- [x] **自动分析失败并形成可复用经验。** 记录漏召回、排名错误、相近负例混淆和代码错误；经验进入知识图谱并可检索，区分建议与已验证修复。证据：[验证分析](../agent_factory/validation.py)、[真实失败分析样例](../examples/ollama-v2-demo/report.md)。
+- [x] **自动分析失败并形成可复用经验。** 经验有失败/通过验证、代码哈希与图关系，分类与检索均支持使用。已补历史开关、隔离的配对实验及 18 次 DeepSeek 实际结果；本样本首版通过率有差异，最终通过率相同，见 [对照结果](history-ablation.md)。是否有普遍增益不能由功能打勾推导。证据：[经验机制](../agent_factory/repair.py)、[对照工具](../agent_factory/experiments.py)、[实验指南](spec-generation-and-experiments.md)。
 - [x] **算法能力版本管理。** 能力抽取与实现不可覆盖，保存来源/代码哈希、修订关系、验证与发布版本；尚无专门的版本差异 UI。证据：[知识存储](../agent_factory/knowledge.py)、[发布清单](../agent_factory/releases.py)、[schema](schema.md)。
 - [x] **自然语言解释方案设计依据。** 方案与报告保存依据和来源关联；模型解释用于说明选择，不作为算法正确性证据。证据：[方案](../examples/ollama-v2-demo/plan.json)、[报告](../examples/ollama-v2-demo/report.md)。
 - [x] **跨场景迁移。** 同一 Factory、路由入口与 SQLite 从技术笔记检索扩展到个人记忆单标签分类，复用规划/生成/修复/回写并切换可信验证器；不是在旧检索任务上仅增加算法。证据：[真实双任务验收](../examples/transfer_validation.json)、[双任务验收脚本](../scripts/smoke_transfer.py)、[使用指南](classification-and-export.md)、[端到端测试](../tests/test_task_workflow.py)。范围为两类文本任务，尚无表格/图像任务。

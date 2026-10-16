@@ -70,7 +70,7 @@ class KnowledgeStore:
                 graph.add_edge(source, target, relation=relation)
         return graph
 
-    def retrieve(self, description, limit=4, algorithms=None):
+    def retrieve(self, description, limit=4, algorithms=None, include_history=True):
         capabilities = [cap for cap in self.nodes("Capability")
                         if algorithms is None or cap["algorithm"] in algorithms]
         if not capabilities:
@@ -98,8 +98,27 @@ class KnowledgeStore:
         histories = []
         for cap in selected:
             for uid in sorted(nx.descendants(graph, cap["node_id"])):
+                if not include_history:
+                    continue
                 if graph.nodes[uid]["kind"] == "Lesson":
-                    lessons.append({"node_id": uid, **graph.nodes[uid]["payload"]})
+                    payload = graph.nodes[uid]['payload']
+                    evidence = payload.get('evidence', {})
+                    current_id, prior_id = evidence.get('validation_id'), evidence.get('prior_validation_id')
+                    implementation_id, parent_id = payload.get('implementation_id'), payload.get('parent')
+                    # A model's diagnosis or a bare validated_fix flag is not proof.
+                    linked = all(item in graph for item in (current_id, prior_id, implementation_id, parent_id))
+                    verified = (linked and graph.nodes[current_id]['kind'] == 'ValidationRun'
+                                and graph.nodes[prior_id]['kind'] == 'ValidationRun'
+                                and graph.nodes[current_id]['payload'].get('split') == 'validation'
+                                and graph.nodes[current_id]['payload'].get('passed') is True
+                                and graph.nodes[prior_id]['payload'].get('passed') is False
+                                and graph.nodes[implementation_id]['payload'].get('code_hash') == evidence.get('code_hash')
+                                and graph.nodes[parent_id]['payload'].get('code_hash') == evidence.get('prior_code_hash')
+                                and graph.has_edge(implementation_id, current_id)
+                                and graph.has_edge(parent_id, prior_id)
+                                and graph.has_edge(current_id, uid))
+                    if payload.get('validated_fix') and verified:
+                        lessons.append({'node_id': uid, **payload})
                 elif graph.nodes[uid]["kind"] == "ValidationRun":
                     payload = graph.nodes[uid]["payload"]
                     # Final-test outcomes are archived, but never returned as planning feedback.

@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from .models import Contract
+from .providers import REAL_PROVIDERS
 
 
 class RoutingError(ValueError):
@@ -91,12 +92,26 @@ def mock_route(context):
 class AutomaticFactory:
     """Route once, continue the same auditable run, and compare after discovery when requested."""
 
-    def __init__(self, *args, mode='auto', on_run=None, github=None, **kwargs):
+    def __init__(self, *args, mode='auto', on_run=None, github=None, policy_overrides=None, **kwargs):
         from .workflow import Factory
         if mode not in {'auto', 'reuse', 'discover'}:
             raise RoutingError('无效模式；请选择 auto、reuse 或 discover。')
         self.engine = Factory(*args, **kwargs)
         self.mode, self.on_run, self.github = mode, on_run, github
+        self.policy_overrides = {key: value for key, value in (policy_overrides or {}).items() if value is not None}
+        if set(self.policy_overrides) - {'generation_mode', 'history_mode', 'model_seed', 'requirements'}:
+            raise RoutingError('Unsupported generation policy override')
+        self._apply_policy(include_requirements=False)
+
+    def _apply_policy(self, include_requirements=True):
+        from .models import ValidationConfig
+        updates = {key: value for key, value in self.policy_overrides.items()
+                   if include_requirements or key != 'requirements'}
+        self.engine.config = ValidationConfig.model_validate({**self.engine.config.model_dump(), **updates})
+        self.engine.client.model_seed = self.engine.config.model_seed
+        if include_requirements:
+            from .requirements import requirement_contracts
+            requirement_contracts(self.engine.config.task, self.engine.config.requirements)
 
     @property
     def run_id(self):
@@ -124,7 +139,12 @@ class AutomaticFactory:
             context['previous_validation_error'] = 'Only extract explicitly mentioned method names; never invent a method or replace a variant with its family.'
         if intent.task == 'unsupported':
             raise RoutingError('当前支持技术记忆检索和文本记忆分类；其他任务需要对应的接口与验证器。')
+        if 'requirements' in self.policy_overrides:
+            # Explicit requirements belong to the requested task, not the old
+            # workspace profile. Validate them after switching task adapters.
+            self.engine.config = self.engine.config.model_copy(update={'requirements': []})
         self.engine.activate_task(intent.task)
+        self._apply_policy()
         # A task profile may load extra trusted plugin packages. Resolve names
         # against that refreshed catalog, never the old retrieval-only profile.
         catalog = [{key: row[key] for key in ['id', 'name', 'task']}
@@ -162,8 +182,10 @@ class AutomaticFactory:
         (self.directory / 'routing.json').write_text(json.dumps(decision, ensure_ascii=False, indent=2), encoding='utf-8')
         if action == 'discover' and intent.task != 'memory_retrieval':
             raise RoutingError('记忆分类已支持已有算法生成和验证；GitHub 新算法发现目前仅支持检索任务。')
-        if action == 'discover' and (self.engine.client.provider != 'ollama' or self.engine.runner_mode != 'docker'):
-            raise RoutingError('新算法发现需要 Ollama + Docker；当前模式可使用已有能力，无法自动联网复刻新方法。')
+        if action == 'discover' and self.engine.config.requirements:
+            raise RoutingError('请先发现并登记来源算法，再提交带扩展要求的规格生成任务；源码发现阶段不宣称完成业务扩展。')
+        if action == 'discover' and (self.engine.client.provider not in REAL_PROVIDERS or self.engine.runner_mode != 'docker'):
+            raise RoutingError('新算法发现需要 Ollama 或 DeepSeek，并使用 Docker；当前模式可使用已有能力，无法自动联网复刻新方法。')
         if action == 'discover' and len(matched) >= 8:
             raise RoutingError('新方法加已有方法超过八个候选上限；请减少比较方法。')
         return {}

@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-16",
+  "protocol_kind": "cloud_repeated_pairs_v1",
+  "model": "deepseek-v4-pro",
+  "thinking": "disabled",
+  "profiles": [
+    "classification_filter",
+    "classification_deduplication",
+    "classification_combined"
+  ],
+  "repeats_per_profile": 3,
+  "planned_pairs": 9,
+  "completed_runs": 18,
+  "arms": {
+    "off": {
+      "observed_units": 9,
+      "missing_units": 0,
+      "denominator": 9,
+      "first_passes": 6,
+      "final_passes": 9,
+      "errors": 0,
+      "first_pass_rate": 0.6666666666666666,
+      "final_pass_rate": 1.0,
+      "repairs": 3,
+      "calls": 33,
+      "observed_prompt_tokens": 36450,
+      "observed_output_tokens": 8480,
+      "provider_attempt_errors": 0,
+      "transport_attempt_errors": 0,
+      "usage_missing_attempts": 0,
+      "wall_seconds": 181.03902941709384
+    },
+    "on": {
+      "observed_units": 9,
+      "missing_units": 0,
+      "denominator": 9,
+      "first_passes": 9,
+      "final_passes": 9,
+      "errors": 0,
+      "first_pass_rate": 1.0,
+      "final_pass_rate": 1.0,
+      "repairs": 0,
+      "calls": 27,
+      "observed_prompt_tokens": 29562,
+      "observed_output_tokens": 6192,
+      "provider_attempt_errors": 0,
+      "transport_attempt_errors": 0,
+      "usage_missing_attempts": 0,
+      "wall_seconds": 135.21472258400172
+    }
+  },
+  "paired_outcomes": {
+    "first_pass": {
+      "history_wins": 3,
+      "history_losses": 0,
+      "ties": 6,
+      "incomplete_pairs": 0
+    },
+    "final_pass": {
+      "history_wins": 0,
+      "history_losses": 0,
+      "ties": 9,
+      "incomplete_pairs": 0
+    }
+  },
+  "first_pass_rate_delta": 0.33333333333333337,
+  "final_pass_rate_delta": 0.0,
+  "protocol_sha256": "7c523ae48f3288f6d04bd6b4c8961c82baeb39fa5a71bebba4cfb0e3ee9afbd1",
+  "prompt_audit_violations": [],
+  "interpretation": "Observed first-revision pass rate improvement on these repeated engineering tasks; final pass rate unchanged; no general causal efficacy claim.",
+  "raw_evidence_location": "Stored outside the repository by project agreement; original traces and template comparisons not bundled.",
+  "limitations": [
+    "Cloud service weights cannot be independently pinned or verified; matching names/fingerprints are observations only.",
+    "No sampling seed is sent. Repeat numbers identify trials and are not reproducibility controls.",
+    "This compares the end-to-end history policy: planner and repair outputs may differ downstream of the treatment.",
+    "The fixed development/evaluation data have been used during debugging; this is a repeated-generation engineering comparison, not a fresh benchmark.",
+    "Small descriptive paired samples do not establish statistical significance or general causal benefit."
+  ]
+}

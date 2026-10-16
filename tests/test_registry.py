@@ -189,7 +189,8 @@ def test_compare_all_rejects_insufficient_budget_and_incomplete_plan(workspace, 
     monkeypatch.setattr(factory.client, 'ask', lambda *args: incomplete)
     with pytest.raises(ValueError, match='all enabled algorithms'):
         factory._plan({'request': {}, 'knowledge': {'capabilities': [
-            {'id': 'cap_j', 'algorithm': 'jaccard'}]}})
+            {'id': 'cap_j', 'algorithm': 'jaccard', 'task': 'memory_retrieval',
+             'source_id': 'fixture_source', 'applicable_conditions': ['Small mixed-language notes']} ]}})
 
 
 def test_new_plugin_ingested_into_existing_store_and_all_candidates_compared(workspace):

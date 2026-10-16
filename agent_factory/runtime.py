@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from .classification import effective_training_examples
 from .knowledge import digest
 from .models import Memory
 from .runner import Runner
@@ -69,11 +70,14 @@ class MemoryClassifier:
         self.code = verified("selected_classification.py", self.manifest.get("code_hash"), 512 * 1024)
         training = json.loads(verified("training_examples.json", self.manifest.get("training_data_hash"),
                                       8 * 1024 * 1024))
-        if not isinstance(training, list) or not training or any(
-                not isinstance(row, dict) or set(row) != {"text", "label"}
-                or any(not isinstance(row[key], str) or not row[key].strip() for key in ("text", "label"))
-                for row in training):
-            raise ValueError("Frozen training examples must contain nonempty text and label only")
+        effective_training_examples(training, nonempty=True, nonblank=True)
+        requirements = self.manifest.get("requirements", [])
+        from .requirements import requirement_contracts
+
+        requirement_contracts("memory_classification", requirements)
+        if (any(row.get("enabled") is False for row in training)
+                and "classification_ignore_disabled" not in requirements):
+            raise ValueError("Disabled training examples require the ignore-disabled business contract")
         # Keep a canonical private snapshot. Each call receives a new parsed copy,
         # so an application or custom transport cannot change subsequent inputs.
         self._training_json = json.dumps(training, ensure_ascii=False)

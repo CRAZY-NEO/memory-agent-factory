@@ -16,18 +16,21 @@ import zipfile
 from pathlib import Path
 
 from agent_factory.exporting import export_run
+from agent_factory.providers import PROVIDERS, load_project_env, resolve_settings
 from agent_factory.routing import AutomaticFactory
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    load_project_env(ROOT)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('workspace', type=Path)
-    parser.add_argument('--provider', choices=['mock', 'ollama'], default='mock')
-    parser.add_argument('--model', default='mock-template-v1')
-    parser.add_argument('--base-url', default='http://127.0.0.1:11435')
+    parser.add_argument('--provider', choices=PROVIDERS, default='mock')
+    parser.add_argument('--model')
+    parser.add_argument('--base-url')
     args = parser.parse_args()
+    args.model, args.base_url = resolve_settings(args.provider, args.model, args.base_url)
     workspace = args.workspace.resolve()
     workspace.mkdir(parents=True, exist_ok=False)
     for name in ['data', 'config', 'knowledge/sources']:

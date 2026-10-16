@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
 
 class Contract(BaseModel):
@@ -13,6 +13,7 @@ class Memory(Contract):
     id: str = Field(min_length=1)
     text: str = Field(min_length=1)
     source: str = Field(min_length=1)
+    archived: StrictBool = False
 
 
 class Query(Contract):
@@ -91,6 +92,10 @@ class ValidationConfig(Contract):
     task: Literal["memory_retrieval", "memory_classification"] = "memory_retrieval"
     algorithms: list[str] = Field(default_factory=lambda: ["tfidf", "bm25"], min_length=1)
     plugin_packages: list[str] = Field(default_factory=list)
+    generation_mode: Literal["spec", "reference"] = "spec"
+    history_mode: Literal["on", "off"] = "on"
+    model_seed: int = Field(default=42, ge=0, le=2147483647)
+    requirements: list[str] = Field(default_factory=list)
     max_candidates: int = Field(default=2, ge=1, le=8)
     compare_all_algorithms: bool = False
     metrics: dict[str, MetricRule] = Field(default_factory=lambda: {
@@ -121,6 +126,8 @@ class ValidationConfig(Contract):
 
     @model_validator(mode="after")
     def unique_configuration(self):
+        if len(set(self.requirements)) != len(self.requirements):
+            raise ValueError("Duplicate requirement IDs")
         if len(set(self.algorithms)) != len(self.algorithms):
             raise ValueError("Duplicate enabled algorithms")
         if len(set(self.selection_order)) != len(self.selection_order):

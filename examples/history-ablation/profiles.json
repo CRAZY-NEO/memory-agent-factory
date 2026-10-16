@@ -1,0 +1,30 @@
+[
+  {
+    "id": "classification_filter",
+    "task": "memory_classification",
+    "algorithm": "tfidf_logreg",
+    "description": "实现字符 TF-IDF 与逻辑回归记忆分类；训练时忽略 enabled=false 的样本。",
+    "requirements": [
+      "classification_ignore_disabled"
+    ]
+  },
+  {
+    "id": "classification_deduplication",
+    "task": "memory_classification",
+    "algorithm": "tfidf_logreg",
+    "description": "实现字符 TF-IDF 与逻辑回归记忆分类；按完全相同的 (text, label) 去重训练样本。",
+    "requirements": [
+      "classification_deduplicate_training"
+    ]
+  },
+  {
+    "id": "classification_combined",
+    "task": "memory_classification",
+    "algorithm": "tfidf_logreg",
+    "description": "实现字符 TF-IDF 与逻辑回归记忆分类；先忽略 enabled=false 的训练样本，再按完全相同的 (text, label) 去重训练样本。",
+    "requirements": [
+      "classification_ignore_disabled",
+      "classification_deduplicate_training"
+    ]
+  }
+]

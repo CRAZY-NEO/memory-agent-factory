@@ -17,6 +17,13 @@ def write_report(directory, summary):
              f"状态：**{summary['status']}**", "", "## 需求", summary["description"], "",
              "## 方案依据", summary["plan"]["design_explanation"], "", "## 候选版本验证", "",
              "| " + " | ".join(columns) + " |", "| " + " | ".join("---" for _ in columns) + " |"]
+    policy = summary['validation_config']
+    seed_label = ('不支持固定采样种子（配置仅为试验编号）' if summary['provider'] == 'deepseek'
+                  else str(policy.get('model_seed', 'legacy')))
+    lines[5:5] = [
+        f"生成模式：`{policy.get('generation_mode', 'legacy_reference')}`；历史经验：`{policy.get('history_mode', 'legacy')}`；模型种子：`{seed_label}`",
+        '扩展要求：' + (', '.join(policy.get('requirements', [])) or '无'),
+        '范围说明：mock 是模板基线；确定性源码适配是代码复用；测试通过本身不证明模型独立开发能力。', '']
     for attempt in summary["attempts"]:
         metrics = attempt["validation"]["metrics"]
         values = [f"{metrics[key]:.4f}" if key in metrics else "—" for key in keys]
