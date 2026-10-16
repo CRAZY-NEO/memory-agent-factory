@@ -1,0 +1,15 @@
+{
+  "records": [
+    {
+      "record_id": "company",
+      "fields": {
+        "name": "示例公司",
+        "email": ""
+      }
+    }
+  ],
+  "required_fields": [
+    "name",
+    "email"
+  ]
+}

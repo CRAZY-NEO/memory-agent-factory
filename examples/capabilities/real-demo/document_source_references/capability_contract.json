@@ -1,0 +1,236 @@
+{
+  "task": "document_source_references",
+  "version": "1",
+  "domain": "information_design",
+  "entrypoint": "check_references",
+  "parameters": [
+    "payload"
+  ],
+  "defaults": {},
+  "input_schema": {
+    "type": "object",
+    "$defs": {
+      "CitedField": {
+        "additionalProperties": false,
+        "properties": {
+          "field_id": {
+            "minLength": 1,
+            "title": "Field Id",
+            "type": "string"
+          },
+          "references": {
+            "items": {
+              "$ref": "#/$defs/Reference"
+            },
+            "title": "References",
+            "type": "array"
+          }
+        },
+        "required": [
+          "field_id",
+          "references"
+        ],
+        "title": "CitedField",
+        "type": "object"
+      },
+      "Reference": {
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "segment_id": {
+            "title": "Segment Id",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "integer"
+          },
+          "end": {
+            "title": "End",
+            "type": "integer"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "segment_id",
+          "start",
+          "end",
+          "quote"
+        ],
+        "title": "Reference",
+        "type": "object"
+      },
+      "Segment": {
+        "additionalProperties": false,
+        "properties": {
+          "segment_id": {
+            "minLength": 1,
+            "title": "Segment Id",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "segment_id",
+          "text"
+        ],
+        "title": "Segment",
+        "type": "object"
+      },
+      "Source": {
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "minLength": 1,
+            "title": "Source Id",
+            "type": "string"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/$defs/Segment"
+            },
+            "title": "Segments",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source_id",
+          "segments"
+        ],
+        "title": "Source",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "payload": {
+        "additionalProperties": false,
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/$defs/Source"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/$defs/CitedField"
+            },
+            "title": "Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sources",
+          "fields"
+        ],
+        "title": "ReferenceInput",
+        "type": "object"
+      }
+    },
+    "required": [
+      "payload"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "$defs": {
+      "CitedFieldResult": {
+        "additionalProperties": false,
+        "properties": {
+          "field_id": {
+            "title": "Field Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "missing_reference",
+              "invalid_reference"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "references": {
+            "items": {
+              "$ref": "#/$defs/ReferenceResult"
+            },
+            "title": "References",
+            "type": "array"
+          }
+        },
+        "required": [
+          "field_id",
+          "status",
+          "references"
+        ],
+        "title": "CitedFieldResult",
+        "type": "object"
+      },
+      "ReferenceResult": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "source_missing",
+              "segment_missing",
+              "invalid_range",
+              "quote_mismatch"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "status"
+        ],
+        "title": "ReferenceResult",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "fields": {
+        "items": {
+          "$ref": "#/$defs/CitedFieldResult"
+        },
+        "title": "Fields",
+        "type": "array"
+      },
+      "valid": {
+        "title": "Valid",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "fields",
+      "valid"
+    ],
+    "title": "ReferenceOutput",
+    "type": "object"
+  },
+  "behaviors": [
+    "Implement check_references(payload). payload.sources is [{source_id, segments:[{segment_id,text}]}]. payload.fields is [{field_id,references:[{source_id,segment_id,start,end,quote}]}]. Source IDs and field IDs are unique; segment IDs are unique only WITHIN each source. Resolve segment within its cited source, not globally.",
+    "For EACH reference preserve its zero-based index and choose status in strict precedence: source_missing if source ID absent; else segment_missing if segment ID absent within that source; else invalid_range unless 0 <= start < end <= len(text); else quote_mismatch unless text[start:end] == quote exactly; else valid. Offsets use Python Unicode character indexes, end-exclusive, not UTF-8 bytes. Do not strip, casefold, normalize or search for a quote elsewhere.",
+    "Return {fields:[{field_id,status,references:[{index,status}]}], valid}. Preserve field/reference order and multiplicity. Field status missing_reference for empty references, otherwise valid iff ALL its references are valid, else invalid_reference. Overall valid iff ALL fields valid; empty fields gives fields=[] and valid=True. Return only exact keys and never mutate inputs.",
+    "This checks citation locations and exact quotations, NOT whether a claim is semantically supported or factually true. A valid quote does not establish semantic truth."
+  ],
+  "environment": "structured-review-v1",
+  "allowed_dependencies": []
+}

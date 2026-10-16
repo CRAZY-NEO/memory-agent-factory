@@ -20,17 +20,20 @@ class AlgorithmSpec:
     version: str
     task: str
     material: Path
-    reference: Path
+    reference: Path | None
     guidance: str
     dependencies: tuple[str, ...] = ()
     environment: str = "retrieval-v1"
     public_cases: tuple[dict, ...] = ()
     provenance: dict | None = None
+    request_aliases: tuple[str, ...] = ()
 
     def metadata(self):
         result = {"id": self.id, "name": self.name, "version": self.version, "task": self.task,
                 "dependencies": list(self.dependencies), "environment": self.environment,
                 "guidance": self.guidance, "public_cases": list(self.public_cases)}
+        if self.request_aliases:
+            result['request_aliases'] = list(self.request_aliases)
         if self.provenance:
             result['provenance'] = self.provenance
         return result
@@ -80,17 +83,18 @@ class PluginRegistry:
     def _identity(spec):
         if not IDENTIFIER.fullmatch(spec.id) or not spec.name or not spec.version:
             raise ValueError("Plugin needs a valid id, name and version")
-        if spec.task not in {"memory_retrieval", "memory_classification"}:
-            raise ValueError(f"Unsupported plugin task: {spec.task}")
+        from .tasks import task_spec
+        task_spec(spec.task)
 
     def add_algorithm(self, spec: AlgorithmSpec):
         self._identity(spec)
         if spec.id in self.algorithms:
             raise ValueError(f"Duplicate algorithm plugin: {spec.id}")
-        expected = {"memory_retrieval": "retrieval-v1", "memory_classification": "classification-v1"}
-        if spec.environment != expected[spec.task] or not set(spec.dependencies) <= {"scikit-learn"}:
+        from .tasks import task_spec
+        contract = task_spec(spec.task).contract
+        if spec.environment != contract.environment or not set(spec.dependencies) <= set(contract.allowed_dependencies):
             raise ValueError(f"Algorithm {spec.id} requires an unsupported execution environment")
-        if not spec.material.is_file() or not spec.reference.is_file() or not spec.guidance:
+        if not spec.material.is_file() or (spec.reference is not None and not spec.reference.is_file()) or not spec.guidance:
             raise ValueError(f"Algorithm {spec.id} has missing material, reference or guidance")
         self.algorithms[spec.id] = spec
 

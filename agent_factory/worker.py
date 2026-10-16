@@ -50,11 +50,18 @@ def main():
         resource.setrlimit(resource.RLIMIT_AS, (2 * 1024 ** 3, 2 * 1024 ** 3))
     payload = json.load(sys.stdin)
     task = payload.get("task", "memory_retrieval")
-    if task not in {"memory_retrieval", "memory_classification"}:
-        print(json.dumps({"error": "Unsupported worker task"}))
+    invocation = payload.get('invocation')
+    if invocation is None:
+        # Backwards-compatible direct-worker protocol for the two original tasks.
+        legacy = {
+            'memory_retrieval': {'entrypoint': 'retrieve', 'parameters': ['query', 'memories', 'top_k'], 'defaults': {'top_k': 5}},
+            'memory_classification': {'entrypoint': 'classify', 'parameters': ['texts', 'training_examples'], 'defaults': {}},
+        }
+        invocation = legacy.get(task)
+    if not isinstance(invocation, dict):
+        print(json.dumps({'error': 'Unsupported worker task'}))
         return 1
-    classification = task == "memory_classification"
-    entrypoint = "classify" if classification else "retrieve"
+    entrypoint = invocation['entrypoint']
     namespace = {"__builtins__": {name: getattr(builtins, name) for name in BUILTINS}}
     namespace["__builtins__"]["__import__"] = limited_import
     namespace["__name__"] = "generated_retrieval"
@@ -64,26 +71,19 @@ def main():
         if not callable(function):
             raise TypeError(entrypoint + " must be callable")
         parameters = list(inspect.signature(function).parameters.values())
-        if classification:
-            if [p.name for p in parameters] != ["texts", "training_examples"] or any(
-                    p.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD or p.default != inspect.Parameter.empty
-                    for p in parameters):
-                raise TypeError("classify signature must be (texts, training_examples) without defaults")
-        else:
-            if [p.name for p in parameters] != ["query", "memories", "top_k"]:
-                raise TypeError("retrieve signature must be (query, memories, top_k=5)")
-            if parameters[2].default != 5 or any(p.kind not in
-                    [inspect.Parameter.POSITIONAL_OR_KEYWORD] for p in parameters):
-                raise TypeError("retrieve must accept positional parameters and default top_k=5")
+        expected = invocation['parameters']
+        defaults = invocation['defaults']
+        if [parameter.name for parameter in parameters] != expected or any(
+                parameter.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD or
+                parameter.default != defaults.get(parameter.name, inspect.Parameter.empty)
+                for parameter in parameters):
+            raise TypeError(entrypoint + ' signature must match the trusted capability contract: ' + str(expected))
         observations = []
         for case in payload["cases"]:
             inputs = copy.deepcopy(case)
             start = time.perf_counter()
             try:
-                if classification:
-                    result = function(inputs["texts"], inputs["training_examples"])
-                else:
-                    result = function(inputs["query"], inputs["memories"], inputs["top_k"])
+                result = function(**{name: inputs[name] for name in expected})
                 duration = (time.perf_counter() - start) * 1000
                 observations.append({"case_id": case["case_id"], "result": result,
                                      "duration_ms": duration, "mutated": inputs != case})

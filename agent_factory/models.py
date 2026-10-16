@@ -9,6 +9,26 @@ class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class CapabilityContract(Contract):
+    """Developer-owned execution and business contract shared by every adapter.
+
+    A model may implement this contract, but may not replace its evaluator,
+    execution environment, schema, or acceptance thresholds.
+    """
+
+    task: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
+    version: str = "1"
+    domain: str
+    entrypoint: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
+    parameters: list[str] = Field(min_length=1)
+    defaults: dict[str, int] = Field(default_factory=dict)
+    input_schema: dict
+    output_schema: dict
+    behaviors: list[str] = Field(min_length=1)
+    environment: str
+    allowed_dependencies: list[str] = Field(default_factory=list)
+
+
 class Memory(Contract):
     id: str = Field(min_length=1)
     text: str = Field(min_length=1)
@@ -28,7 +48,7 @@ class Query(Contract):
 class Capability(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_-]+$")
     name: str
-    task: Literal["memory_retrieval", "memory_classification"]
+    task: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     algorithm: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     inputs: list[str]
     outputs: list[str]
@@ -45,7 +65,7 @@ class Extraction(Contract):
 
 
 class Request(Contract):
-    task: Literal["memory_retrieval", "memory_classification"]
+    task: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     description: str = Field(min_length=1)
     language: Literal["zh", "mixed"]
     top_k: int = Field(default=5, ge=1, le=20)
@@ -89,7 +109,7 @@ class MetricRule(Contract):
 
 
 class ValidationConfig(Contract):
-    task: Literal["memory_retrieval", "memory_classification"] = "memory_retrieval"
+    task: str = Field(default="memory_retrieval", pattern=r"^[a-z][a-z0-9_]*$")
     algorithms: list[str] = Field(default_factory=lambda: ["tfidf", "bm25"], min_length=1)
     plugin_packages: list[str] = Field(default_factory=list)
     generation_mode: Literal["spec", "reference"] = "spec"

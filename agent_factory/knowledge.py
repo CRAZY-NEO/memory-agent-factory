@@ -70,9 +70,10 @@ class KnowledgeStore:
                 graph.add_edge(source, target, relation=relation)
         return graph
 
-    def retrieve(self, description, limit=4, algorithms=None, include_history=True):
+    def retrieve(self, description, limit=4, algorithms=None, include_history=True, task=None):
         capabilities = [cap for cap in self.nodes("Capability")
-                        if algorithms is None or cap["algorithm"] in algorithms]
+                        if (algorithms is None or cap["algorithm"] in algorithms)
+                        and (task is None or cap["task"] == task)]
         if not capabilities:
             raise ValueError("Knowledge store is empty: run ingest first")
         texts = [json.dumps(cap, ensure_ascii=False) for cap in capabilities]

@@ -1,0 +1,508 @@
+[
+  {
+    "id": "validation_present",
+    "category": "present",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_present",
+          "fields": {
+            "company": "文字"
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_present",
+          "missing_fields": [],
+          "complete": true
+        }
+      ],
+      "complete": true
+    }
+  },
+  {
+    "id": "validation_absent",
+    "category": "absent",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_absent",
+          "fields": {}
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_absent",
+          "missing_fields": [
+            "company"
+          ],
+          "complete": false
+        }
+      ],
+      "complete": false
+    }
+  },
+  {
+    "id": "validation_null",
+    "category": "null",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_null",
+          "fields": {
+            "company": null
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_null",
+          "missing_fields": [
+            "company"
+          ],
+          "complete": false
+        }
+      ],
+      "complete": false
+    }
+  },
+  {
+    "id": "validation_whitespace",
+    "category": "whitespace",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_whitespace",
+          "fields": {
+            "company": " \t\n"
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_whitespace",
+          "missing_fields": [
+            "company"
+          ],
+          "complete": false
+        }
+      ],
+      "complete": false
+    }
+  },
+  {
+    "id": "validation_zero",
+    "category": "zero",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_zero",
+          "fields": {
+            "company": 0
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_zero",
+          "missing_fields": [],
+          "complete": true
+        }
+      ],
+      "complete": true
+    }
+  },
+  {
+    "id": "validation_false",
+    "category": "false",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_false",
+          "fields": {
+            "company": false
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_false",
+          "missing_fields": [],
+          "complete": true
+        }
+      ],
+      "complete": true
+    }
+  },
+  {
+    "id": "validation_empty_list",
+    "category": "empty_list",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_empty_list",
+          "fields": {
+            "company": []
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_empty_list",
+          "missing_fields": [
+            "company"
+          ],
+          "complete": false
+        }
+      ],
+      "complete": false
+    }
+  },
+  {
+    "id": "validation_empty_dict",
+    "category": "empty_dict",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_empty_dict",
+          "fields": {
+            "company": {}
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_empty_dict",
+          "missing_fields": [
+            "company"
+          ],
+          "complete": false
+        }
+      ],
+      "complete": false
+    }
+  },
+  {
+    "id": "validation_nested_present",
+    "category": "nested_present",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_nested_present",
+          "fields": {
+            "company": {
+              "child": null
+            }
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_nested_present",
+          "missing_fields": [],
+          "complete": true
+        }
+      ],
+      "complete": true
+    }
+  },
+  {
+    "id": "validation_list_present",
+    "category": "list_present",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_list_present",
+          "fields": {
+            "company": [
+              null
+            ]
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_list_present",
+          "missing_fields": [],
+          "complete": true
+        }
+      ],
+      "complete": true
+    }
+  },
+  {
+    "id": "validation_literal_dot",
+    "category": "literal_dot",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_literal_dot",
+          "fields": {
+            "company.name": "ok"
+          }
+        }
+      ],
+      "required_fields": [
+        "company.name"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_literal_dot",
+          "missing_fields": [],
+          "complete": true
+        }
+      ],
+      "complete": true
+    }
+  },
+  {
+    "id": "validation_no_path_traversal",
+    "category": "no_path_traversal",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_no_path_traversal",
+          "fields": {
+            "company": {
+              "name": "ok"
+            }
+          }
+        }
+      ],
+      "required_fields": [
+        "company.name"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_no_path_traversal",
+          "missing_fields": [
+            "company.name"
+          ],
+          "complete": false
+        }
+      ],
+      "complete": false
+    }
+  },
+  {
+    "id": "validation_required_order",
+    "category": "required_order",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_required_order",
+          "fields": {}
+        }
+      ],
+      "required_fields": [
+        "z_company",
+        "a_company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_required_order",
+          "missing_fields": [
+            "z_company",
+            "a_company"
+          ],
+          "complete": false
+        }
+      ],
+      "complete": false
+    }
+  },
+  {
+    "id": "validation_record_order",
+    "category": "record_order",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_record_order",
+          "fields": {
+            "company": "ok"
+          }
+        },
+        {
+          "record_id": "validation_record_order_empty",
+          "fields": {}
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_record_order",
+          "missing_fields": [],
+          "complete": true
+        },
+        {
+          "record_id": "validation_record_order_empty",
+          "missing_fields": [
+            "company"
+          ],
+          "complete": false
+        }
+      ],
+      "complete": false
+    }
+  },
+  {
+    "id": "validation_optional_ignored",
+    "category": "optional_ignored",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_optional_ignored",
+          "fields": {
+            "optional": null
+          }
+        }
+      ],
+      "required_fields": []
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_optional_ignored",
+          "missing_fields": [],
+          "complete": true
+        }
+      ],
+      "complete": true
+    }
+  },
+  {
+    "id": "validation_empty_records",
+    "category": "empty_records",
+    "payload": {
+      "records": [],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [],
+      "complete": true
+    }
+  },
+  {
+    "id": "validation_nonblank",
+    "category": "nonblank",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_nonblank",
+          "fields": {
+            "company": "  内容  "
+          }
+        }
+      ],
+      "required_fields": [
+        "company"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_nonblank",
+          "missing_fields": [],
+          "complete": true
+        }
+      ],
+      "complete": true
+    }
+  },
+  {
+    "id": "validation_mixed_missing",
+    "category": "mixed_missing",
+    "payload": {
+      "records": [
+        {
+          "record_id": "validation_mixed_missing",
+          "fields": {
+            "company": false,
+            "extra": null
+          }
+        }
+      ],
+      "required_fields": [
+        "company",
+        "extra",
+        "absent"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "validation_mixed_missing",
+          "missing_fields": [
+            "extra",
+            "absent"
+          ],
+          "complete": false
+        }
+      ],
+      "complete": false
+    }
+  }
+]

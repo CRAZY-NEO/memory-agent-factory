@@ -85,6 +85,21 @@ def write_report(directory, summary):
             for row in evaluation['per_example']:
                 lines.append('| ' + ' | '.join(str(row[key]).replace('|', '/').replace('\n', ' ')
                                                for key in ['id', 'label', 'prediction', 'correct']) + ' |')
+    if summary.get('capability_contract'):
+        contract = summary['capability_contract']
+        lines += ['', '## 能力契约', '',
+                  f"任务：`{contract['task']}`；领域：`{contract['domain']}`；入口：`{contract['entrypoint']}`",
+                  f"契约哈希：`{summary['contract_hash']}`", '',
+                  *['- ' + behavior for behavior in contract['behaviors']]]
+    if summary['request']['task'].startswith('document_'):
+        for label, evaluation in [('验证集', (summary.get('selected') or {}).get('validation')),
+                                  ('独立最终测试', summary.get('test'))]:
+            if not evaluation:
+                continue
+            lines += ['', '## 文档检查：' + label, '', '| 样例 | 类型 | 精确通过 |', '| --- | --- | --- |']
+            for row in evaluation.get('per_case', []):
+                lines.append('| ' + ' | '.join(str(row[key]).replace('|', '/') for key in ('id', 'category', 'correct')) + ' |')
+        lines += ['', '字段检查只判断约定的缺失规则；引用检查只判断位置和原文精确一致，不证明语义事实正确。']
     lines += ["", "## 可复现性与边界", "",
               "- 数据文件哈希、算法和指标插件版本、验证阈值均已记录。最终测试不参与修复和候选选择。",
               "- 所有报告指标由可信验证器计算，mock 只替代 LLM 响应。",
@@ -92,8 +107,9 @@ def write_report(directory, summary):
                   "- 分类 P95 包含整批重新训练与预测，以三次整批调用估计，不是单条纯推理延迟。",
                   "- 分类部署包包含冻结训练样本；对外分享前检查数据是否适合公开。"]
                  if summary['request']['task'] == 'memory_classification' else
-                 ["- Precision@k 使用固定分母 k，不足 k 条的返回位置计为不相关；多查询取平均。",
-                  "- P95 包含查询内索引构建，不包含解释器和依赖导入，小样本结果不代表生产性能。"] ),
+                 (["- 文档检查采用整例精确匹配；三个独立执行检查确定性与输入不被修改。"]
+                  if summary['request']['task'].startswith('document_') else ["- Precision@k 使用固定分母 k，不足 k 条的返回位置计为不相关；多查询取平均。",
+                  "- P95 包含查询内索引构建，不包含解释器和依赖导入，小样本结果不代表生产性能。"]) ),
               "- 算法目录来自可信开发者模块或验证后登记清单；真实模型代码默认在禁网 Docker 容器运行，local 不构成可靠安全沙箱。", ""]
     if summary.get('discovery'):
         discovery = summary['discovery']

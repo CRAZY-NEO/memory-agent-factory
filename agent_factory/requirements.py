@@ -45,8 +45,8 @@ CONTRACTS = {
 
 def requirement_contracts(task, ids):
     """Validate configured IDs and return public, code-free behavioral specifications."""
-    if task not in {"memory_retrieval", "memory_classification"}:
-        raise ValueError("Unsupported requirement task")
+    from .tasks import task_spec
+    task_spec(task)
     if not isinstance(ids, (list, tuple)) or any(not isinstance(uid, str) for uid in ids):
         raise ValueError("Requirements must be a list of IDs")
     if len(set(ids)) != len(ids):

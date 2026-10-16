@@ -57,6 +57,10 @@ def execute_job(workspace, job, provider, model, base_url, runner, store=None):
                                  workspace / "state" / "extracted_capabilities.json",
                                  registry=registry, algorithm_ids=config.algorithms)
         return {"status": "passed", "capabilities": len(records)}
+    if kind == 'invoke':
+        from .runtime import CapabilityPlugin
+        component = CapabilityPlugin(workspace / 'runs' / payload['run_id'] / 'plugin.json', runner)
+        return {'status': 'passed', 'run_id': payload['run_id'], 'output': component.invoke(payload['input'])}
     if kind == "search":
         if payload.get("run_id"):
             manifest = workspace / "runs" / payload["run_id"] / "plugin.json"

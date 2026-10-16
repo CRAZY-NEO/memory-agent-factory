@@ -1,86 +1,66 @@
-"""Trusted task adapters: share orchestration, specialize data, interface and scoring."""
+"""Trusted task registry: one workflow, explicit contracts and pluggable evaluators.
 
-from dataclasses import dataclass
+Only developer-authored adapters register here. Generated artifacts never get to
+register validators or lower gates. Existing task IDs and callable APIs remain.
+"""
+
+import re
 from pathlib import Path
 
 from .models import ValidationConfig
+from .task_base import TaskAdapter
+
+# Compatibility name for code importing the old registry's spec class.
+TaskSpec = TaskAdapter
+TASKS: dict[str, TaskAdapter] = {}
 
 
-@dataclass(frozen=True)
-class TaskSpec:
-    id: str
-    entrypoint: str
-    filename: str
-    data_files: tuple[str, ...]
-
-    @property
-    def selected_filename(self):
-        return 'selected_' + self.filename
-
-    def load(self, directory, split, config=None):
-        if self.id == 'memory_classification':
-            from .classification import load_dataset
-            return load_dataset(Path(directory) / 'classification', split, allow_training_duplicates=bool(
-                config and 'classification_deduplicate_training' in config.requirements))
-        from .validation import load_dataset
-        return load_dataset(directory, split)
-
-    def preflight(self, directory, config=None):
-        if self.id == 'memory_classification':
-            from .classification import check_dataset_split
-            check_dataset_split(Path(directory) / 'classification', allow_training_duplicates=bool(
-                config and 'classification_deduplicate_training' in config.requirements))
-        else:
-            from .validation import evaluation_memories
-
-            memories, validation = self.load(directory, 'validation')
-            _, test = self.load(directory, 'test')
-            requirements = config.requirements if config else []
-            evaluation_memories(memories, validation, requirements)
-            evaluation_memories(memories, test, requirements)
-            if {row['query'] for row in validation} & {row['query'] for row in test}:
-                raise ValueError('Validation and final-test queries must be disjoint')
-
-    def evaluate(self, code, runner, inputs, examples, request, config, registry, algorithm, split):
-        if self.id == 'memory_classification':
-            from .classification import validate
-            return validate(code, runner, inputs, examples, config, split=split,
-                            registry=registry, algorithm=algorithm)
-        from .validation import validate
-        return validate(code, runner, inputs, examples, request['top_k'], config,
-                        split=split, registry=registry, algorithm=algorithm)
-
-
-TASKS = {
-    'memory_retrieval': TaskSpec('memory_retrieval', 'retrieve', 'retrieval.py',
-                               ('memories.json', 'validation_queries.json', 'test_queries.json')),
-    'memory_classification': TaskSpec('memory_classification', 'classify', 'classification.py',
-                                    ('classification/train.json', 'classification/validation.json',
-                                     'classification/test.json')),
-}
+def register_task(adapter):
+    if not isinstance(adapter, TaskAdapter):
+        raise TypeError('Task must implement TaskAdapter')
+    if adapter.id != adapter.contract.task or adapter.id in TASKS:
+        raise ValueError('Invalid or duplicate task adapter: ' + adapter.id)
+    if not adapter.data_files or not adapter.filename.endswith('.py'):
+        raise ValueError('Task adapter needs evaluation data and a Python artifact')
+    parameters = adapter.contract.parameters
+    if len(parameters) != len(set(parameters)) or any(not re.fullmatch(r'[a-z][a-z0-9_]*', name) for name in parameters):
+        raise ValueError('Contract parameter names must be unique public identifiers')
+    if set(adapter.contract.defaults) - set(parameters):
+        raise ValueError('Contract defaults must name declared parameters')
+    TASKS[adapter.id] = adapter
+    return adapter
 
 
 def task_spec(task):
     if task not in TASKS:
-        raise ValueError('Unsupported task: ' + task)
+        raise ValueError('Unsupported task: ' + str(task))
     return TASKS[task]
 
 
+def task_catalog():
+    return [adapter.contract.model_dump() for adapter in TASKS.values()]
+
+
 def load_task_config(workspace, task):
-    """Only a trusted workspace profile defines gates; the LLM cannot lower them."""
-    task_spec(task)
-    path = Path(workspace) / ('config.json' if task == 'memory_retrieval' else 'config/classification.json')
+    adapter = task_spec(task)
+    path = Path(workspace) / adapter.config_file
     if path.exists():
         config = ValidationConfig.model_validate_json(path.read_text(encoding='utf-8'))
-    elif task == 'memory_classification':
-        config = ValidationConfig.model_validate({
-            'task': task, 'algorithms': ['tfidf_logreg', 'tfidf_nb'], 'max_candidates': 2,
-            'compare_all_algorithms': True, 'max_repairs': 2, 'timeout_seconds': 30,
-            'metrics': {'accuracy': {'min': 0.75}, 'macro_f1': {'min': 0.70},
-                        'classification_p95_ms': {'max': 2000}},
-            'selection_order': ['macro_f1', 'accuracy']})
     else:
-        config = ValidationConfig()
+        config = ValidationConfig.model_validate(adapter.default_config)
     if config.task != task:
         raise ValueError('Task profile does not match its task: ' + str(path))
     return config
+
+
+def _register_builtins():
+    from .document_review import DocumentReviewAdapter
+    from .task_adapters import ClassificationAdapter, RetrievalAdapter
+
+    for adapter in [RetrievalAdapter(), ClassificationAdapter(),
+                    DocumentReviewAdapter('document_field_completeness'),
+                    DocumentReviewAdapter('document_source_references')]:
+        register_task(adapter)
+
+
+_register_builtins()

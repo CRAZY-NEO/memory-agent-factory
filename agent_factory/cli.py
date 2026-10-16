@@ -17,8 +17,8 @@ from .registry import load_registry
 from .repair import load_failed_codes
 from .repository import ingest_repository
 from .routing import AutomaticFactory
-from .runtime import MemoryRetriever
-from .tasks import TASKS, load_task_config, task_spec
+from .runtime import CapabilityPlugin, MemoryRetriever
+from .tasks import TASKS, load_task_config, task_catalog, task_spec
 from .visualization import write_graph_html
 
 
@@ -38,6 +38,11 @@ def parser():
     root.add_argument("--verbose", action="store_true")
     root.add_argument("--config", type=Path, help="覆盖工作目录的 config.json")
     commands = root.add_subparsers(dest="command", required=True)
+    commands.add_parser("capabilities", help="列出统一能力契约及可信任务适配器")
+    invoke = commands.add_parser("invoke", help="使用统一 JSON 接口调用已验证能力组件")
+    invoke.add_argument("--run", required=True, help="已通过最终测试的运行 ID")
+    invoke.add_argument("--input", type=Path, required=True, help="JSON 输入文件")
+    invoke.add_argument("--runner", choices=["local", "docker"])
     commands.add_parser("plugins", help="列出已发现的算法、指标及版本")
     ingest = commands.add_parser("ingest", help="从算法材料抽取能力并写入知识库")
     provider_options(ingest)
@@ -59,6 +64,7 @@ def parser():
     request = run.add_mutually_exclusive_group(required=True)
     request.add_argument("--description", help="自然语言算法开发需求")
     request.add_argument("--request-file", type=Path, help="UTF-8 算法开发需求文件")
+    run.add_argument("--task", choices=list(TASKS), help="可选：明确任务类型，并核对自然语言路由结果")
     run.add_argument("--runner", choices=["local", "docker"], help="mock 默认 local；真实模型默认 docker")
     run.add_argument("--allow-local", action="store_true", help="明确接受本地执行边界，允许真实模型代码在本机子进程运行")
     run.add_argument("--repair-from", type=Path, help="重放该运行目录中哈希校验通过的历史失败代码并修复")
@@ -140,7 +146,7 @@ def main(argv=None):
         if history_task and not arguments.config:
             # Keep today's trusted task gates; do not take thresholds from historical evidence.
             config = load_task_config(workspace, history_task)
-        elif arguments.command == 'validate' and arguments.task and not arguments.config:
+        elif arguments.command in {'validate', 'run'} and arguments.task and not arguments.config:
             config = load_task_config(workspace, arguments.task)
         else:
             config = ValidationConfig.model_validate(json.loads(config_path.read_text(encoding="utf-8")))
@@ -155,6 +161,16 @@ def main(argv=None):
                 algorithm = attempt['algorithm']
                 if algorithm in registry.algorithms and registry.algorithm(algorithm).task != history_task:
                     raise ValueError('Historical candidate is incompatible with its task: ' + algorithm)
+        if arguments.command == 'capabilities':
+            print(json.dumps(task_catalog(), ensure_ascii=False, indent=2))
+            return 0
+        if arguments.command == 'invoke':
+            import re
+            if not re.fullmatch(r'\d{8}T\d{6}_[0-9a-f]{8}', arguments.run):
+                raise ValueError('Invalid run ID')
+            component = CapabilityPlugin(workspace / 'runs' / arguments.run / 'plugin.json', arguments.runner)
+            print(json.dumps(component.invoke(json.loads(arguments.input.read_text(encoding='utf-8'))), ensure_ascii=False, indent=2))
+            return 0
         if arguments.command == "plugins":
             print(json.dumps(registry.catalog(), ensure_ascii=False, indent=2))
             return 0
@@ -178,7 +194,7 @@ def main(argv=None):
                                                 'history_mode': arguments.history_mode,
                                                 'model_seed': arguments.seed,
                                                 'requirements': arguments.requirement})
-            result = factory.run(description, initial_codes=seeds, expected_task=history_task)
+            result = factory.run(description, initial_codes=seeds, expected_task=history_task or arguments.task)
             print(json.dumps({"status": result["status"], "run_id": result["run_id"],
                               "report": str(Path(result["directory"]) / "report.md"),
                               "algorithm": result.get('algorithm') or (result.get('selected') or {}).get('algorithm'),

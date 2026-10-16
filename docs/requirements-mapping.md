@@ -4,7 +4,7 @@
 
 状态说明：勾选 `[x]` 表示已实现并有对应证据；未勾选 `[ ]` 配合“部分实现”或“未实现”说明缺口。这里的“已实现”指原型范围内完成，不代表生产级能力或任意输入下的正确性保证。进阶要求、加分项与基础要求分开统计。
 
-当前支持**技术记忆检索**与**个人文本记忆分类**，任务为 `memory_retrieval` / `memory_classification`，产出 `retrieve(...)` / `classify(...)`。两任务复用同一 Factory 状态图与知识库，各自使用独立数据契约和验证配置；未实现任意功能代码的通用验证。
+当前支持**技术记忆检索、个人文本记忆分类、字段完整性、来源引用检查**四种任务，通过统一 CapabilityContract 和可信任务适配器复用同一 Factory 状态图。新文档任务使用结构化 JSON、静态标注、独立最终测试和统一组件调用；未实现任意功能代码的通用验证。见 [统一能力改造](capability-factory.md)。
 
 归档证据包括检索→文本分类的参考辅助真实模型运行和 ZIP 独立执行。证据：[分类报告](../examples/classification-demo/report.md)、[迁移验收](../examples/transfer_validation.json)、[浏览器验收](../examples/classification_web_validation.json)。之前的自动发现/比较/复用证据继续保留。
 

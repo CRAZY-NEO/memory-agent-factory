@@ -2,7 +2,7 @@
 
 import json
 import re
-from typing import Annotated, Literal
+from typing import Annotated
 
 from pydantic import Field
 
@@ -15,7 +15,7 @@ class RoutingError(ValueError):
 
 
 class RouteIntent(Contract):
-    task: Literal['memory_retrieval', 'memory_classification', 'unsupported']
+    task: str = Field(pattern=r'^[a-z][a-z0-9_]*$')
     requested_methods: list[Annotated[str, Field(min_length=1, max_length=80)]] = Field(default_factory=list, max_length=8)
     discover_new: bool = False
     rationale: str = Field(min_length=1, max_length=600)
@@ -26,7 +26,7 @@ def canonical(value):
 
 
 def aliases(item):
-    values = [item['id'], item['name'], item['id'].removeprefix('github_')]
+    values = [item['id'], item['name'], item['id'].removeprefix('github_'), *item.get('request_aliases', [])]
     if item.get('task') == 'memory_classification':
         values.append(item['name'].removeprefix('字符 '))
         if '+' in item['name']:
@@ -81,10 +81,14 @@ def mock_route(context):
     """Explicit rule demonstration for offline mode, not arbitrary natural-language understanding."""
     description = context['description']
     requested = explicit_method_names(description, context['algorithm_catalog'])
+    document = ('document_source_references' if any(word in description.casefold() for word in
+                ['来源引用', '引用检查', 'source reference', 'citation', 'check_references']) else
+                'document_field_completeness' if any(word in description.casefold() for word in
+                ['字段完整', '必填字段', 'field completeness', 'check_fields']) else None)
     classification = any(word in description.casefold() for word in ['分类', 'classification', 'classify'])
     unsupported = any(word in description.casefold() for word in ['流失预测', '库存预测', '图像分类', '回归预测'])
     discovery = any(word in description.casefold() for word in ['新算法', '新方法', '未登记', 'new algorithm', 'new method', 'unregistered'])
-    return {'task': 'unsupported' if unsupported else 'memory_classification' if classification else 'memory_retrieval',
+    return {'task': 'unsupported' if unsupported else document or ('memory_classification' if classification else 'memory_retrieval'),
             'requested_methods': list(dict.fromkeys(requested)), 'discover_new': discovery,
             'rationale': '离线规则：优先已登记的方法；明确的新方法交给发现流程，离线模式不会伪造网络或模型结果。'}
 
@@ -122,11 +126,13 @@ class AutomaticFactory:
         return self.engine.directory
 
     def _route(self, state):
-        catalog = [{key: row[key] for key in ['id', 'name', 'task']}
+        catalog = [{key: row[key] for key in ['id', 'name', 'task', 'request_aliases'] if key in row}
                    for row in self.engine.registry.catalog()['algorithms']]
         literal_methods = explicit_method_names(state['description'], catalog)
+        from .tasks import TASKS, task_catalog
         context = {'description': state['description'], 'algorithm_catalog': catalog,
-                   'supported_tasks': ['memory_retrieval', 'memory_classification'], 'literal_method_mentions': literal_methods}
+                   'supported_tasks': list(TASKS), 'capability_catalog': task_catalog(),
+                   'literal_method_mentions': literal_methods}
         for attempt in range(2):
             intent = self.engine.client.ask('router', context, RouteIntent)
             invalid = [name for name in intent.requested_methods if not mentioned(name, state['description'])
@@ -137,8 +143,8 @@ class AutomaticFactory:
             if attempt:
                 raise RoutingError('路由模型提取了需求中未出现的方法；请明确写出方法名称后重试。')
             context['previous_validation_error'] = 'Only extract explicitly mentioned method names; never invent a method or replace a variant with its family.'
-        if intent.task == 'unsupported':
-            raise RoutingError('当前支持技术记忆检索和文本记忆分类；其他任务需要对应的接口与验证器。')
+        if intent.task not in TASKS:
+            raise RoutingError('当前任务没有已注册的能力契约与可信验证器。支持：' + ', '.join(TASKS))
         if 'requirements' in self.policy_overrides:
             # Explicit requirements belong to the requested task, not the old
             # workspace profile. Validate them after switching task adapters.
@@ -147,7 +153,7 @@ class AutomaticFactory:
         self._apply_policy()
         # A task profile may load extra trusted plugin packages. Resolve names
         # against that refreshed catalog, never the old retrieval-only profile.
-        catalog = [{key: row[key] for key in ['id', 'name', 'task']}
+        catalog = [{key: row[key] for key in ['id', 'name', 'task', 'request_aliases'] if key in row}
                    for row in self.engine.registry.catalog()['algorithms']]
         literal_methods = explicit_method_names(state['description'], catalog)
         matched, missing = [], []

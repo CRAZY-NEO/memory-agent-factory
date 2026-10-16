@@ -72,3 +72,8 @@ FactoryRun 新增 routing 属性：requested_mode、action、intent、literal_me
 Capability.task 和 FactoryRun.request.task 可为 memory_retrieval / memory_classification；Lesson.scope 使用同一任务标识。分类 ValidationRun 新增 task、training_count、example_count、per_example、confusion_matrix、by_category；指标由分类 MetricSpec 定义，行是真实类别、列是预测类别。
 
 分类 FactoryRun 与 plugin.json 均记录 training_data_hash；manifest.training_data 固定为 training_examples.json，分类入口 classify、interface_version=1，产物 selected_classification.py。ZIP 内代码统一为 algorithm.py，所有路径相对；导出摘要只保留指标/门槛/哈希，不含评估样本文本和模型trace。ZIP不是新的算法版本，而是已冻结版本的部署形式。
+
+
+## 能力契约与交付证据
+
+FactoryRun 与发布清单新增 capability_contract 和 contract_hash。契约包含 task/domain/version、入口与参数、输入输出 JSON Schema、公开行为、执行环境与允许依赖；同一任务的不同实现必须遵守同一可信契约。摘要同时保存数据哈希与选定实现哈希。契约 JSON 单独落盘并在评估、调用、导出时复核。它保存算法组件接口，不保存个人记忆或客户文档事实；当前没有新增业务记忆图谱。

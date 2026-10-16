@@ -188,3 +188,8 @@ bash scripts/run_tests.sh -q
 算法还可声明 public_cases（query/memories/top_k/expected），作为公开公式契约，自动进入生成提示与可信验证。新增评分逻辑宜加入手算样例。改进的修复流程及历史重放见 generation-repair.md；独立 CLI validate 可使用 --algorithm jaccard 启用对应公式检查。
 
 分类配置见 [config/classification.json](../config/classification.json)。分类 MetricContext 的 predictions 是 ID→标签，queries 为可信标注样本、top_k=0；不要使用检索指标解析分类输出。分类 public_cases 暂未接入，当前用统一分类接口/质量/稳定性契约验收；检索 public_cases 保持原行为。
+
+
+## 跨领域能力适配
+
+算法与指标继续使用原注册表，任务接口由统一 CapabilityContract 和 TaskAdapter 提供。新增策略可以声明 reference=None，以规格生成代替完整实现参考；这种策略显式 reference 模式会在模型调用前拒绝，mock 基线也不会进入真实生成上下文。新增任务要注册可信数据加载、执行输入检查、评估和运行适配，不得让生成代码登记自己的验证器。完整扩展边界见 [能力工厂指南](capability-factory.md)。

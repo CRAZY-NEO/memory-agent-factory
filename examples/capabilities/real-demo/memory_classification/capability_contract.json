@@ -1,0 +1,43 @@
+{
+  "task": "memory_classification",
+  "version": "1",
+  "domain": "personal_memory",
+  "entrypoint": "classify",
+  "parameters": [
+    "texts",
+    "training_examples"
+  ],
+  "defaults": {},
+  "input_schema": {
+    "type": "object",
+    "required": [
+      "texts",
+      "training_examples"
+    ],
+    "properties": {
+      "texts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "training_examples": {
+        "type": "array"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "array",
+    "items": {
+      "type": "string"
+    }
+  },
+  "behaviors": [
+    "Return one effective-training label per text, preserving order and multiplicity.",
+    "Fit on training only. Do not mutate inputs. Handle blank, empty and single-label cases."
+  ],
+  "environment": "classification-v1",
+  "allowed_dependencies": [
+    "scikit-learn"
+  ]
+}

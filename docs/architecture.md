@@ -100,3 +100,8 @@ Query 新增 category、hard_negative_ids 和 annotation。负例在真实检索
 AutomaticFactory 先识别任务，Factory.activate_task 加载对应可信配置；TaskSpec 选择数据加载器、接口、验证器和产物文件名。LangGraph 角色交接、候选选择、修复预算、环境/代码版本和知识回写继续共用。分类训练数据在运行开始时复制到 training_examples.json 并绑定 SHA-256；所有候选与最终测试使用同一副本，数据变动会阻止发布。
 
 分类 worker 只接收 texts 和 training_examples（仅 text/label），评估标签保留在父进程。它可以在调用内训练，但不保存拟合模型；MemoryClassifier 和独立 ZIP 每次根据冻结训练集重新训练，适合小型原型，不宣称生产推理优化。最终测试失败不再修复或换候选。
+
+
+## 统一能力契约与四类任务
+
+工厂现以 TaskAdapter 注册表取得输入、代码规则、评估、冻结及运行适配，不再在 tasks.py 分支判断检索／分类。新增 document_field_completeness、document_source_references 与原任务共用同一状态图和修复预算。CapabilityContract 及其规范化哈希进入 FactoryRun、plugin.json 与可移植交付包；既有检索／分类函数 API 保持不变。统一 CapabilityPlugin.invoke 接收应用 JSON，网关的调用请求进入原隔离 worker 队列。细节见 [能力工厂指南](capability-factory.md)。

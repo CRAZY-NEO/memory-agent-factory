@@ -118,29 +118,28 @@ class Factory:
         if current != self.dataset_hashes:
             raise ValueError('Dataset changed during the run')
         inputs, examples = self.task.load(self.workspace / 'data', split, self.config)
-        if self.config.task == 'memory_classification':
-            # Every candidate and the final test use the same frozen training input.
-            path = self.directory / 'training_examples.json'
-            frozen = path.read_text(encoding='utf-8')
-            if digest(frozen) != self.training_data_hash:
-                raise ValueError('Frozen training data changed during the run')
-            inputs = json.loads(frozen)
-        return inputs, examples
+        return self.task.frozen_inputs(self, inputs), examples
 
     def _prepare_data(self):
         requirement_contracts(self.config.task, self.config.requirements)
+        if self.config.generation_mode == 'reference' and any(self.registry.algorithm(name).reference is None for name in self.config.algorithms):
+            raise ValueError('This capability is specification-only and has no complete reference implementation')
         self.task.preflight(self.workspace / 'data', self.config)
         self.dataset_hashes = {name: digest((self.workspace / 'data' / name).read_text(encoding='utf-8'))
                                for name in self.task.data_files}
-        if self.config.task == 'memory_classification':
-            training, _ = self.task.load(self.workspace / 'data', 'validation', self.config)
-            if any(row.get('enabled') is False for row in training) and 'classification_ignore_disabled' not in self.config.requirements:
-                raise ValueError('Disabled training rows require classification_ignore_disabled')
-            frozen = json.dumps(training, ensure_ascii=False, indent=2)
-            self.training_data_hash = digest(frozen)
-            (self.directory / 'training_examples.json').write_text(frozen, encoding='utf-8')
+        self.task.prepare(self)
+        from .contracts import contract_hash
+        self.contract_snapshot = self.task.contract.model_dump()
+        self.contract_hash = contract_hash(self.contract_snapshot)
+        (self.directory / 'capability_contract.json').write_text(
+            json.dumps(self.contract_snapshot, ensure_ascii=False, indent=2), encoding='utf-8')
 
     def _evaluate(self, code, request, algorithm, split):
+        from .contracts import contract_hash
+        saved = json.loads((self.directory / 'capability_contract.json').read_text(encoding='utf-8'))
+        if (contract_hash(self.task.contract.model_dump()) != self.contract_hash
+                or contract_hash(saved) != self.contract_hash):
+            raise ValueError('Capability contract changed during the run')
         inputs, examples = self._dataset(split)
         result = self.task.evaluate(code, self.runner, inputs, examples, request, self.config,
                                     self.registry, algorithm, split)
@@ -166,7 +165,8 @@ class Factory:
 
     def _understand(self, state):
         request = self.client.ask("understander", {"description": state["description"],
-                                                   "task": self.config.task}, Request)
+                                                   "task": self.config.task,
+                                                   "capability_contract": self.task.contract.model_dump()}, Request)
         if request.task != self.config.task:
             raise ValueError('Understood task differs from the selected validation profile')
         request.description = state["description"]
@@ -174,7 +174,8 @@ class Factory:
 
     def _retrieve(self, state):
         knowledge = self.store.retrieve(state["description"], limit=max(4, len(self.config.algorithms)),
-                                        algorithms=self.config.algorithms, include_history=self.config.history_mode == "on")
+                                        algorithms=self.config.algorithms, include_history=self.config.history_mode == "on",
+                                        task=self.config.task)
         (self.directory / "retrieved_knowledge.json").write_text(
             json.dumps(knowledge, ensure_ascii=False, indent=2), encoding="utf-8")
         return {"knowledge": knowledge}
@@ -188,6 +189,7 @@ class Factory:
                                           "algorithm_catalog": [algorithm_specification(self.registry.algorithm(name))
                                               if self.config.generation_mode == 'spec' else self.registry.algorithm(name).metadata()
                                               for name in self.config.algorithms],
+                                          "capability_contract": self.task.contract.model_dump(),
                                           "max_candidates": self.config.max_candidates,
                                           "required_algorithms": self.config.algorithms
                                           if self.config.compare_all_algorithms else []}, Plan)
@@ -425,6 +427,10 @@ class Factory:
         return {"test": report, "status": "passed" if report["passed"] else "failed_test"}
 
     def _persist(self, state):
+        from .contracts import contract_hash
+        saved = json.loads((self.directory / 'capability_contract.json').read_text(encoding='utf-8'))
+        if contract_hash(saved) != self.contract_hash or self.task.contract.model_dump() != self.contract_snapshot:
+            raise ValueError('Capability contract changed before publication')
         files = {name: digest((self.workspace / "data" / name).read_text(encoding="utf-8"))
                  for name in self.task.data_files}
         if files != self.dataset_hashes:
@@ -453,8 +459,9 @@ class Factory:
                    "mock_fault_algorithm": self.client.fault_algorithm if self.client.inject_fault else None,
                    "workflow_events": state["events"] + ["persist"]}
         summary.update(self.report_metadata(state))
-        if self.config.task == 'memory_classification':
-            summary['training_data_hash'] = self.training_data_hash
+        summary.update(self.task.summary_metadata(self))
+        summary.update(capability_contract=self.contract_snapshot, contract_hash=self.contract_hash,
+                       artifacts={'selected_code': self.task.selected_filename, 'contract': 'capability_contract.json'})
         if getattr(self, 'routing', None):
             summary['routing'] = self.routing
         self.store.add_node("run_" + self.run_id, "FactoryRun", summary)
@@ -475,8 +482,8 @@ class Factory:
                       "seed_supported": self.client.provider == "ollama",
                       "requirements": self.config.requirements,
                       "generation_backend": state['selected'].get('generation', {}).get('backend', 'unknown')}
-            if self.config.task == 'memory_classification':
-                plugin.update(training_data='training_examples.json', training_data_hash=self.training_data_hash)
+            plugin.update(self.task.publication_metadata(self))
+            plugin.update(capability_contract=self.contract_snapshot, contract_hash=self.contract_hash)
             (self.directory / "plugin.json").write_text(json.dumps(plugin, ensure_ascii=False, indent=2), encoding="utf-8")
         write_report(self.directory, summary)
         self.store.export(self.directory / "knowledge")

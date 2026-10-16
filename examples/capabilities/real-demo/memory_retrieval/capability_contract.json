@@ -1,0 +1,52 @@
+{
+  "task": "memory_retrieval",
+  "version": "1",
+  "domain": "personal_memory",
+  "entrypoint": "retrieve",
+  "parameters": [
+    "query",
+    "memories",
+    "top_k"
+  ],
+  "defaults": {
+    "top_k": 5
+  },
+  "input_schema": {
+    "type": "object",
+    "required": [
+      "query",
+      "memories"
+    ],
+    "properties": {
+      "query": {
+        "type": "string"
+      },
+      "memories": {
+        "type": "array"
+      },
+      "top_k": {
+        "type": "integer",
+        "default": 5
+      }
+    }
+  },
+  "output_schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": [
+        "id",
+        "score"
+      ]
+    }
+  },
+  "behaviors": [
+    "Return ranked unique input IDs with finite nonnegative scores.",
+    "English alphanumeric/underscore identifiers are whole lowercase words; Chinese uses characters and adjacent bigrams strictly within each contiguous Chinese run; never concatenate across spaces, punctuation or English.",
+    "Empty query, memories or nonpositive top_k returns []. Never mutate inputs."
+  ],
+  "environment": "retrieval-v1",
+  "allowed_dependencies": [
+    "scikit-learn"
+  ]
+}

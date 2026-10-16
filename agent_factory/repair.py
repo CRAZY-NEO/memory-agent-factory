@@ -63,7 +63,8 @@ def static_findings(code):
 
 def import_findings(code, task='memory_retrieval'):
     """Explain the same AST import policy as the safety gate without executing code."""
-    from .safety import ALLOWED_IMPORTS, CLASSIFICATION_IMPORTS
+    from .safety import CLASSIFICATION_IMPORTS, allowed_imports
+    ALLOWED_IMPORTS = allowed_imports(task)
 
     try:
         tree = ast.parse(code)
@@ -487,9 +488,13 @@ def focused_context(state, registry, config=None):
                'required_behaviors': requirement_contracts(config.task, config.requirements),
                'validated_lessons': (compact_lessons(knowledge, plugin.id, config.task)
                                      if config.history_mode == 'on' else [])}
+    from .tasks import task_spec
+    context['capability_contract'] = task_spec(config.task).contract.model_dump()
     if config.generation_mode == 'reference':
         capabilities = [cap for cap in knowledge['capabilities'] if cap['id'] == candidate['capability_id']]
         source_ids = {cap['source_id'] for cap in capabilities}
+        if plugin.reference is None:
+            raise ValueError('This capability is specification-only and has no complete reference implementation')
         reference = plugin.reference.read_text(encoding='utf-8')
         context.update(capabilities=capabilities,
                        sources=[source for source in knowledge['sources'] if source['source_id'] in source_ids],

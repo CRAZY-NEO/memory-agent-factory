@@ -2,9 +2,13 @@
 
 使用 Agent 把自然语言算法需求转换为可运行、经过验证的记忆算法插件。软件研发与个人知识管理场景包含两项任务：从技术笔记检索相关记忆，以及把个人记忆分成技术知识、项目记录、个人偏好与待办提醒。
 
-工厂输入是自然语言算法需求，产物为 Python 代码、依赖说明、验证报告、版本历史与可独立运行的 ZIP。检索产物提供 `retrieve(query, memories, top_k=5)`；分类产物提供 `classify(texts, training_examples)`。两项任务复用同一套 LangGraph 编排、知识库、候选比较与有限修复。
+工厂输入是自然语言算法需求，产物为 Python 代码、依赖说明、验证报告、版本历史与可独立运行的 ZIP。检索产物提供 `retrieve(query, memories, top_k=5)`；分类产物提供 `classify(texts, training_examples)`。检索与分类保留原接口；新增字段完整性、来源引用检查，通过统一能力契约和任务适配器复用同一套 LangGraph 编排、知识库与有限修复。
 
 **当前可运行模式**：离线 mock/规则模板演示、远端 Ollama 原生 API，以及 DeepSeek 云端 API。DeepSeek 已完成不提供完整模板的分类扩展验收及历史经验开／关对照，见 [DeepSeek 接入与验收](docs/deepseek-api.md) 和 [历史经验对照](docs/history-ablation.md)。mock 只替代模型响应，代码执行、测试、指标和知识回写都真实运行。已通过本机 11435 转发接口调用 `qwen3.5:2b`，在 v2 评估集上完成真实模型抽取、三候选生成、Docker 验证及知识回写，见 [三候选真实模型报告](examples/ollama-v2-demo/report.md)；历史运行保留真实代码修复记录。工厂和算法执行容器运行在 Mac；远端硬件由用户管理，SSH 隧道可通过本地启动器的 --ssh-target 一起启动。
+
+新增信息设计场景：工厂可根据规格生成 `check_fields(payload)` 和 `check_references(payload)`，分别检查字段完整性与引用位置／原文一致性。两项新任务不提供完整参考实现，使用独立评估、隔离运行、统一 SDK 和可移植 ZIP。见 [统一能力工厂与接入指南](docs/capability-factory.md)。当前共四种已登记能力，不是任意功能生成器，尚未实现 MCP 服务或两个业务系统的直接部署。
+
+本次改造已完成四能力真实验收、672 项回归及两项新能力的网页验收，结果与已知边界见 [统一工厂真实验收报告](examples/capabilities/real-demo/report.md)。
 
 ## 1. 快速开始
 

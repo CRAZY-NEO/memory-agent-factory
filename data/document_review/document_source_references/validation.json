@@ -1,0 +1,1011 @@
+[
+  {
+    "id": "validation_valid",
+    "category": "valid",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_valid",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_valid",
+          "status": "valid",
+          "references": [
+            {
+              "index": 0,
+              "status": "valid"
+            }
+          ]
+        }
+      ],
+      "valid": true
+    }
+  },
+  {
+    "id": "validation_missing_reference",
+    "category": "missing_reference",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_missing_reference",
+          "references": []
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_missing_reference",
+          "status": "missing_reference",
+          "references": []
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_source_missing",
+    "category": "source_missing",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_source_missing",
+          "references": [
+            {
+              "source_id": "absent_validation",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_source_missing",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "source_missing"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_segment_missing",
+    "category": "segment_missing",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_segment_missing",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "absent_validation",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_segment_missing",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "segment_missing"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_negative_start",
+    "category": "negative_start",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_negative_start",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": -1,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_negative_start",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "invalid_range"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_empty_range",
+    "category": "empty_range",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_empty_range",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 0,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_empty_range",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "invalid_range"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_reverse_range",
+    "category": "reverse_range",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_reverse_range",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 3,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_reverse_range",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "invalid_range"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_past_end",
+    "category": "past_end",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_past_end",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 16,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_past_end",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "invalid_range"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_quote_mismatch",
+    "category": "quote_mismatch",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_quote_mismatch",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "wrong_validation"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_quote_mismatch",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "quote_mismatch"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_unicode_character_offsets",
+    "category": "unicode_character_offsets",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_unicode_character_offsets",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 2,
+              "end": 3,
+              "quote": "🙂"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_unicode_character_offsets",
+          "status": "valid",
+          "references": [
+            {
+              "index": 0,
+              "status": "valid"
+            }
+          ]
+        }
+      ],
+      "valid": true
+    }
+  },
+  {
+    "id": "validation_exact_whitespace",
+    "category": "exact_whitespace",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_exact_whitespace",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 3,
+              "end": 4,
+              "quote": ""
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_exact_whitespace",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "quote_mismatch"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_full_text",
+    "category": "full_text",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_full_text",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 15,
+              "quote": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_full_text",
+          "status": "valid",
+          "references": [
+            {
+              "index": 0,
+              "status": "valid"
+            }
+          ]
+        }
+      ],
+      "valid": true
+    }
+  },
+  {
+    "id": "validation_all_references",
+    "category": "all_references",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_all_references",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            },
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "wrong_validation"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_all_references",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "valid"
+            },
+            {
+              "index": 1,
+              "status": "quote_mismatch"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_duplicate_references",
+    "category": "duplicate_references",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_duplicate_references",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            },
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_duplicate_references",
+          "status": "valid",
+          "references": [
+            {
+              "index": 0,
+              "status": "valid"
+            },
+            {
+              "index": 1,
+              "status": "valid"
+            }
+          ]
+        }
+      ],
+      "valid": true
+    }
+  },
+  {
+    "id": "validation_field_order",
+    "category": "field_order",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_field_order",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        },
+        {
+          "field_id": "validation_field_order_empty",
+          "references": []
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_field_order",
+          "status": "valid",
+          "references": [
+            {
+              "index": 0,
+              "status": "valid"
+            }
+          ]
+        },
+        {
+          "field_id": "validation_field_order_empty",
+          "status": "missing_reference",
+          "references": []
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_empty_sources",
+    "category": "empty_sources",
+    "payload": {
+      "sources": [],
+      "fields": [
+        {
+          "field_id": "validation_empty_sources",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_empty_sources",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "source_missing"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_priority_source",
+    "category": "priority_source",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_priority_source",
+          "references": [
+            {
+              "source_id": "absent_validation",
+              "segment_id": "validation_segment",
+              "start": -1,
+              "end": 2,
+              "quote": "wrong"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_priority_source",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "source_missing"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_priority_segment",
+    "category": "priority_segment",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_priority_segment",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "absent_validation",
+              "start": -1,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_priority_segment",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "segment_missing"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_priority_range",
+    "category": "priority_range",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_priority_range",
+          "references": [
+            {
+              "source_id": "validation_source",
+              "segment_id": "validation_segment",
+              "start": -1,
+              "end": 2,
+              "quote": "wrong"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_priority_range",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "invalid_range"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_no_global_segment",
+    "category": "no_global_segment",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        },
+        {
+          "source_id": "validation_source_other",
+          "segments": []
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_no_global_segment",
+          "references": [
+            {
+              "source_id": "validation_source_other",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_no_global_segment",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "segment_missing"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_source_scoped_segment",
+    "category": "source_scoped_segment",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        },
+        {
+          "source_id": "validation_source_other",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "unrelated_validation"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "field_id": "validation_source_scoped_segment",
+          "references": [
+            {
+              "source_id": "validation_source_other",
+              "segment_id": "validation_segment",
+              "start": 0,
+              "end": 2,
+              "quote": "中文"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "fields": [
+        {
+          "field_id": "validation_source_scoped_segment",
+          "status": "invalid_reference",
+          "references": [
+            {
+              "index": 0,
+              "status": "quote_mismatch"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    }
+  },
+  {
+    "id": "validation_empty_fields",
+    "category": "empty_fields",
+    "payload": {
+      "sources": [
+        {
+          "source_id": "validation_source",
+          "segments": [
+            {
+              "segment_id": "validation_segment",
+              "text": "中文🙂 evidence 公司"
+            }
+          ]
+        }
+      ],
+      "fields": []
+    },
+    "expected": {
+      "fields": [],
+      "valid": true
+    }
+  }
+]

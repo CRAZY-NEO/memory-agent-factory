@@ -98,3 +98,90 @@ class MemoryClassifier:
                 or not isinstance(observations[0], dict) or observations[0].get("case_id") != "classify"):
             raise ValueError("Classifier worker returned missing or unexpected observations")
         return check_classification_result(observations[0], case)
+
+
+class _DocumentReviewer:
+    """Pure structured-input document capability, executed in the same sandbox."""
+
+    def __init__(self, manifest, runner=None):
+        from .tasks import task_spec
+        self.path = Path(manifest)
+        self.manifest = json.loads(self.path.read_text(encoding='utf-8'))
+        self.task = task_spec(self.manifest['task'])
+        if self.task.contract.domain != 'information_design':
+            raise ValueError('DocumentReviewer requires a document-review capability')
+        self.code = (self.path.parent / self.task.selected_filename).read_text(encoding='utf-8')
+        if digest(self.code) != self.manifest['code_hash']:
+            raise ValueError('Capability code hash mismatch')
+        self.runner = Runner(runner or self.manifest.get('runner', 'docker'))
+
+    def invoke(self, payload):
+        from .document_contracts import check_output, parse_input
+        normalized = parse_input(self.task.id, payload)
+        case = {'case_id': 'invoke', 'payload': normalized}
+        result = self.runner.execute(self.code, [case], task=self.task.id)
+        if 'error' in result:
+            raise RuntimeError(result['error'])
+        rows = result.get('observations', [])
+        if len(rows) != 1 or rows[0].get('case_id') != 'invoke':
+            raise ValueError('Missing or unexpected capability observation')
+        row = rows[0]
+        if 'error' in row:
+            raise RuntimeError(row['error'])
+        if row.get('mutated'):
+            raise ValueError('Capability mutated inputs')
+        return check_output(self.task.id, row.get('result'), normalized)
+
+
+class CapabilityPlugin:
+    """Uniform application-facing SDK: load approved artifact, then invoke JSON.
+
+    Only trusted adapters dispatch calls. Generated code never imports into this
+    process. New manifests bind the contract, selected code and passing evidence.
+    """
+
+    def __init__(self, manifest, runner=None):
+        from .contracts import contract_hash
+        from .tasks import task_spec
+        path = Path(manifest)
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > 1024 * 1024:
+            raise ValueError('Unsafe capability manifest')
+        self.manifest = json.loads(path.read_text(encoding='utf-8'))
+        self.adapter = task_spec(self.manifest['task'])
+        contract = self.manifest.get('capability_contract')
+        if contract is None:
+            raise ValueError('Unified SDK requires a versioned capability contract')
+        saved_path = path.parent / 'capability_contract.json'
+        if saved_path.is_symlink() or saved_path.stat().st_size > 1024 * 1024:
+            raise ValueError('Unsafe capability contract')
+        saved = json.loads(saved_path.read_text(encoding='utf-8'))
+        expected = contract_hash(self.adapter.contract.model_dump())
+        if saved != contract:
+            raise ValueError('Frozen capability contract mismatch')
+        if contract_hash(contract) != expected or self.manifest.get('contract_hash') != expected:
+            raise ValueError('Capability contract mismatch')
+        report_path = path.parent / 'report.json'
+        if report_path.is_symlink() or report_path.stat().st_size > 32 * 1024 * 1024:
+            raise ValueError('Unsafe capability report')
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+        selected = report.get('selected') or {}
+        if (self.manifest.get('interface_version') != '1'
+                or self.manifest.get('entrypoint') != self.adapter.entrypoint
+                or report.get('run_id') != self.manifest.get('run_id')
+                or report.get('request', {}).get('task') != self.adapter.id
+                or report.get('status') != 'passed' or report.get('test', {}).get('passed') is not True
+                or report.get('test', {}).get('split') != 'test'
+                or selected.get('validation', {}).get('passed') is not True
+                or report.get('contract_hash') != expected
+                or report.get('capability_contract') != contract):
+            raise ValueError('Capability lacks matching passing publication evidence')
+        code_path = path.parent / self.adapter.selected_filename
+        if code_path.is_symlink() or not code_path.is_file() or code_path.stat().st_size > 512 * 1024:
+            raise ValueError('Unsafe capability code')
+        code = code_path.read_text(encoding='utf-8')
+        if digest(code) != self.manifest.get('code_hash') or digest(code) != selected.get('code_hash'):
+            raise ValueError('Capability code hash mismatch')
+        self.runtime = self.adapter.create_runtime(path, runner)
+
+    def invoke(self, payload):
+        return self.adapter.invoke_runtime(self.runtime, payload)

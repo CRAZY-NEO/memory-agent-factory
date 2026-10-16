@@ -49,7 +49,8 @@ def test_discovery_contract_and_duplicate_rejection():
         PluginRegistry().add_algorithm(replace(plugin, task="classification"))
     with pytest.raises(ValueError, match="missing"):
         PluginRegistry().add_algorithm(replace(plugin, reference=Path('/nonexistent/reference.py')))
-    assert all(spec.reference.is_file() and spec.material.is_file() for spec in registry.algorithms.values())
+    assert all(spec.material.is_file() and (spec.reference is None or spec.reference.is_file())
+               for spec in registry.algorithms.values())
 
 
 def test_legacy_config_and_preflight_failures(workspace):

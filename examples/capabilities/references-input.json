@@ -1,0 +1,27 @@
+{
+  "sources": [
+    {
+      "source_id": "doc",
+      "segments": [
+        {
+          "segment_id": "p1",
+          "text": "示例公司"
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "field_id": "name",
+      "references": [
+        {
+          "source_id": "doc",
+          "segment_id": "p1",
+          "start": 0,
+          "end": 4,
+          "quote": "示例公司"
+        }
+      ]
+    }
+  ]
+}

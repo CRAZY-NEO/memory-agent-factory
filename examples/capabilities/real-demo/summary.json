@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-16",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "generation_mode": "spec",
+  "history_mode": "off",
+  "runner": "docker",
+  "software_regression_tests_passed": 672,
+  "runner_image_id": "sha256:fc290c884acc97c209d1ec8678651df8141ba4fd6c6fa3fe7a3722deac362341",
+  "source_unchanged_during_final_run": true,
+  "exact_model_source_verified": true,
+  "raw_evidence": "state/capability-real-20261016-v6 (Git ignored)",
+  "not_history_ablation": true,
+  "tasks": [
+    {
+      "task": "document_field_completeness",
+      "run_id": "20261016T120532_d8d8309f",
+      "status": "passed",
+      "validation": {
+        "field_case_accuracy": 1.0,
+        "field_p95_ms": 0.005792011506855488
+      },
+      "final_metrics": {
+        "field_case_accuracy": 1.0,
+        "field_p95_ms": 0.005958951078355312
+      },
+      "llm_calls": 5,
+      "code_revisions": 1,
+      "contract_hash": "5b89f83a1365413d107b02682be318c75d1f77ff497b4e549b7b760922713a2d",
+      "code_hash": "e1d7e00e523d23b0de8957ac5280551557a99a39964c221186ee32848c59d906",
+      "runtime_passed": true,
+      "bundle_passed": true
+    },
+    {
+      "task": "document_source_references",
+      "run_id": "20261016T120558_809bb5bc",
+      "status": "passed",
+      "validation": {
+        "reference_case_accuracy": 1.0,
+        "reference_p95_ms": 0.0020840088836848736
+      },
+      "final_metrics": {
+        "reference_case_accuracy": 1.0,
+        "reference_p95_ms": 0.00204198295250535
+      },
+      "llm_calls": 5,
+      "code_revisions": 1,
+      "contract_hash": "b21df37f611f399bd104ad3be3e59d15f28358738b7e68adec2cc83ac61d8940",
+      "code_hash": "e75e5a3a93240269ba2bb5822049be0eb2fa09a437adc0f87732add693c3e072",
+      "runtime_passed": true,
+      "bundle_passed": true
+    },
+    {
+      "task": "memory_retrieval",
+      "run_id": "20261016T120617_3e6740ae",
+      "status": "passed",
+      "validation": {
+        "recall_at_k": 0.9305555555555556,
+        "mrr_at_k": 0.8958333333333334,
+        "precision_at_k": 0.2277777777777778,
+        "p95_ms": 1.1003232357325032
+      },
+      "final_metrics": {
+        "recall_at_k": 0.9666666666666667,
+        "mrr_at_k": 0.9333333333333333,
+        "precision_at_k": 0.24666666666666667,
+        "p95_ms": 1.1315850599203245
+      },
+      "llm_calls": 5,
+      "code_revisions": 1,
+      "contract_hash": "a7957a47a97de9f44323945435e4df69bfbc1047b4b87f0e34445642a9ebc244",
+      "code_hash": "cdc1bca20471d4777f17ff3e7068019825d737da1019e3823b1384d63a89350d",
+      "runtime_passed": true,
+      "bundle_passed": true
+    },
+    {
+      "task": "memory_classification",
+      "run_id": "20261016T120637_12e4db4c",
+      "status": "passed",
+      "validation": {
+        "accuracy": 0.9583333333333334,
+        "macro_f1": 0.958041958041958,
+        "classification_p95_ms": 20.200487796682864
+      },
+      "final_metrics": {
+        "accuracy": 0.9166666666666666,
+        "macro_f1": 0.9166666666666667,
+        "classification_p95_ms": 15.71927538025193
+      },
+      "llm_calls": 5,
+      "code_revisions": 1,
+      "contract_hash": "c73cfa5c579294cc35a8cee36495cf1cfcdb9381ae8caab517c79d9fc7c5b151",
+      "code_hash": "51dab7c74d10a0f752f2743c782d135b83d54565534cc34e4a2dcc2830ab96cc",
+      "runtime_passed": true,
+      "bundle_passed": true
+    }
+  ]
+}

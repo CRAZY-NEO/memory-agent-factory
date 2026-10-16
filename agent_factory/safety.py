@@ -16,11 +16,21 @@ FORBIDDEN_NAMES = {
 }
 
 
+def allowed_imports(task):
+    from .tasks import task_spec
+    if task_spec(task).contract.environment == 'structured-review-v1':
+        return {'math', 're', 'collections'}
+    return ALLOWED_IMPORTS
+
+
 def inspect_code(code, task="memory_retrieval"):
     """Reject syntax errors, dangerous imports/reflection and missing plugin entrypoint."""
-    if task not in {"memory_retrieval", "memory_classification"}:
+    from .tasks import task_spec
+    try:
+        entrypoint = task_spec(task).entrypoint
+        imports = allowed_imports(task)
+    except ValueError:
         return [f"interface: unsupported task {task}"]
-    entrypoint = "classify" if task == "memory_classification" else "retrieve"
     try:
         tree = ast.parse(code)
     except SyntaxError as exc:
@@ -31,11 +41,11 @@ def inspect_code(code, task="memory_retrieval"):
         errors.append(f"interface: missing top-level {entrypoint} function")
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
-            if any(alias.name not in ALLOWED_IMPORTS for alias in node.names):
+            if any(alias.name not in imports for alias in node.names):
                 errors.append("safety: import outside allowlist")
         elif isinstance(node, ast.ImportFrom):
             classification_import = task == "memory_classification" and node.module in CLASSIFICATION_IMPORTS
-            allowed = node.module in ALLOWED_IMPORTS or classification_import
+            allowed = node.module in imports or classification_import
             if node.level or not allowed or any(a.name.startswith("_") for a in node.names):
                 errors.append("safety: import outside allowlist")
             elif classification_import and any(a.name not in CLASSIFICATION_IMPORTS[node.module] for a in node.names):
@@ -49,3 +59,21 @@ def inspect_code(code, task="memory_retrieval"):
         elif isinstance(node, ast.FunctionDef) and node.decorator_list:
             errors.append("safety: decorators forbidden")
     return sorted(set(errors))
+
+
+def dependency_errors(code, declared):
+    """Reject undeclared third-party imports, including unused imports.
+
+    The execution allowlist is a maximum, not a dependency declaration. Check
+    before publication so installed developer packages cannot hide bundle bugs.
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return []  # Syntax belongs to the existing safety gate.
+    required = {'scikit-learn' for node in ast.walk(tree)
+                if isinstance(node, (ast.Import, ast.ImportFrom))
+                and any(name.split('.')[0] == 'sklearn' for name in
+                        ([alias.name for alias in node.names] if isinstance(node, ast.Import) else [node.module or '']))}
+    return ['dependency: import requires undeclared package ' + name + '; use only declared dependencies'
+            for name in sorted(required - set(declared))]

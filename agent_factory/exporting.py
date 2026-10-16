@@ -17,12 +17,10 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from .classification import effective_training_examples
 from .requirements import requirement_contracts
+from .tasks import TASKS, task_spec
 
 IDENTIFIER = re.compile(r"[A-Za-z0-9_-]{1,100}")
-TASK_FILES = {
-    "memory_retrieval": ("selected_retrieval.py", "retrieve"),
-    "memory_classification": ("selected_classification.py", "classify"),
-}
+TASK_FILES = {name: (adapter.selected_filename, adapter.entrypoint) for name, adapter in TASKS.items()}
 
 
 def _hash(content):
@@ -88,6 +86,8 @@ def _requirements(code, plugin, report):
         if not isinstance(version, str) or not re.fullmatch(r"[0-9]+(?:\.[0-9]+)+(?:[a-z]+[0-9]+)?", version):
             raise ValueError(f"Missing recorded dependency version: {name}")
         pinned.append(f"{name}=={version}")
+    if task_spec(plugin['task']).portable_validation() is not None:
+        pinned.append('pydantic==' + versions['pydantic'])
     return "\n".join(pinned) + ("\n" if pinned else "# This algorithm uses Python standard library only.\n")
 
 
@@ -175,6 +175,16 @@ def invoke(payload, manifest):
     module = importlib.util.module_from_spec(spec)
     # Execute the exact verified bytes, avoiding a second file read during load.
     exec(compile(source, str(ROOT / "algorithm.py"), "exec"), module.__dict__)
+    if manifest.get('runtime_validation'):
+        validator_bytes = read_verified('runtime_contracts.py', manifest['runtime_validation_hash'])
+        validator = {'__name__': 'portable_contracts'}
+        exec(compile(validator_bytes, 'runtime_contracts.py', 'exec'), validator)
+        normalized = validator['parse_input'](manifest['task'], payload)
+        before = copy.deepcopy(normalized)
+        result = getattr(module, manifest['entrypoint'])(normalized)
+        if normalized != before:
+            raise ValueError('Capability mutated inputs')
+        return validator['check_output'](manifest['task'], result, normalized)
     if manifest["task"] == "memory_classification":
         texts = payload.get("texts")
         if not isinstance(texts, list) or any(not isinstance(text, str) for text in texts):
@@ -233,7 +243,7 @@ def main():
     parser.add_argument("--input", default=str(ROOT / "example_input.json"), help="JSON path, or - for stdin")
     args = parser.parse_args()
     manifest = json.loads((ROOT / "plugin.json").read_text(encoding="utf-8"))
-    if manifest.get("task") not in {"memory_retrieval", "memory_classification"} or manifest.get("interface_version") != "1":
+    if (manifest.get("task") not in {"memory_retrieval", "memory_classification"} and not manifest.get("runtime_validation")) or manifest.get("interface_version") != "1":
         raise ValueError("Unsupported bundle interface")
     payload = json.load(sys.stdin) if args.input == "-" else json.loads(Path(args.input).read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
@@ -261,6 +271,20 @@ ENTRYPOINT ["python", "-B", "run.py"]
 
 
 def _readme(task):
+    adapter = task_spec(task)
+    if adapter.portable_validation() is not None:
+        return """# 已验证的结构化文档检查组件
+
+本包包含真实生成的冻结实现、可信输入输出检查、接口契约及验证摘要，不需要工厂或大模型服务。
+需要 Python 3.11+。安装 requirements.txt 后执行 `python run.py --input example_input.json`。
+`--input -` 从标准输入读取 JSON。接口见 capability_contract.json，缺失字段与引用状态含义见其 behaviors。
+引用位置以 Python Unicode 字符索引计数，右端不包含；这不是语义事实核查或 OCR。
+
+建议在 Docker 中运行：构建 `docker build -t document-capability .`，执行
+`docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges document-capability`。
+真实部署可复用同一代码及契约；最终测试通过仅表示在所记录样例和门槛下合格。
+哈希检查检测意外修改，不是数字签名。包内仅有合成使用示例，不包含评估样例、文档、密钥或模型提示。
+"""
     training = ("分类包包含验证时使用的全部训练样本 `training_examples.json`（文本、标签及可选 enabled 标记）。"
                 "运行时基于这些样本训练后预测，不需要下载数据。分享 ZIP 会同时分享训练文本；"
                 "禁用样本也会随包保存，enabled=false 表示不参与训练，不表示已从包中删除。"
@@ -332,7 +356,8 @@ def export_run(workspace, run_id):
     task = plugin.get("task")
     if task not in TASK_FILES or plugin.get("interface_version") != "1":
         raise ValueError("Unsupported deployment interface")
-    filename, entrypoint = TASK_FILES[task]
+    adapter = task_spec(task)
+    filename, entrypoint = adapter.selected_filename, adapter.entrypoint
     if (plugin.get("run_id") != run_id or report.get("run_id") != run_id
             or plugin.get("entrypoint") != entrypoint
             or report.get("request", {}).get("task") != task):
@@ -356,6 +381,16 @@ def export_run(workspace, run_id):
                     or checks.get("requirements") != business_requirements
                     or type(checks.get("case_count")) is not int or checks["case_count"] <= 0):
                 raise ValueError("Business requirements lack matching validation/final-test evidence")
+    contract = plugin.get('capability_contract')
+    if contract is not None:
+        from .contracts import contract_hash
+        saved = json.loads(_read(directory, 'capability_contract.json'))
+        if (saved != contract or contract != adapter.contract.model_dump() or report.get('capability_contract') != contract
+                or plugin.get('contract_hash') != contract_hash(contract)
+                or report.get('contract_hash') != contract_hash(contract)):
+            raise ValueError('Capability contract does not match frozen publication evidence')
+    elif adapter.portable_validation() is not None:
+        raise ValueError('Document capabilities require a versioned contract')
     generation = {}
     for key in ("generation_policy", "generation_mode", "history_mode", "generation_backend", "model_seed"):
         value = report.get(key, plugin.get(key))
@@ -378,7 +413,16 @@ def export_run(workspace, run_id):
     files = {"algorithm.py": code, "run.py": STANDALONE_RUNNER.encode(),
              "requirements.txt": requirements.encode(), "Dockerfile": DOCKERFILE.encode(),
              ".dockerignore": b".venv\n__pycache__\n*.zip\n.git\n", "README.md": _readme(task).encode()}
-    if task == "memory_classification":
+    if contract is not None:
+        manifest.update(capability_contract=contract, contract_hash=plugin['contract_hash'])
+        files['capability_contract.json'] = _json(contract)
+    portable = adapter.portable_validation()
+    if portable is not None:
+        content = portable.read_bytes()
+        manifest.update(runtime_validation='runtime_contracts.py', runtime_validation_hash=_hash(content))
+        files['runtime_contracts.py'] = content
+        example = adapter.example_input()
+    elif task == "memory_classification":
         if plugin.get("training_data") != "training_examples.json":
             raise ValueError("Classification requires frozen training examples")
         training_bytes = _read(directory, "training_examples.json")

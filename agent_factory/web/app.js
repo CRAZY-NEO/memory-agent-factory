@@ -4,7 +4,7 @@ const names = { queued:"排队中", running:"执行中", succeeded:"已完成", 
 Object.assign(names, { route:"判断能力与执行路径", source_search:"理解新能力与搜索规划", github_search:"搜索 GitHub", pick_repository:"选择来源仓库", download_repository:"下载固定提交源码", extract_repository:"AST 抽取源码", propose_algorithm:"提议新算法能力", approve_algorithm:"验证后登记算法" });
 const categories = { direct:"词面基线", paraphrase:"同义改写", hard_negative:"相近负例", multi_relevance:"多相关文档", lexical:"词面基线", near_boundary:"相近类别" };
 const metricNames = { recall_at_k:"Recall@k", mrr_at_k:"MRR@k", precision_at_k:"Precision@k", p95_ms:"P95 ms", accuracy:"Accuracy", macro_f1:"Macro F1", classification_p95_ms:"P95 ms" };
-const taskNames = { memory_retrieval:"记忆检索", memory_classification:"文本记忆分类" };
+const taskNames = { memory_retrieval:"记忆检索", memory_classification:"文本记忆分类", document_field_completeness:"字段完整性", document_source_references:"来源引用检查" };
 // The opening ticket is consumed once; remove it before any authenticated request.
 function takeOpeningTicket() {
   const ticket = new URLSearchParams(location.hash.slice(1)).get("login");
@@ -102,6 +102,8 @@ function reportMetrics(report) {
 function categoryTable(title, evaluation, metrics, classification) {
   if (!evaluation?.by_category) return null;
   const box = node("div", undefined, "table-scroll"); const table = node("table"); table.append(node("caption", title)); const head = node("thead"); const header = node("tr");
+  const review = Array.isArray(evaluation.per_case);
+  if (review) { const header = node("tr"); for (const label of ["检查类型", "样例数", "精确通过数"]) header.append(node("th", label)); const head = node("thead"); head.append(header); const body = node("tbody"); for (const [category, group] of Object.entries(evaluation.by_category)) { const row = node("tr"); for (const value of [category, group.case_count, group.correct]) row.append(node("td", value)); body.append(row); } table.replaceChildren(node("caption", title), head, body); box.append(table); return box; }
   const columns = [classification ? "样本类型" : "查询类型", "数量", ...metrics.map((metric) => metric.name), "失败样本", ...(classification ? [] : ["负例优先"])];
   for (const label of columns) header.append(node("th", label)); head.append(header); table.append(head); const body = node("tbody");
   for (const [category, group] of Object.entries(evaluation.by_category)) { const row = node("tr"); for (const value of [categories[category] || category, group.example_count ?? group.query_count ?? group.count ?? "—", ...metrics.map((metric) => format(group.metrics?.[metric.id])), group.failure_count ?? "—", ...(classification ? [] : [group.hard_negative_confusion_count ?? "—"])]) row.append(node("td", value)); body.append(row); }
@@ -159,14 +161,16 @@ function renderReport(report) {
   $("failures").replaceChildren(); let failureCount = 0;
   for (const [title, evaluation] of [["验证", selected?.validation], ["最终测试", report.test]]) {
     for (const row of evaluation?.per_query || []) { if (!row.failure_types?.length) continue; failureCount++; const item = node("div", undefined, "failure-item"); item.append(node("p", `${title} / ${row.query_id} · ${categories[row.category] || row.category} · ${row.query}`), node("pre", `类型：${row.failure_types.join(", ")}\n相关：${row.relevant_ids.join(", ")}\n漏召回：${row.missed_relevant_ids.join(", ")}\n负例优先：${JSON.stringify(row.hard_negative_confusions)}\n返回顺序：${row.predictions.map((hit) => hit.id).join(" → ")}`), node("p", row.annotation, "muted")); $("failures").append(item); }
+    for (const row of evaluation?.per_case || []) { if (row.correct) continue; failureCount++; const item = node("div", undefined, "failure-item"); item.append(node("p", `${title} / ${row.id} · ${row.category}`), node("p", "未通过接口、功能或稳定性检查；具体错误见候选报告。")); $("failures").append(item); }
     for (const row of evaluation?.per_example || []) { if (row.label === row.prediction && !row.failure_types?.length) continue; failureCount++; const item = node("div", undefined, "failure-item"); item.append(node("p", `${title} / ${row.id} · ${categories[row.category] || row.category || "分类样本"} · ${row.text}`), node("pre", `真实标签：${row.label}\n预测标签：${row.prediction ?? "无预测"}`)); if (row.annotation) item.append(node("p", row.annotation, "muted")); $("failures").append(item); }
   }
   if (!failureCount) $("failures").append(node("p", selected ? "此报告未记录逐样本失败；旧版报告可能没有此分析字段。" : "所有候选均未通过，详情见候选问题及完整报告。", "muted"));
   $("downloads").replaceChildren();
-  const files = report.status === "passed" ? [classification ? "selected_classification.py" : "selected_retrieval.py", "plugin.json", "report.md", "report.json"] : ["report.md", "report.json"];
-  const labels = { "selected_retrieval.py":"下载选定算法", "selected_classification.py":"下载选定算法", "plugin.json":"下载插件清单", "report.md":"下载 Markdown 报告", "report.json":"下载 JSON 报告" };
+  const files = report.status === "passed" ? [report.artifacts?.selected_code || (classification ? "selected_classification.py" : "selected_retrieval.py"), "plugin.json", "report.md", "report.json"] : ["report.md", "report.json"];
+  if (report.capability_contract) files.push("capability_contract.json");
+  const labels = { "capability_contract.json":"下载能力契约", "selected_retrieval.py":"下载选定算法", "selected_classification.py":"下载选定算法", "plugin.json":"下载插件清单", "report.md":"下载 Markdown 报告", "report.json":"下载 JSON 报告" };
   if (report.status === "passed") $("downloads").append(downloadButton("一键导出可运行 ZIP", `/v1/runs/${report.run_id}/export`, `${report.run_id}-deployment.zip`, false, "POST"));
-  for (const file of files) $("downloads").append(downloadButton(labels[file], `/v1/runs/${report.run_id}/artifacts/${file}`, file));
+  for (const file of files) $("downloads").append(downloadButton(labels[file] || "下载选定组件", `/v1/runs/${report.run_id}/artifacts/${file}`, file));
   $("export-note").hidden = report.status !== "passed";
   $("export-note").textContent = classification ? "分类包包含训练样本（文本及标签），不包含验证集或最终测试集。解压后按 README 安装依赖即可运行，无需连接模型。" : "部署包包含选定代码、运行入口、依赖与验证摘要。解压后按 README 安装依赖即可运行，无需连接模型。";
 }
@@ -177,11 +181,12 @@ async function connectWorkspace(token = "") {
     $("mode").disabled = false;
     $("mode").querySelector('option[value="discover"]').disabled = !settings.discovery_available;
     if (!settings.discovery_available && $("mode").value === "discover") $("mode").value = "auto";
-    $("routing-hint").textContent = settings.discovery_available ? "自动识别检索或文本分类需求，使用对应的评估配置；检索任务缺少方法时会搜索 GitHub，验证合格后登记。" : "自动识别检索或文本分类需求；当前为离线演示，发现未登记的检索方法需要 Ollama。";
+    const supported = (settings.tasks || ["memory_retrieval"]).map((task) => taskNames[task] || task).join("、");
+    $("routing-hint").textContent = `支持${supported}，自动使用对应的验证规则。` + (settings.discovery_available ? "仅检索任务支持发现新方法。" : "当前为离线基线演示；真实生成可使用已配置的模型接口。");
     const classificationData = settings.classification_dataset;
     const retrievalSummary = d ? `检索 v${d.version}：${d.memory_count} 条记忆，${d.splits.validation.query_count} 验证查询，${d.splits.test.query_count} 最终测试查询。` : "检索：未提供数据版本说明。";
     const classificationSummary = classificationData ? `分类：${classificationData.training_count ?? classificationData.splits?.train?.example_count ?? "—"} 条训练，${classificationData.validation_count ?? classificationData.splits?.validation?.example_count ?? "—"} 条验证，${classificationData.test_count ?? classificationData.splits?.test?.example_count ?? "—"} 条最终测试。` : "分类：使用独立的训练、验证及最终测试集。";
-    $("dataset").textContent = retrievalSummary + " " + classificationSummary;
+    $("dataset").textContent = retrievalSummary + " " + classificationSummary + " 文档检查使用独立的合成样例，数量和检查类型见运行报告。";
     $("connection").textContent = "已连接 · " + (settings.tasks || ["memory_retrieval"]).map((task) => taskNames[task] || task).join(" / ");
     $("token").value = ""; $("token").hidden = true; document.querySelector('label[for="token"]').hidden = true; $("connect").hidden = true;
     $("disconnect").hidden = false; $("submit").disabled = false; $("refresh").disabled = false;
@@ -217,3 +222,8 @@ $("refresh").addEventListener("click", async () => { notice(""); try { await ref
 
 $("new-example").addEventListener("click", () => { $("description").value = "为中文与英文混合技术笔记复刻 BM25Plus 检索方法，输入 query、memories、top_k=5，返回相关记忆 ID 和得分，通过验证后交付可复用代码。"; $("description").dispatchEvent(new Event("input")); });
 $("classification-example").addEventListener("click", () => { $("mode").value = "auto"; $("description").value = "生成文本记忆分类算法，根据训练样本将技术笔记分类，输入 texts 与 training_examples，返回与文本顺序一致的类别标签。比较配置中的分类候选，检查 Accuracy、Macro F1、运行稳定性和接口，有限修复后用独立最终测试集验证并沉淀为可复用插件。"; $("description").dispatchEvent(new Event("input")); });
+
+for (const [id, description] of [
+  ["fields-example", "生成字段完整性检查组件：根据 required_fields 检查 records 中各条记录的 fields；缺少键、null、空白字符串、空列表和空字典算缺失，0 和 false 有效。保持顺序并返回逐记录和整体检查结果。"],
+  ["references-example", "生成来源引用检查组件：根据文档 sources 和提取字段 fields 的 references，核对 source_id、segment_id、Unicode 字符范围与原文 quote。按规范返回各引用、各字段和整体状态；不进行语义事实核查。"]
+]) $(id)?.addEventListener("click", () => { $("mode").value = "auto"; $("requirement-profile").value = ""; $("description").value = description; $("description").dispatchEvent(new Event("input")); });

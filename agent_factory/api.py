@@ -17,6 +17,7 @@ from .exporting import export_run
 from .jobs import JobStore, QueueFull
 from .models import Contract, Memory
 from .providers import REAL_PROVIDERS
+from .tasks import TASKS, task_catalog, task_spec
 
 RUN_PATTERN = r"^\d{8}T\d{6}_[0-9a-f]{8}$"
 
@@ -34,6 +35,11 @@ class DiscoverySubmission(Contract):
     """Source discovery has its own policy; do not silently accept factory controls."""
 
     description: str = Field(min_length=5, max_length=6000)
+
+
+class CapabilityInvocation(Contract):
+    run_id: str = Field(pattern=RUN_PATTERN)
+    input: dict
 
 
 class BrowserOpening(Contract):
@@ -228,10 +234,20 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
                                           for name, path in paths.items()}
         return {'algorithms': config.get('algorithms', []), 'metrics': config.get('metrics', {}),
                 'dataset': dataset, 'classification_dataset': classification_dataset,
-                'tasks': ['memory_retrieval', 'memory_classification'],
+                'tasks': list(TASKS),
+                'capabilities': task_catalog(),
                 'generation_mode': config.get('generation_mode', 'spec'),
                 'history_mode': config.get('history_mode', 'on'),
                 'discovery_available': os.getenv('FACTORY_PROVIDER', 'mock') in REAL_PROVIDERS}
+
+    @app.get('/v1/capabilities', dependencies=[Depends(authenticate)])
+    def capabilities():
+        return {'capabilities': task_catalog()}
+
+    @app.post('/v1/capabilities/invoke', status_code=202, dependencies=[Depends(authenticate)])
+    def invoke_capability(body: CapabilityInvocation):
+        run_directory(body.run_id)
+        return submit('invoke', body.model_dump())
 
     @app.post('/v1/algorithms/discover', status_code=202, dependencies=[Depends(authenticate)])
     def discover_algorithm(body: DiscoverySubmission):
@@ -313,7 +329,8 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
 
     @app.get('/v1/runs/{run_id}/artifacts/{filename}', dependencies=[Depends(authenticate)])
     def download(run_id: str, filename: str):
-        if filename not in {'selected_retrieval.py', 'selected_classification.py', 'plugin.json', 'report.json', 'report.md',
+        if filename not in {*(adapter.selected_filename for adapter in TASKS.values()),
+                            'capability_contract.json', 'plugin.json', 'report.json', 'report.md',
                             'routing.json', 'search_results.json', 'proposal.json', 'source_context.json', 'source_contract.json', 'extracted_repository.json'}:
             raise HTTPException(status_code=404, detail='Artifact not found')
         if filename == 'report.json':
@@ -325,9 +342,10 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
         if not re.fullmatch(r'[a-z][a-z0-9_]*', algorithm) or not 0 <= revision <= 3:
             raise HTTPException(status_code=404, detail='Candidate not found')
         task = report(run_id).get('request', {}).get('task', 'memory_retrieval')
-        filename = {'memory_retrieval': 'retrieval.py', 'memory_classification': 'classification.py'}.get(task)
-        if filename is None:
-            raise HTTPException(status_code=404, detail='Unsupported candidate task')
+        try:
+            filename = task_spec(task).filename
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail='Unsupported candidate task') from exc
         return artifact(run_id, f'{algorithm}/r{revision}/{filename}', f'{algorithm}-r{revision}.py')
 
     return app
