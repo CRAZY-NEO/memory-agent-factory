@@ -1,0 +1,65 @@
+{
+  "status": "replayed_original_search",
+  "repositories": [
+    {
+      "full_name": "necat101/python-counter-hapax-lab",
+      "description": "Rare-token / hapax handling correctness lab for ML-adjacent text feature pipelines. Python stdlib only. collections.Counter, tokenization, case normalization, vocabulary min_freq threshold, deterministic ordering.",
+      "license": "MIT",
+      "stars": 0,
+      "url": "https://github.com/necat101/python-counter-hapax-lab"
+    }
+  ],
+  "excluded": [
+    {
+      "repository": "AudreyGermain/Game-Recommendation-System",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "KenYew/python-playground",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "conorbmurphy/galvanizereference",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "MuhammadManan/python-practice",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "bot-forgeai/forgeai-build",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "Bien-venu/python-tests",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "sowmiya637943/Simple-Log-Analyzer",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "danielasrat/eaglepoint-assessment-DanielAsrat",
+      "reason": "private, invalid name or unsupported/unknown license"
+    }
+  ],
+  "search_trace": [
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "python word frequency counter regex findall lowercase sorted in:readme language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    },
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "pure python word frequency count regex alphabetical sort in:name language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    }
+  ],
+  "source_run_id": "20261017T121903_86613a6c"
+}

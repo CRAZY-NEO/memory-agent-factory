@@ -12,6 +12,7 @@ DEEPSEEK_API_KEY=在本机填写自己的密钥
 DEEPSEEK_MODEL=deepseek-v4-pro
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_THINKING=disabled
+DEEPSEEK_PLANNING_THINKING=enabled
 DEEPSEEK_MAX_TOKENS=8192
 FACTORY_RUNNER=docker
 ```
@@ -63,7 +64,11 @@ docker build -f Dockerfile.runner -t agent-factory-runner:0.1 .
 
 按 [官方 Chat Completions 协议](https://api-docs.deepseek.com/api/create-chat-completion/)调用 `/chat/completions`。结构化角色使用 `response_format=json_object`，提示中包含 schema，本地继续做 Pydantic 校验；Coder / Repairer 使用纯源码协议。单独返回的 `reasoning_content` 保存为审计字段，不会拼进可执行源码。
 
-默认关闭思考模式，输出上限 8192。此次真实调用在开启思考时两次耗尽 8192 token，均未返回源码；关闭后完成生成和修复。可显式设置 `DEEPSEEK_THINKING=enabled` 开启思考，此时使用 `reasoning_effort=high` 且不传温度；关闭时完整源码角色温度为 0.3，其余为 0。思考与最终内容共享输出预算，应保留截断记录并调整配置后在新目录复验。`DEEPSEEK_MAX_TOKENS` 可设为 1–32768。系统不发送 Ollama 的 `seed`、`num_ctx`、`format`、`think` 或 `options`。
+一般生成/修复角色默认关闭思考模式，输出上限 8192。此前分类验收在开启思考时两次耗尽 8192 token，均未返回源码；关闭后完成生成和修复。可设置 `DEEPSEEK_THINKING=enabled` 改变这些角色。
+
+新增通用候选的 `component_router`、`draft_planner` 和 `draft_spec_reviewer` 使用单独的 `DEEPSEEK_PLANNING_THINKING`，默认 enabled：路由需要比较完整契约，规划与审查需要准确推导示例。可显式设 disabled 对照；这一设置不改变检索/分类原有实验的角色参数。实际配置逐次记录在模型日志的 options 中。
+
+开启思考时使用 `reasoning_effort=high` 且不传温度；关闭时完整源码角色温度为 0.3，其余为 0。思考与最终内容共享输出预算，截断会保留失败记录，不能把推理内容当成代码；`DEEPSEEK_MAX_TOKENS` 可设为 1–32768。系统不发送 Ollama 的 `seed`、`num_ctx`、`format`、`think` 或 `options`。
 
 每个角色最多两次响应尝试。格式或语法错误可在预算内重试；HTTP 429/5xx 与网络错误最多重试一次。401/402/403 等账户或请求错误立即停止，避免继续花费修复调用。异常及 HTTP 错误正文会去除密钥；认证头不写日志。仅正常结束的完整响应可进入后续检查，截断或其他异常结束不算成功。
 

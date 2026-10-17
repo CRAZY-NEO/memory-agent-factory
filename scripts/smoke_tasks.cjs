@@ -35,7 +35,8 @@ async function main() {
     async function login() {
       await page.locator("#token").fill(token);
       await page.locator("#connect").click();
-      await page.locator("#submit:enabled").waitFor();
+      await page.locator("#component-ensure:enabled").waitFor();
+      if (await page.locator("#research-tools").getAttribute("open") === null) await page.locator("#research-tools > summary").click();
     }
     await page.goto("/");
     assert.equal((await page.request.get("/v1/settings")).status(), 401);

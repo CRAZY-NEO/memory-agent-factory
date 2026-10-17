@@ -97,7 +97,7 @@ class Factory:
 
     @property
     def task(self):
-        return task_spec(self.config.task)
+        return task_spec(self.config.task, self.config.contract_version)
 
     def activate_task(self, task):
         """Switch the validation adapter before generation, preserving the run and traces."""
@@ -221,12 +221,21 @@ class Factory:
                     'source_hash': seed['source_hash'], 'unchanged': False,
                     'backend': 'historical_replay', 'llm_code_generated': False}}
         context = focused_context(state, self.registry, self.config)
+        base = getattr(self, 'update_base', None)
+        if state['revision'] == 0 and base and getattr(self, 'build_action', None) == 'update':
+            context['base_component'] = base
+            context['change_request'] = state['description']
+            context['update_policy'] = ('Modify this approved base implementation to satisfy the target contract. '
+                                        'Preserve existing behavior unless the target contract explicitly changes it. '
+                                        'The base is implementation evidence, not a new independent-generation result.')
         plugin = self.registry.algorithm(candidate['algorithm'])
         adapter = (adapter_from_reference(plugin.reference.read_text(encoding='utf-8'))
                    if plugin.provenance and plugin.public_cases and not self.config.requirements else None)
         repository_ids = [row['id'] for row in context.get('repository_candidates', [])]
         role = 'coder'
         strategy = 'generate_from_spec' if self.config.generation_mode == 'spec' else 'reproduce_reference'
+        if state['revision'] == 0 and base and getattr(self, 'build_action', None) == 'update':
+            strategy = 'modify_approved_component'
         if state['revision']:
             role = 'repairer'
             # Keep partial progress unless execution evidence shows a stall.
@@ -249,6 +258,7 @@ class Factory:
                 context['failed_code_hash'] = digest(state['code'])
         context['repair_strategy'] = strategy
         input_evidence = {'reference_provided': 'reference_example' in context,
+                          'base_component_provided': 'base_component' in context,
                           'history_lesson_ids': [lesson['lesson_id'] for lesson in context.get('validated_lessons', [])]}
         if context.get('repair_progress'):
             input_evidence['repair_progress'] = context['repair_progress']

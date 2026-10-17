@@ -1,0 +1,146 @@
+{
+  "title": "文本列表去重组件",
+  "search_queries": [
+    "python list deduplicate casefold strip preserve order",
+    "python remove duplicate strings case insensitive strip"
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "texts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "texts"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "texts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "texts"
+    ],
+    "additionalProperties": false
+  },
+  "assumptions": [
+    "输入 texts 必须是字符串列表；非字符串元素会导致类型错误。",
+    "去重键为 text.strip().casefold()，即先去除两端空白，再进行 Unicode 大小写折叠。",
+    "strip 后为空的文本会被跳过，不包含在输出中。",
+    "相同去重键只保留第一次出现的原始字符串，保留其原始空白和大小写。",
+    "输出顺序与输入中首次出现的顺序一致。",
+    "空输入列表返回空列表。",
+    "不修改原始输入列表。",
+    "只使用 Python 标准库，不依赖外部服务。"
+  ],
+  "limitations": [
+    "仅去除两端空白，不合并内部空白。",
+    "不移除标点符号。",
+    "不做 Unicode 规范化（如 NFC/NFD）。",
+    "不处理非字符串元素，会抛出 TypeError。",
+    "不提供模糊匹配或语义去重。",
+    "不处理嵌套列表或其他复杂结构。",
+    "不保证线程安全，但函数无副作用。",
+    "不进行网络或文件系统操作。"
+  ],
+  "examples": [
+    {
+      "input": {
+        "texts": [
+          "  Hello World  ",
+          "hello world",
+          "HELLO WORLD",
+          "  ",
+          "Hello World",
+          "foo",
+          "foo"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "  Hello World  ",
+          "foo"
+        ]
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "apple",
+          "Apple",
+          "APPLE",
+          "banana",
+          "Banana",
+          "apple"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "apple",
+          "banana"
+        ]
+      }
+    },
+    {
+      "input": {
+        "texts": []
+      },
+      "expected": {
+        "texts": []
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "  ",
+          "\t",
+          "\n",
+          "   "
+        ]
+      },
+      "expected": {
+        "texts": []
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "  Hello  World  ",
+          "hello  world",
+          "Hello   World"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "  Hello  World  "
+        ]
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "Straße",
+          "STRASSE",
+          "straße"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "Straße",
+          "STRASSE"
+        ]
+      }
+    }
+  ]
+}

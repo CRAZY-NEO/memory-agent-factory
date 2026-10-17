@@ -1,0 +1,545 @@
+{
+  "kind": "component_draft",
+  "run_id": "20261017T121628_45e5425a",
+  "status": "draft_failed",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "runner": "docker",
+  "request": {
+    "description": "生成英文词频统计组件，严格使用 execute(payload) -> dict。输入为 {\"text\": 字符串}，输出仅为 {\"frequencies\": [{\"word\": 字符串, \"count\": 正整数}]}。单词严格指连续 ASCII 英文字母 [A-Za-z]+，统一小写；数字、中文、撇号、连字符、下划线和其他非 ASCII 字母字符均作为分隔符。先按次数降序排列，同频按小写单词字母顺序排列。空文本或没有英文单词时返回空 frequencies 列表，不修改输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。",
+    "task": "python_draft"
+  },
+  "proposal": {
+    "title": "英文词频统计组件",
+    "search_queries": [
+      "python word frequency counter regex ascii letters",
+      "sort word frequency descending alphabetical tie"
+    ],
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "frequencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "word": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "word",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "frequencies"
+      ],
+      "additionalProperties": false
+    },
+    "assumptions": [
+      "输入 payload 必须包含字符串类型的 text 字段。",
+      "单词定义为连续的一个或多个 ASCII 英文字母 [A-Za-z]+。",
+      "所有单词统一转换为小写进行统计。",
+      "数字、中文、撇号、连字符、下划线及其他非 ASCII 字母字符均视为分隔符。",
+      "输出按 count 降序排列；count 相同时按 word 字母顺序升序排列。",
+      "空文本或没有英文单词时返回空 frequencies 列表。",
+      "不修改输入 payload。",
+      "仅使用 Python 标准库中的 re、collections 等模块。"
+    ],
+    "limitations": [
+      "不处理 Unicode 字母，仅统计 ASCII 英文字母。",
+      "不进行词形还原或停用词过滤。",
+      "不处理网络、文件系统或外部服务。",
+      "不提供训练、分类或检索功能。",
+      "输出顺序严格遵循指定规则，不保留原文出现顺序。",
+      "输入 text 字段缺失或类型错误时行为未定义（假设输入合法）。"
+    ],
+    "examples": [
+      {
+        "input": {
+          "text": "Hello, world! Hello everyone."
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "everyone",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "text": "Apple banana apple Banana cherry"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 2
+            },
+            {
+              "word": "banana",
+              "count": 2
+            },
+            {
+              "word": "cherry",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "text": "123 中文 test-case under_score don't"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "don",
+              "count": 1
+            },
+            {
+              "word": "t",
+              "count": 1
+            },
+            {
+              "word": "test",
+              "count": 1
+            },
+            {
+              "word": "under",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "text": ""
+        },
+        "expected": {
+          "frequencies": []
+        }
+      },
+      {
+        "input": {
+          "text": "!!!"
+        },
+        "expected": {
+          "frequencies": []
+        }
+      },
+      {
+        "input": {
+          "text": "a A aA Aa"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "a",
+              "count": 2
+            },
+            {
+              "word": "aa",
+              "count": 2
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "checks": {
+    "passed": false,
+    "technical_passed": false,
+    "examples_passed": null,
+    "failure_stage": "specification",
+    "business_verified": false,
+    "errors": [
+      "Specification needs clarification after bounded review: example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 5, \"actual_length\": 4}}; example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}"
+    ]
+  },
+  "attempts": [],
+  "error": "Specification needs clarification after bounded review: example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 5, \"actual_length\": 4}}; example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}",
+  "spec_reviews": [
+    {
+      "revision": 0,
+      "proposal_hash": "738712886688d32890b66f7199abcbf62ad791fa1e40f3b56de603520655271d",
+      "review": {
+        "consistent": true,
+        "issues": [],
+        "example_expectations": [
+          {
+            "case_id": "example_1",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_2",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 2
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_3",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "don",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_4",
+            "expected": {
+              "frequencies": []
+            }
+          },
+          {
+            "case_id": "example_5",
+            "expected": {
+              "frequencies": []
+            }
+          },
+          {
+            "case_id": "example_6",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "a",
+                  "count": 2
+                },
+                {
+                  "word": "aa",
+                  "count": 1
+                },
+                {
+                  "word": "aa",
+                  "count": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "accepted": false,
+      "issues": [
+        "example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 5, \"actual_length\": 4}}",
+        "example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}"
+      ],
+      "reviewer_saw_planner_expectations": false
+    },
+    {
+      "revision": 1,
+      "proposal_hash": "738712886688d32890b66f7199abcbf62ad791fa1e40f3b56de603520655271d",
+      "review": {
+        "consistent": true,
+        "issues": [],
+        "example_expectations": [
+          {
+            "case_id": "example_1",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_2",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 2
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_3",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "don",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_4",
+            "expected": {
+              "frequencies": []
+            }
+          },
+          {
+            "case_id": "example_5",
+            "expected": {
+              "frequencies": []
+            }
+          },
+          {
+            "case_id": "example_6",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "a",
+                  "count": 2
+                },
+                {
+                  "word": "aa",
+                  "count": 1
+                },
+                {
+                  "word": "aa",
+                  "count": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "accepted": false,
+      "issues": [
+        "example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"score\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"][2][\\\"word\\\"]\", \"kind\": \"value\", \"expected\": \"t\", \"actual\": \"score\"}}",
+        "example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}"
+      ],
+      "reviewer_saw_planner_expectations": false
+    },
+    {
+      "revision": 2,
+      "proposal_hash": "738712886688d32890b66f7199abcbf62ad791fa1e40f3b56de603520655271d",
+      "review": {
+        "consistent": true,
+        "issues": [],
+        "example_expectations": [
+          {
+            "case_id": "example_1",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_2",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 2
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_3",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "don",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_4",
+            "expected": {
+              "frequencies": []
+            }
+          },
+          {
+            "case_id": "example_5",
+            "expected": {
+              "frequencies": []
+            }
+          },
+          {
+            "case_id": "example_6",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "a",
+                  "count": 2
+                },
+                {
+                  "word": "aa",
+                  "count": 1
+                },
+                {
+                  "word": "aa",
+                  "count": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "accepted": false,
+      "issues": [
+        "example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 5, \"actual_length\": 4}}",
+        "example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}"
+      ],
+      "reviewer_saw_planner_expectations": false
+    }
+  ],
+  "spec_review_authority": "model_consistency_review_not_independent_gold",
+  "failure_stage": "specification",
+  "business_verified": false,
+  "auto_activated": false,
+  "missing_validation": [
+    "生成英文词频统计组件，严格使用 execute(payload) -> dict。输入为 {\"text\": 字符串}，输出仅为 {\"frequencies\": [{\"word\": 字符串, \"count\": 正整数}]}。单词严格指连续 ASCII 英文字母 [A-Za-z]+，统一小写；数字、中文、撇号、连字符、下划线和其他非 ASCII 字母字符均作为分隔符。先按次数降序排列，同频按小写单词字母顺序排列。空文本或没有英文单词时返回空 frequencies 列表，不修改输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。"
+  ],
+  "search": {
+    "status": "not_started",
+    "repositories": []
+  },
+  "sources": {
+    "local_components": [],
+    "repositories": [],
+    "errors": [],
+    "untrusted_reference_evidence": true
+  },
+  "code_hash": null,
+  "generation_backend": "llm"
+}

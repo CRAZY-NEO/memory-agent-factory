@@ -110,6 +110,7 @@ class MetricRule(Contract):
 
 class ValidationConfig(Contract):
     task: str = Field(default="memory_retrieval", pattern=r"^[a-z][a-z0-9_]*$")
+    contract_version: str = Field(default="1", pattern=r"^[1-9][0-9]*$")
     algorithms: list[str] = Field(default_factory=lambda: ["tfidf", "bm25"], min_length=1)
     plugin_packages: list[str] = Field(default_factory=list)
     generation_mode: Literal["spec", "reference"] = "spec"

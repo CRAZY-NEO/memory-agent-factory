@@ -87,7 +87,7 @@ mock 默认 local，为可查看的仓库模板提供简单复现。local 使用
 仍不能可靠阻止恶意代码接触宿主资源。真实模型默认 Docker，使用 local 必须显式 `--allow-local`。
 LLM 不能更改验证器、数据标注、阈值或发布条件。模型服务错误不会自动伪装成 mock 成功。
 
-默认规格生成仅传入当前算法说明、接口、扩展行为及已验证经验；生成/审查/修复均不接收完整模板或仓库源码。重复修复被拒绝，最后一轮依据规格重建。完整参考实现仅用于显式 reference 模式。公开算法契约与独立业务扩展检查共同验证行为，history=off 不影响本轮错误反馈。详见 [规格生成与对照实验](spec-generation-and-experiments.md)。
+原算法 Factory 的默认规格生成仅传入当前算法说明、接口、扩展行为及已验证经验；这一路径的生成/审查/修复不接收完整模板或仓库源码。重复修复被拒绝，最后一轮依据规格重建。完整参考实现仅用于显式 reference 模式。公开算法契约与独立业务扩展检查共同验证行为，history=off 不影响本轮错误反馈。详见 [规格生成与对照实验](spec-generation-and-experiments.md)。
 
 ## Web 与分组评估
 
@@ -105,3 +105,14 @@ AutomaticFactory 先识别任务，Factory.activate_task 加载对应可信配�
 ## 统一能力契约与四类任务
 
 工厂现以 TaskAdapter 注册表取得输入、代码规则、评估、冻结及运行适配，不再在 tasks.py 分支判断检索／分类。新增 document_field_completeness、document_source_references 与原任务共用同一状态图和修复预算。CapabilityContract 及其规范化哈希进入 FactoryRun、plugin.json 与可移植交付包；既有检索／分类函数 API 保持不变。统一 CapabilityPlugin.invoke 接收应用 JSON，网关的调用请求进入原隔离 worker 队列。细节见 [能力工厂指南](capability-factory.md)。
+
+## 组件生命周期
+
+ComponentService 在原 Factory 上提供需求匹配、复用、参数化、更新与重写。ComponentStore 保存不可覆盖的版本证据、绑定 revision、请求幂等记录和审计事件；切换使用 SQLite compare-and-swap 事务。旧任务适配器按 task + contract version 保留，字段契约 2 与契约 1 同时可用。更新向模型提供明确标记的已验证旧代码，重写只提供目标规格；二者均通过独立最终测试及旧规则回归后才纳入已批准目录。业务反馈分类与代码修改分开，valid=false 不表示执行异常。详见 [使用和验收](component-lifecycle.md)。
+
+
+## 未登记能力的候选路径
+
+组件需求匹配若发现缺少业务验证配置，会进入 DraftFactory，而不是直接拒绝。它提出待确认规格，检索已批准组件与历史候选，核对来源完整性后提取源码片段，搜索公开 GitHub 并固定提交做 AST 抽取，再由模型生成 `execute(payload) -> dict` 候选。候选执行复用现有受限 Docker 传输与固定调用协议，不执行下载仓库本身。此路径允许明确标记的参考源码片段，不声称无参考独立生成。
+
+语法、安全、接口、JSON、输入不变、稳定性和模型提议样例可先检查；失败反馈最多两轮修复。提议接口与期望不是可信业务金标，因此仅保存为 DraftCandidate，不进入已批准版本或 slot。来源获取失败保留原因并继续生成。完整批准仍需可信业务适配器与独立验收，详见组件生命周期文档。

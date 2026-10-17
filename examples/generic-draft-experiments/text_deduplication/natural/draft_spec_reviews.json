@@ -1,0 +1,96 @@
+[
+  {
+    "revision": 0,
+    "proposal_hash": "15258181a51b0b390181dbf8b833e61e0d338ff79f75159e798f8d84c1694431",
+    "review": {
+      "consistent": true,
+      "issues": [],
+      "example_expectations": [
+        {
+          "case_id": "example_1",
+          "expected": {
+            "texts": [
+              "apple",
+              "banana"
+            ]
+          }
+        },
+        {
+          "case_id": "example_2",
+          "expected": {
+            "texts": []
+          }
+        },
+        {
+          "case_id": "example_3",
+          "expected": {
+            "texts": [
+              "Hello World"
+            ]
+          }
+        },
+        {
+          "case_id": "example_4",
+          "expected": {
+            "texts": [
+              "a b",
+              "a  b",
+              "a\tb"
+            ]
+          }
+        }
+      ]
+    },
+    "accepted": false,
+    "issues": [
+      "example_1 planner/reviewer disagreement: {\"planner_expected\": {\"texts\": [\"apple\", \" Apple \", \"banana\"]}, \"reviewer_expected\": {\"texts\": [\"apple\", \"banana\"]}, \"first_difference\": {\"path\": \"$[\\\"texts\\\"]\", \"kind\": \"array_length\", \"expected_length\": 3, \"actual_length\": 2}}"
+    ],
+    "reviewer_saw_planner_expectations": false
+  },
+  {
+    "revision": 1,
+    "proposal_hash": "5e5b44515d5e215a93289468f91e1bf76e9ff645433aef6b20411784d13c7085",
+    "review": {
+      "consistent": true,
+      "issues": [],
+      "example_expectations": [
+        {
+          "case_id": "example_1",
+          "expected": {
+            "texts": [
+              "apple",
+              "banana"
+            ]
+          }
+        },
+        {
+          "case_id": "example_2",
+          "expected": {
+            "texts": []
+          }
+        },
+        {
+          "case_id": "example_3",
+          "expected": {
+            "texts": [
+              "Hello World"
+            ]
+          }
+        },
+        {
+          "case_id": "example_4",
+          "expected": {
+            "texts": [
+              "a b",
+              "a  b",
+              "a\tb"
+            ]
+          }
+        }
+      ]
+    },
+    "accepted": true,
+    "issues": [],
+    "reviewer_saw_planner_expectations": false
+  }
+]

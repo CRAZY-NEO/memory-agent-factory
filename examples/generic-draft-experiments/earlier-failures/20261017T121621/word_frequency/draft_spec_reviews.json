@@ -1,0 +1,330 @@
+[
+  {
+    "revision": 0,
+    "proposal_hash": "738712886688d32890b66f7199abcbf62ad791fa1e40f3b56de603520655271d",
+    "review": {
+      "consistent": true,
+      "issues": [],
+      "example_expectations": [
+        {
+          "case_id": "example_1",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "hello",
+                "count": 2
+              },
+              {
+                "word": "everyone",
+                "count": 1
+              },
+              {
+                "word": "world",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_2",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "apple",
+                "count": 2
+              },
+              {
+                "word": "banana",
+                "count": 2
+              },
+              {
+                "word": "cherry",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_3",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "case",
+                "count": 1
+              },
+              {
+                "word": "don",
+                "count": 1
+              },
+              {
+                "word": "test",
+                "count": 1
+              },
+              {
+                "word": "under",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_4",
+          "expected": {
+            "frequencies": []
+          }
+        },
+        {
+          "case_id": "example_5",
+          "expected": {
+            "frequencies": []
+          }
+        },
+        {
+          "case_id": "example_6",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "a",
+                "count": 2
+              },
+              {
+                "word": "aa",
+                "count": 1
+              },
+              {
+                "word": "aa",
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "accepted": false,
+    "issues": [
+      "example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 5, \"actual_length\": 4}}",
+      "example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}"
+    ],
+    "reviewer_saw_planner_expectations": false
+  },
+  {
+    "revision": 1,
+    "proposal_hash": "738712886688d32890b66f7199abcbf62ad791fa1e40f3b56de603520655271d",
+    "review": {
+      "consistent": true,
+      "issues": [],
+      "example_expectations": [
+        {
+          "case_id": "example_1",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "hello",
+                "count": 2
+              },
+              {
+                "word": "everyone",
+                "count": 1
+              },
+              {
+                "word": "world",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_2",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "apple",
+                "count": 2
+              },
+              {
+                "word": "banana",
+                "count": 2
+              },
+              {
+                "word": "cherry",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_3",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "case",
+                "count": 1
+              },
+              {
+                "word": "don",
+                "count": 1
+              },
+              {
+                "word": "score",
+                "count": 1
+              },
+              {
+                "word": "test",
+                "count": 1
+              },
+              {
+                "word": "under",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_4",
+          "expected": {
+            "frequencies": []
+          }
+        },
+        {
+          "case_id": "example_5",
+          "expected": {
+            "frequencies": []
+          }
+        },
+        {
+          "case_id": "example_6",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "a",
+                "count": 2
+              },
+              {
+                "word": "aa",
+                "count": 1
+              },
+              {
+                "word": "aa",
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "accepted": false,
+    "issues": [
+      "example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"score\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"][2][\\\"word\\\"]\", \"kind\": \"value\", \"expected\": \"t\", \"actual\": \"score\"}}",
+      "example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}"
+    ],
+    "reviewer_saw_planner_expectations": false
+  },
+  {
+    "revision": 2,
+    "proposal_hash": "738712886688d32890b66f7199abcbf62ad791fa1e40f3b56de603520655271d",
+    "review": {
+      "consistent": true,
+      "issues": [],
+      "example_expectations": [
+        {
+          "case_id": "example_1",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "hello",
+                "count": 2
+              },
+              {
+                "word": "everyone",
+                "count": 1
+              },
+              {
+                "word": "world",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_2",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "apple",
+                "count": 2
+              },
+              {
+                "word": "banana",
+                "count": 2
+              },
+              {
+                "word": "cherry",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_3",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "case",
+                "count": 1
+              },
+              {
+                "word": "don",
+                "count": 1
+              },
+              {
+                "word": "test",
+                "count": 1
+              },
+              {
+                "word": "under",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_4",
+          "expected": {
+            "frequencies": []
+          }
+        },
+        {
+          "case_id": "example_5",
+          "expected": {
+            "frequencies": []
+          }
+        },
+        {
+          "case_id": "example_6",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "a",
+                "count": 2
+              },
+              {
+                "word": "aa",
+                "count": 1
+              },
+              {
+                "word": "aa",
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "accepted": false,
+    "issues": [
+      "example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 5, \"actual_length\": 4}}",
+      "example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}"
+    ],
+    "reviewer_saw_planner_expectations": false
+  }
+]

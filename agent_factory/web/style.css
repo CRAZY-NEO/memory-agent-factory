@@ -80,3 +80,42 @@ footer { text-align:center; font-size:12px; color:var(--muted); padding:6px 0 28
 
 .mode-options { margin: 10px 0 16px; }
 .mode-options summary { color: var(--accent); cursor: pointer; }
+
+/* The ordinary path has one submit action; maintenance stays progressively disclosed. */
+.demand-card textarea { min-height:120px; }
+.example-label { margin-top:14px; }
+.primary-action { display:flex; justify-content:space-between; width:100%; padding:13px 17px; margin-top:18px; }
+.advanced-options { border-top:1px solid var(--border); padding-top:12px; margin:18px 0 0; }
+.advanced-options[open]>summary,.management[open]>summary,.research-tools[open]>summary { margin-bottom:16px; }
+.advanced-options label,.management label,.component-trial label { margin-top:12px; }
+.advanced-options textarea,.management textarea { min-height:86px; }
+.advanced-options button { margin-top:12px; }
+.management,.research-tools { font-size:14px; }
+.management>summary,.research-tools>summary { font-size:15px; font-weight:600; }
+.management>summary>span { font-weight:400; font-size:12px; margin-left:10px; }
+.management li { margin:6px 0; overflow-wrap:anywhere; }
+.research-tools .card { border:0; padding:0; margin:0; }
+.migration-note { border:1px solid #e4d7ae; background:#fcf8ec; border-radius:10px; padding:18px; margin-top:20px; }
+.migration-note p { font-size:14px; }
+.component-output>details { margin-top:18px; }
+.component-trial { margin-top:22px; padding-top:20px; border-top:1px solid var(--border); }
+.component-trial textarea { min-height:100px; }
+.component-trial button { margin-top:14px; }
+.component-trial label:first-child { margin-top:0; }
+.checkbox-label { display:flex; align-items:center; gap:8px; }
+input[type="checkbox"] { width:auto; }
+.access.is-connected { display:none; }
+.access.is-connected h2 { font-size:14px; margin:0; }
+.access.is-connected p { display:none; }
+.access.is-connected button { padding:4px 10px; font-size:12px; }
+#component-progress:empty,#component-summary:empty { display:none; }
+#component-trial-summary { margin-top:12px; }
+
+.account-controls { display:flex; align-items:center; gap:12px; }
+.account-controls button { padding:4px 10px; font-size:12px; }
+
+.badge.warning { color:#805c16; background:#fbf3df; }
+.history-button[data-outcome="draft"],.history-button[data-outcome="migration_required"],.history-button[data-outcome="blocked"] { border-left:3px solid #c2a455; }
+.check-failure { margin: 1rem 0; padding: 0.75rem 1rem; border-left: 3px solid #b34a48; background: #fff8f7; overflow-wrap: anywhere; }
+.check-failure h4 { margin: 0 0 0.5rem; }
+.check-failure p { margin: 0.4rem 0; }

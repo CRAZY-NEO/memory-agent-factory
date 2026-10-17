@@ -6,6 +6,7 @@ import traceback
 import httpx
 import pytest
 
+from agent_factory.drafts import DraftSpecReview
 from agent_factory.llm import (
     JSON_ARTIFACT_PROTOCOL,
     PYTHON_SOURCE_PROTOCOL,
@@ -26,6 +27,7 @@ def fake_credentials(monkeypatch):
     monkeypatch.setenv('DEEPSEEK_API_KEY', FAKE_KEY)
     monkeypatch.delenv('DEEPSEEK_THINKING', raising=False)
     monkeypatch.delenv('DEEPSEEK_MAX_TOKENS', raising=False)
+    monkeypatch.delenv('DEEPSEEK_PLANNING_THINKING', raising=False)
 
 
 def reply(content=CODE, *, finish='stop', reasoning='Private reasoning, not executable code.'):
@@ -46,6 +48,23 @@ def make_client(tmp_path, respond, *, base_url='https://api.deepseek.com'):
 
 def traces(tmp_path):
     return [json.loads(path.read_text()) for path in sorted(tmp_path.glob('*.json'))]
+
+
+@pytest.mark.parametrize('setting', [None, 'enabled', 'disabled'])
+def test_generic_planning_review_has_explicit_reasoning_configuration(tmp_path, monkeypatch, setting):
+    if setting is not None:
+        monkeypatch.setenv('DEEPSEEK_PLANNING_THINKING', setting)
+
+    def respond(request):
+        payload = json.loads(request.content)
+        expected = setting or 'enabled'
+        assert payload['thinking']['type'] == expected
+        assert ('reasoning_effort' in payload) == (expected == 'enabled')
+        assert payload['response_format'] == {'type': 'json_object'}
+        return reply(json.dumps({'consistent': True, 'issues': [], 'example_expectations': []}))
+
+    make_client(tmp_path, respond).ask('draft_spec_reviewer', {'proposal': {}, 'example_inputs': []}, DraftSpecReview)
+    assert traces(tmp_path)[0]['options']['thinking']['type'] == (setting or 'enabled')
 
 
 def assert_no_secret(tmp_path, exception=None, caplog=None):

@@ -1,10 +1,11 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
 const names = { queued:"排队中", running:"执行中", succeeded:"已完成", failed:"失败", passed:"通过", failed_validation:"验证未通过", failed_generation:"代码生成中断或响应不合格", failed_test:"最终测试未通过", prepare:"准备材料", understand:"理解需求", retrieve:"检索能力知识", plan:"规划候选", generate:"生成 / 修复代码", validate:"自动验证", review:"诊断问题", advance:"切换候选", select:"选择并冻结版本", test:"独立最终测试", persist:"报告与知识回写" };
-Object.assign(names, { route:"判断能力与执行路径", source_search:"理解新能力与搜索规划", github_search:"搜索 GitHub", pick_repository:"选择来源仓库", download_repository:"下载固定提交源码", extract_repository:"AST 抽取源码", propose_algorithm:"提议新算法能力", approve_algorithm:"验证后登记算法" });
+Object.assign(names, { draft_plan:"规划候选接口", component_library_search:"检索组件库", draft_generate:"生成候选代码", draft_validate:"基础执行与示例检查", draft_repair:"修复候选代码", draft_persist:"保存候选与报告", route:"判断能力与执行路径", source_search:"理解新能力与搜索规划", github_search:"搜索 GitHub", pick_repository:"选择来源仓库", download_repository:"下载固定提交源码", extract_repository:"AST 抽取源码", propose_algorithm:"提议新算法能力", approve_algorithm:"验证后登记算法" });
+Object.assign(names, {draft:"候选待业务验证", draft_failed:"候选检查未通过", draft_spec_review:"规格一致性审查"});
 const categories = { direct:"词面基线", paraphrase:"同义改写", hard_negative:"相近负例", multi_relevance:"多相关文档", lexical:"词面基线", near_boundary:"相近类别" };
 const metricNames = { recall_at_k:"Recall@k", mrr_at_k:"MRR@k", precision_at_k:"Precision@k", p95_ms:"P95 ms", accuracy:"Accuracy", macro_f1:"Macro F1", classification_p95_ms:"P95 ms" };
-const taskNames = { memory_retrieval:"记忆检索", memory_classification:"文本记忆分类", document_field_completeness:"字段完整性", document_source_references:"来源引用检查" };
+const taskNames = {python_draft:"新能力候选", memory_retrieval:"记忆检索", memory_classification:"文本记忆分类", document_field_completeness:"字段完整性", document_source_references:"来源引用检查" };
 // The opening ticket is consumed once; remove it before any authenticated request.
 function takeOpeningTicket() {
   const ticket = new URLSearchParams(location.hash.slice(1)).get("login");
@@ -19,9 +20,9 @@ let selection = 0;
 let selectedJob = null;
 function node(tag, text, className) { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (className) el.className = className; return el; }
 function notice(text) { $("message").textContent = text; $("message").hidden = !text; }
-function badge(id, status) { $(id).textContent = names[status] || status; $(id).classList.toggle("failed", status.startsWith("failed")); }
+function badge(id, status) { $(id).textContent = names[status] || status; $(id).classList.toggle("failed", status.startsWith("failed")); $(id).classList.remove("warning"); }
 function format(value) { return typeof value === "number" ? value.toFixed(4) : "—"; }
-function disconnect() { connected = false; $("mode").disabled = true; $("token").hidden = false; document.querySelector('label[for="token"]').hidden = false; $("connect").hidden = false; accessToken = ""; $("token").value = ""; clearTimeout(timer); selection++; selectedJob = null; $("submit").disabled = true; $("refresh").disabled = true; $("disconnect").hidden = true; $("connect").disabled = false; $("connection").textContent = "未连接"; $("result").hidden = true; $("jobs").replaceChildren(node("li", "连接后查看。", "muted")); $("runs").replaceChildren(node("li", "连接后查看。", "muted")); $("events").replaceChildren(node("li", "提交需求后查看执行阶段。", "empty")); $("job-caption").textContent = "提交需求后，查看实际执行阶段与修复轮次。"; badge("job-status", "等待提交"); }
+function disconnect() { connected = false; $("access-panel").classList.remove("is-connected"); if (window.resetComponents) window.resetComponents(); $("mode").disabled = true; $("token").hidden = false; document.querySelector('label[for="token"]').hidden = false; $("connect").hidden = false; accessToken = ""; $("token").value = ""; clearTimeout(timer); selection++; selectedJob = null; $("submit").disabled = true; $("refresh").disabled = true; $("disconnect").hidden = true; $("connect").disabled = false; $("connection").textContent = "未连接"; $("result").hidden = true; $("draft-report").hidden = true; $("jobs").replaceChildren(node("li", "连接后查看。", "muted")); $("runs").replaceChildren(node("li", "连接后查看。", "muted")); $("events").replaceChildren(node("li", "提交需求后查看执行阶段。", "empty")); $("job-caption").textContent = "提交需求后，查看实际执行阶段与修复轮次。"; badge("job-status", "等待提交"); }
 async function request(path, options = {}, blob = false) {
   if (!connected) throw new Error("请先连接工作空间。");
   if (!path.startsWith("/v1/")) throw new Error("无效的接口路径。");
@@ -46,19 +47,20 @@ function downloadButton(label, path, filename, small = false, method = "GET") { 
 async function refreshHistory() {
   const [jobs, runs] = await Promise.all([request("/v1/jobs?limit=12"), request("/v1/runs?limit=20")]);
   $("jobs").replaceChildren();
-  for (const job of jobs.jobs) { const item = node("li"); const kind = { factory:"算法生成", discovery:"发现新算法", ingest:"能力抽取", search:"检索试用" }[job.kind] || job.kind; const button = node("button", `${names[job.status] || job.status} · ${kind} · ${job.id.slice(0, 8)}`, "history-button"); button.type = "button"; button.addEventListener("click", () => selectJob(job.id)); item.append(button); $("jobs").append(item); }
+  for (const job of jobs.jobs) { const item = node("li"); const kind = { factory:"算法生成", discovery:"发现新算法", ingest:"能力抽取", search:"检索试用", component_plan:"需求计划", component_ensure:"组件生成", component_invoke:"组件试用", component_draft_invoke:"候选试用", component_activate:"切换版本", component_rollback:"版本回退", component_import:"登记组件", component_feedback:"组件反馈" }[job.kind] || job.kind; const outcome = factoryJobOutcome(job); const button = node("button", `${outcome.label} · ${kind} · ${job.id.slice(0, 8)}`, "history-button"); button.dataset.outcome = outcome.state; button.type = "button"; button.addEventListener("click", () => selectJob(job.id)); item.append(button); $("jobs").append(item); }
   if (!jobs.jobs.length) $("jobs").append(node("li", "还没有任务。", "muted"));
   $("runs").replaceChildren();
   for (const run of runs.runs) { const item = node("li"); const button = node("button", `${names[run.status] || run.status} · ${taskNames[run.task] || "记忆检索"} · ${run.algorithm || "未发布"}`, "history-button"); button.type = "button"; button.append(node("small", `${run.run_id} · ${run.provider} / ${run.model}`)); button.addEventListener("click", () => selectRun(run.run_id)); item.append(button); $("runs").append(item); }
   if (!runs.runs.length) $("runs").append(node("li", "还没有完成的运行。", "muted"));
 }
 function renderJob(job) {
-  badge("job-status", job.status);
+  const outcome = factoryJobOutcome(job);
+  $("job-status").textContent = outcome.label; $("job-status").classList.toggle("failed", outcome.tone === "danger"); $("job-status").classList.toggle("warning", outcome.tone === "warning");
   const stage = job.progress?.stage;
-  $("job-caption").textContent = `任务 ${job.id.slice(0, 8)} · ${names[stage] || stage || names[job.status]}${job.run_id ? " · " + job.run_id : ""}`;
+  $("job-caption").textContent = `任务 ${job.id.slice(0, 8)} · ${["queued", "running"].includes(job.status) ? names[stage] || stage || outcome.label : outcome.label}${job.run_id ? " · " + job.run_id : ""}`;
   const list = $("events"); list.replaceChildren();
   for (const event of job.progress?.events || []) { const item = node("li", names[event.node] || event.node); const candidate = event.candidate_index === null ? "" : `候选 ${event.candidate_index + 1} · r${event.revision ?? 0} · `; item.append(node("small", candidate + new Date(event.time).toLocaleTimeString())); list.append(item); }
-  if (!list.children.length) list.append(node("li", job.status === "queued" ? "已提交，等待执行。" : "正在准备能力材料。", "empty"));
+  if (!list.children.length) list.append(node("li", outcome.note, "empty"));
   list.scrollTop = list.scrollHeight;
 }
 async function pollJob(id, current, retries = 0) {
@@ -70,18 +72,19 @@ async function pollJob(id, current, retries = 0) {
       clearTimeout(timer);
       if (job.error) notice(job.error);
       const runId = job.run_id || job.result?.run_id;
-      if (runId && ["factory", "discovery"].includes(job.kind)) { try { const report = await request(`/v1/runs/${runId}/report`); if (current === selection) renderReport(report); } catch (error) { if (current === selection) notice(`${job.error || "任务结束"}；${error.message}`); } }
+      if (job.kind.startsWith("component_") && job.result && window.showComponentResult) { await window.refreshComponents(); if (current === selection) window.showComponentResult(job.result); }
+      else if (runId && ["factory", "discovery"].includes(job.kind)) { try { const report = await request(`/v1/runs/${runId}/report`); if (current === selection) renderReport(report); } catch (error) { if (current === selection) notice(`${job.error || "任务结束"}；${error.message}`); } }
       else if (job.result?.hits) { $("job-caption").textContent += " · 检索任务已完成"; }
       if (current === selection && connected) await refreshHistory();
     } else { timer = setTimeout(() => pollJob(id, current), 3000); }
   } catch (error) { if (current !== selection) return; notice(error.message); if (connected && retries < 3) timer = setTimeout(() => pollJob(id, current, retries + 1), 5000); }
 }
-function selectJob(id) { selection++; clearTimeout(timer); selectedJob = id; $("result").hidden = true; notice(""); pollJob(id, selection); }
+function selectJob(id) { selection++; clearTimeout(timer); selectedJob = id; $("result").hidden = true; $("draft-report").hidden = true; notice(""); pollJob(id, selection); }
 async function selectRun(id) {
   const current = ++selection;
   selectedJob = null;
   clearTimeout(timer);
-  $("result").hidden = true;
+  $("result").hidden = true; $("draft-report").hidden = true;
   notice("");
   try {
     const report = await request(`/v1/runs/${id}/report`);
@@ -119,6 +122,8 @@ function generationEvidence(generation = {}, mode) {
   return strategy ? `输入策略：${strategy}；实际参考记录未保存` : "实际参考输入：旧记录未保存";
 }
 function renderReport(report) {
+  if (report.kind === "component_draft") { renderDraftReport(report); return; }
+  $("draft-report").hidden = true;
   const policy = report.validation_config || {};
   $("result").hidden = false; badge("run-status", report.status);
   const selected = report.selected;
@@ -187,10 +192,11 @@ async function connectWorkspace(token = "") {
     const retrievalSummary = d ? `检索 v${d.version}：${d.memory_count} 条记忆，${d.splits.validation.query_count} 验证查询，${d.splits.test.query_count} 最终测试查询。` : "检索：未提供数据版本说明。";
     const classificationSummary = classificationData ? `分类：${classificationData.training_count ?? classificationData.splits?.train?.example_count ?? "—"} 条训练，${classificationData.validation_count ?? classificationData.splits?.validation?.example_count ?? "—"} 条验证，${classificationData.test_count ?? classificationData.splits?.test?.example_count ?? "—"} 条最终测试。` : "分类：使用独立的训练、验证及最终测试集。";
     $("dataset").textContent = retrievalSummary + " " + classificationSummary + " 文档检查使用独立的合成样例，数量和检查类型见运行报告。";
-    $("connection").textContent = "已连接 · " + (settings.tasks || ["memory_retrieval"]).map((task) => taskNames[task] || task).join(" / ");
+    $("connection").textContent = "已连接"; $("connection").title = supported;
     $("token").value = ""; $("token").hidden = true; document.querySelector('label[for="token"]').hidden = true; $("connect").hidden = true;
-    $("disconnect").hidden = false; $("submit").disabled = false; $("refresh").disabled = false;
+    $("access-panel").classList.add("is-connected"); $("disconnect").hidden = false; $("submit").disabled = false; $("refresh").disabled = false;
     await refreshHistory();
+    if (window.refreshComponents) await window.refreshComponents();
   } catch (error) { disconnect(); notice(error.message); }
   finally { $("connect").disabled = false; }
 }

@@ -1,0 +1,398 @@
+{
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "role": "draft_planner",
+  "transport_kind": "http",
+  "context": {
+    "description": "生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {\"texts\": 字符串列表}，输出仅为 {\"texts\": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。",
+    "missing_validation": [
+      "Generate a standalone text-list deduplicate component with entrypoint execute(payload) -> dict, exact input schema {\"texts\": string[]} and exact output schema {\"texts\": deduped string[]}",
+      "Use text.strip().casefold() as deduplication key, skip entries whose stripped text is empty, keep the first original string for each key and preserve original whitespace/case and first-occurrence order",
+      "Strip only leading/trailing whitespace; do not collapse internal whitespace, remove punctuation, or perform Unicode normalization",
+      "Empty input returns an empty list; do not mutate the original input",
+      "Use only allowed pure Python standard library",
+      "No training, classification, or retrieval"
+    ],
+    "envelope": "def execute(payload: dict) -> dict; pure Python stdlib only",
+    "previous_proposal": {
+      "title": "文本列表去重组件（strip+casefold 键，保留首个原文）",
+      "search_queries": [
+        "text deduplicate Python casefold strip preserve order",
+        "deduplicate list strings preserving original whitespace order Python"
+      ],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "texts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "texts"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "texts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "texts"
+        ],
+        "additionalProperties": false
+      },
+      "assumptions": [
+        "输入 payload 必须是 dict 且包含 texts 键，texts 为字符串列表；不处理其他类型或缺失键。",
+        "去重键为 text.strip().casefold()，strip 只去除两端 Unicode 空白，casefold 用于大小写不敏感比较。",
+        "相同去重键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。",
+        "跳过 strip 后为空的文本（空字符串或仅含空白字符的文本）。",
+        "不折叠内部空白、不移除标点、不做 Unicode 正规化（如 NFC/NFD 等）。",
+        "返回的 JSON 对象仅包含 texts 字段，不修改输入 payload。",
+        "输出列表中的文本顺序与输入中首次出现的顺序一致。"
+      ],
+      "limitations": [
+        "不处理非字符串元素，如果 texts 中包含非字符串会抛出类型错误。",
+        "不进行语义去重、模糊匹配、分类或检索，仅按字符串键精确去重。",
+        "casefold 可能将某些 Unicode 字符扩展为多个字符（例如 ß→ss），但这不属于 Unicode 正规化。",
+        "组件需要将输入完整加载到内存中，内存占用与输入规模线性相关。",
+        "仅作为纯 JSON 转换组件运行，不访问网络、文件系统或外部服务。",
+        "空输入或全部文本仅含空白时返回 {\"texts\": []}。"
+      ],
+      "examples": [
+        {
+          "input": {
+            "texts": [
+              "apple",
+              " Apple ",
+              "banana",
+              "apple",
+              "   ",
+              "Banana"
+            ]
+          },
+          "expected": {
+            "texts": [
+              "apple",
+              " Apple ",
+              "banana"
+            ]
+          }
+        },
+        {
+          "input": {
+            "texts": []
+          },
+          "expected": {
+            "texts": []
+          }
+        },
+        {
+          "input": {
+            "texts": [
+              "Hello World",
+              "hello world",
+              "HELLO WORLD",
+              " hello world "
+            ]
+          },
+          "expected": {
+            "texts": [
+              "Hello World"
+            ]
+          }
+        },
+        {
+          "input": {
+            "texts": [
+              "a b",
+              "a  b",
+              "a\tb",
+              "\t",
+              "A B"
+            ]
+          },
+          "expected": {
+            "texts": [
+              "a b",
+              "a  b",
+              "a\tb"
+            ]
+          }
+        }
+      ]
+    },
+    "review_issues": [
+      "example_1 planner/reviewer disagreement: {\"planner_expected\": {\"texts\": [\"apple\", \" Apple \", \"banana\"]}, \"reviewer_expected\": {\"texts\": [\"apple\", \"banana\"]}, \"first_difference\": {\"path\": \"$[\\\"texts\\\"]\", \"kind\": \"array_length\", \"expected_length\": 3, \"actual_length\": 2}}"
+    ]
+  },
+  "schema": {
+    "$defs": {
+      "DraftCase": {
+        "additionalProperties": false,
+        "properties": {
+          "input": {
+            "additionalProperties": true,
+            "title": "Input",
+            "type": "object"
+          },
+          "expected": {
+            "additionalProperties": true,
+            "title": "Expected",
+            "type": "object"
+          }
+        },
+        "required": [
+          "input",
+          "expected"
+        ],
+        "title": "DraftCase",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "title": {
+        "maxLength": 120,
+        "minLength": 1,
+        "title": "Title",
+        "type": "string"
+      },
+      "search_queries": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 2,
+        "minItems": 1,
+        "title": "Search Queries",
+        "type": "array"
+      },
+      "input_schema": {
+        "additionalProperties": true,
+        "title": "Input Schema",
+        "type": "object"
+      },
+      "output_schema": {
+        "additionalProperties": true,
+        "title": "Output Schema",
+        "type": "object"
+      },
+      "assumptions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8,
+        "minItems": 1,
+        "title": "Assumptions",
+        "type": "array"
+      },
+      "limitations": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8,
+        "minItems": 1,
+        "title": "Limitations",
+        "type": "array"
+      },
+      "examples": {
+        "items": {
+          "$ref": "#/$defs/DraftCase"
+        },
+        "maxItems": 6,
+        "minItems": 2,
+        "title": "Examples",
+        "type": "array"
+      }
+    },
+    "required": [
+      "title",
+      "search_queries",
+      "input_schema",
+      "output_schema",
+      "assumptions",
+      "limitations",
+      "examples"
+    ],
+    "title": "DraftSpec",
+    "type": "object"
+  },
+  "retry": 0,
+  "response_protocol": "json_artifact_v1",
+  "model_seed": null,
+  "requested_model_seed": 42,
+  "seed_supported": false,
+  "generation_mode": "spec",
+  "history_mode": "on",
+  "generation_backend": "llm",
+  "options": {
+    "max_tokens": 8192,
+    "thinking": {
+      "type": "enabled"
+    },
+    "reasoning_effort": "high"
+  },
+  "system_prompt": "Plan a candidate Python component for the exact user demand. Missing a trusted business validator does NOT prohibit research or code generation. Propose a concise title, 1-2 English GitHub search queries (each <=100 chars), JSON input/output schemas, explicit assumptions and limitations, and 2-6 example inputs/expected JSON objects. Write title, assumptions and limitations in the user language. These examples are model-authored proposals, not independent gold or a business certificate. Public interface must be def execute(payload), returning a JSON object. Keep the business core a pure JSON transformation using only re, math, collections and standard Python builtins. Do not claim to implement network, filesystem or deployed services. Never replace the requested task with retrieval/classification. For underspecified details choose and disclose reasonable assumptions. Resolve ambiguous token boundaries, output types, order and duplicate semantics explicitly where relevant; ensure every example agrees with those assumptions. Return only the schema JSON.\n只返回符合以下 JSON schema 的对象，不要添加 Markdown：\n{\"$defs\": {\"DraftCase\": {\"additionalProperties\": false, \"properties\": {\"input\": {\"additionalProperties\": true, \"title\": \"Input\", \"type\": \"object\"}, \"expected\": {\"additionalProperties\": true, \"title\": \"Expected\", \"type\": \"object\"}}, \"required\": [\"input\", \"expected\"], \"title\": \"DraftCase\", \"type\": \"object\"}}, \"additionalProperties\": false, \"properties\": {\"title\": {\"maxLength\": 120, \"minLength\": 1, \"title\": \"Title\", \"type\": \"string\"}, \"search_queries\": {\"items\": {\"type\": \"string\"}, \"maxItems\": 2, \"minItems\": 1, \"title\": \"Search Queries\", \"type\": \"array\"}, \"input_schema\": {\"additionalProperties\": true, \"title\": \"Input Schema\", \"type\": \"object\"}, \"output_schema\": {\"additionalProperties\": true, \"title\": \"Output Schema\", \"type\": \"object\"}, \"assumptions\": {\"items\": {\"type\": \"string\"}, \"maxItems\": 8, \"minItems\": 1, \"title\": \"Assumptions\", \"type\": \"array\"}, \"limitations\": {\"items\": {\"type\": \"string\"}, \"maxItems\": 8, \"minItems\": 1, \"title\": \"Limitations\", \"type\": \"array\"}, \"examples\": {\"items\": {\"$ref\": \"#/$defs/DraftCase\"}, \"maxItems\": 6, \"minItems\": 2, \"title\": \"Examples\", \"type\": \"array\"}}, \"required\": [\"title\", \"search_queries\", \"input_schema\", \"output_schema\", \"assumptions\", \"limitations\", \"examples\"], \"title\": \"DraftSpec\", \"type\": \"object\"}",
+  "retry_previous_response": null,
+  "retry_error": null,
+  "messages": [
+    {
+      "role": "system",
+      "content": "Plan a candidate Python component for the exact user demand. Missing a trusted business validator does NOT prohibit research or code generation. Propose a concise title, 1-2 English GitHub search queries (each <=100 chars), JSON input/output schemas, explicit assumptions and limitations, and 2-6 example inputs/expected JSON objects. Write title, assumptions and limitations in the user language. These examples are model-authored proposals, not independent gold or a business certificate. Public interface must be def execute(payload), returning a JSON object. Keep the business core a pure JSON transformation using only re, math, collections and standard Python builtins. Do not claim to implement network, filesystem or deployed services. Never replace the requested task with retrieval/classification. For underspecified details choose and disclose reasonable assumptions. Resolve ambiguous token boundaries, output types, order and duplicate semantics explicitly where relevant; ensure every example agrees with those assumptions. Return only the schema JSON.\n只返回符合以下 JSON schema 的对象，不要添加 Markdown：\n{\"$defs\": {\"DraftCase\": {\"additionalProperties\": false, \"properties\": {\"input\": {\"additionalProperties\": true, \"title\": \"Input\", \"type\": \"object\"}, \"expected\": {\"additionalProperties\": true, \"title\": \"Expected\", \"type\": \"object\"}}, \"required\": [\"input\", \"expected\"], \"title\": \"DraftCase\", \"type\": \"object\"}}, \"additionalProperties\": false, \"properties\": {\"title\": {\"maxLength\": 120, \"minLength\": 1, \"title\": \"Title\", \"type\": \"string\"}, \"search_queries\": {\"items\": {\"type\": \"string\"}, \"maxItems\": 2, \"minItems\": 1, \"title\": \"Search Queries\", \"type\": \"array\"}, \"input_schema\": {\"additionalProperties\": true, \"title\": \"Input Schema\", \"type\": \"object\"}, \"output_schema\": {\"additionalProperties\": true, \"title\": \"Output Schema\", \"type\": \"object\"}, \"assumptions\": {\"items\": {\"type\": \"string\"}, \"maxItems\": 8, \"minItems\": 1, \"title\": \"Assumptions\", \"type\": \"array\"}, \"limitations\": {\"items\": {\"type\": \"string\"}, \"maxItems\": 8, \"minItems\": 1, \"title\": \"Limitations\", \"type\": \"array\"}, \"examples\": {\"items\": {\"$ref\": \"#/$defs/DraftCase\"}, \"maxItems\": 6, \"minItems\": 2, \"title\": \"Examples\", \"type\": \"array\"}}, \"required\": [\"title\", \"search_queries\", \"input_schema\", \"output_schema\", \"assumptions\", \"limitations\", \"examples\"], \"title\": \"DraftSpec\", \"type\": \"object\"}"
+    },
+    {
+      "role": "user",
+      "content": "{\"description\": \"生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {\\\"texts\\\": 字符串列表}，输出仅为 {\\\"texts\\\": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。\", \"missing_validation\": [\"Generate a standalone text-list deduplicate component with entrypoint execute(payload) -> dict, exact input schema {\\\"texts\\\": string[]} and exact output schema {\\\"texts\\\": deduped string[]}\", \"Use text.strip().casefold() as deduplication key, skip entries whose stripped text is empty, keep the first original string for each key and preserve original whitespace/case and first-occurrence order\", \"Strip only leading/trailing whitespace; do not collapse internal whitespace, remove punctuation, or perform Unicode normalization\", \"Empty input returns an empty list; do not mutate the original input\", \"Use only allowed pure Python standard library\", \"No training, classification, or retrieval\"], \"envelope\": \"def execute(payload: dict) -> dict; pure Python stdlib only\", \"previous_proposal\": {\"title\": \"文本列表去重组件（strip+casefold 键，保留首个原文）\", \"search_queries\": [\"text deduplicate Python casefold strip preserve order\", \"deduplicate list strings preserving original whitespace order Python\"], \"input_schema\": {\"type\": \"object\", \"properties\": {\"texts\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}, \"required\": [\"texts\"], \"additionalProperties\": false}, \"output_schema\": {\"type\": \"object\", \"properties\": {\"texts\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}, \"required\": [\"texts\"], \"additionalProperties\": false}, \"assumptions\": [\"输入 payload 必须是 dict 且包含 texts 键，texts 为字符串列表；不处理其他类型或缺失键。\", \"去重键为 text.strip().casefold()，strip 只去除两端 Unicode 空白，casefold 用于大小写不敏感比较。\", \"相同去重键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。\", \"跳过 strip 后为空的文本（空字符串或仅含空白字符的文本）。\", \"不折叠内部空白、不移除标点、不做 Unicode 正规化（如 NFC/NFD 等）。\", \"返回的 JSON 对象仅包含 texts 字段，不修改输入 payload。\", \"输出列表中的文本顺序与输入中首次出现的顺序一致。\"], \"limitations\": [\"不处理非字符串元素，如果 texts 中包含非字符串会抛出类型错误。\", \"不进行语义去重、模糊匹配、分类或检索，仅按字符串键精确去重。\", \"casefold 可能将某些 Unicode 字符扩展为多个字符（例如 ß→ss），但这不属于 Unicode 正规化。\", \"组件需要将输入完整加载到内存中，内存占用与输入规模线性相关。\", \"仅作为纯 JSON 转换组件运行，不访问网络、文件系统或外部服务。\", \"空输入或全部文本仅含空白时返回 {\\\"texts\\\": []}。\"], \"examples\": [{\"input\": {\"texts\": [\"apple\", \" Apple \", \"banana\", \"apple\", \"   \", \"Banana\"]}, \"expected\": {\"texts\": [\"apple\", \" Apple \", \"banana\"]}}, {\"input\": {\"texts\": []}, \"expected\": {\"texts\": []}}, {\"input\": {\"texts\": [\"Hello World\", \"hello world\", \"HELLO WORLD\", \" hello world \"]}, \"expected\": {\"texts\": [\"Hello World\"]}}, {\"input\": {\"texts\": [\"a b\", \"a  b\", \"a\\tb\", \"\\t\", \"A B\"]}, \"expected\": {\"texts\": [\"a b\", \"a  b\", \"a\\tb\"]}}]}, \"review_issues\": [\"example_1 planner/reviewer disagreement: {\\\"planner_expected\\\": {\\\"texts\\\": [\\\"apple\\\", \\\" Apple \\\", \\\"banana\\\"]}, \\\"reviewer_expected\\\": {\\\"texts\\\": [\\\"apple\\\", \\\"banana\\\"]}, \\\"first_difference\\\": {\\\"path\\\": \\\"$[\\\\\\\"texts\\\\\\\"]\\\", \\\"kind\\\": \\\"array_length\\\", \\\"expected_length\\\": 3, \\\"actual_length\\\": 2}}\"]}"
+    }
+  ],
+  "wire_message_characters": 5374,
+  "response_id": "b243fc88-4ac1-4208-b2a3-28c3814b4b27",
+  "response_model": "deepseek-v4-pro",
+  "system_fingerprint": "a307abda487cd1b463329ccb945ce396",
+  "done_reason": "stop",
+  "provider_usage": {
+    "prompt_tokens": 1739,
+    "completion_tokens": 4322,
+    "total_tokens": 6061,
+    "prompt_tokens_details": {
+      "cached_tokens": 896
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 3493
+    },
+    "prompt_cache_hit_tokens": 896,
+    "prompt_cache_miss_tokens": 843
+  },
+  "usage": {
+    "prompt_eval_count": 1739,
+    "prompt_eval_cached_count": 896,
+    "eval_count": 4322
+  },
+  "raw_content": "{\n  \"title\": \"文本列表去重组件（strip+casefold 键，保留首个原文）\",\n  \"search_queries\": [\n    \"python deduplicate list strings by stripped casefold key preserve first original order\",\n    \"text dedupe case-insensitive strip whitespace keep first occurrence Python\"\n  ],\n  \"input_schema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"texts\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"required\": [\n      \"texts\"\n    ],\n    \"additionalProperties\": false\n  },\n  \"output_schema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"texts\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"required\": [\n      \"texts\"\n    ],\n    \"additionalProperties\": false\n  },\n  \"assumptions\": [\n    \"输入 payload 必须是 dict 且包含 texts 键；texts 是字符串列表，忽略其他字段。\",\n    \"去重键为 text.strip().casefold()，strip 只去除首尾 Unicode 空白，casefold 用于大小写不敏感比较。\",\n    \"相同去重键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。\",\n    \"跳过 strip 后为空字符串的文本（如空串、纯空格、制表符或换行）。\",\n    \"不折叠内部空白、不移除标点、不做 Unicode 正规化（如 NFC/NFD 等）。\",\n    \"返回的 JSON 对象仅包含 texts 字段，不修改输入 payload。\",\n    \"texts 中每个元素都应为字符串，否则会抛出 AttributeError/TypeError。\"\n  ],\n  \"limitations\": [\n    \"不处理非字符串元素；若 texts 中包含非字符串将抛出 AttributeError/TypeError。\",\n    \"仅按字符串键精确去重，不进行语义去重、模糊匹配、分类或检索。\",\n    \"casefold 可能将某些 Unicode 字符扩展为多个字符（例如 ß→ss），这不等同于 Unicode 正规化，但会按全小写扩展结果比较。\",\n    \"需要将输入列表完整加载到内存中，内存占用与输入规模线性相关。\",\n    \"仅作为纯 JSON 变换组件运行，不访问网络、文件系统或外部服务。\",\n    \"空输入或全部文本仅含空白时返回 {\\\"texts\\\": []}。\",\n    \"输出字段固定为 texts，不保留输入 payload 中的其他字段。\"\n  ],\n  \"examples\": [\n    {\n      \"input\": {\n        \"texts\": [\n          \"apple\",\n          \" Apple \",\n          \"banana\",\n          \"apple\",\n          \"   \",\n          \"Banana\"\n        ]\n      },\n      \"expected\": {\n        \"texts\": [\n          \"apple\",\n          \"banana\"\n        ]\n      }\n    },\n    {\n      \"input\": {\n        \"texts\": []\n      },\n      \"expected\": {\n        \"texts\": []\n      }\n    },\n    {\n      \"input\": {\n        \"texts\": [\n          \"Hello World\",\n          \"hello world\",\n          \"HELLO WORLD\",\n          \" hello world \"\n        ]\n      },\n      \"expected\": {\n        \"texts\": [\n          \"Hello World\"\n        ]\n      }\n    },\n    {\n      \"input\": {\n        \"texts\": [\n          \"a b\",\n          \"a  b\",\n          \"a\\tb\",\n          \"\\t\",\n          \"A B\"\n        ]\n      },\n      \"expected\": {\n        \"texts\": [\n          \"a b\",\n          \"a  b\",\n          \"a\\tb\"\n        ]\n      }\n    }\n  ]\n}",
+  "response": {
+    "title": "文本列表去重组件（strip+casefold 键，保留首个原文）",
+    "search_queries": [
+      "python deduplicate list strings by stripped casefold key preserve first original order",
+      "text dedupe case-insensitive strip whitespace keep first occurrence Python"
+    ],
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "texts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "texts"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "texts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "texts"
+      ],
+      "additionalProperties": false
+    },
+    "assumptions": [
+      "输入 payload 必须是 dict 且包含 texts 键；texts 是字符串列表，忽略其他字段。",
+      "去重键为 text.strip().casefold()，strip 只去除首尾 Unicode 空白，casefold 用于大小写不敏感比较。",
+      "相同去重键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。",
+      "跳过 strip 后为空字符串的文本（如空串、纯空格、制表符或换行）。",
+      "不折叠内部空白、不移除标点、不做 Unicode 正规化（如 NFC/NFD 等）。",
+      "返回的 JSON 对象仅包含 texts 字段，不修改输入 payload。",
+      "texts 中每个元素都应为字符串，否则会抛出 AttributeError/TypeError。"
+    ],
+    "limitations": [
+      "不处理非字符串元素；若 texts 中包含非字符串将抛出 AttributeError/TypeError。",
+      "仅按字符串键精确去重，不进行语义去重、模糊匹配、分类或检索。",
+      "casefold 可能将某些 Unicode 字符扩展为多个字符（例如 ß→ss），这不等同于 Unicode 正规化，但会按全小写扩展结果比较。",
+      "需要将输入列表完整加载到内存中，内存占用与输入规模线性相关。",
+      "仅作为纯 JSON 变换组件运行，不访问网络、文件系统或外部服务。",
+      "空输入或全部文本仅含空白时返回 {\"texts\": []}。",
+      "输出字段固定为 texts，不保留输入 payload 中的其他字段。"
+    ],
+    "examples": [
+      {
+        "input": {
+          "texts": [
+            "apple",
+            " Apple ",
+            "banana",
+            "apple",
+            "   ",
+            "Banana"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        }
+      },
+      {
+        "input": {
+          "texts": []
+        },
+        "expected": {
+          "texts": []
+        }
+      },
+      {
+        "input": {
+          "texts": [
+            "Hello World",
+            "hello world",
+            "HELLO WORLD",
+            " hello world "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Hello World"
+          ]
+        }
+      },
+      {
+        "input": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb",
+            "\t",
+            "A B"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb"
+          ]
+        }
+      }
+    ]
+  },
+  "duration_seconds": 38.065980416955426,
+  "publication_note": "Provider reasoning text omitted; final raw_content, messages, response and usage retained. Complete original trace stays in ignored local state."
+}

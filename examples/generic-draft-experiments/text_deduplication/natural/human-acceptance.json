@@ -1,0 +1,434 @@
+{
+  "saved_source_matches_real_model_response": true,
+  "source_matches_zip": true,
+  "zip_artifact_hashes_valid": true,
+  "human_evaluation": {
+    "case_count": 16,
+    "correct": 16,
+    "passed": true,
+    "cases": [
+      {
+        "id": "td01",
+        "input": {
+          "texts": []
+        },
+        "expected": {
+          "texts": []
+        },
+        "actual": {
+          "texts": []
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td02",
+        "input": {
+          "texts": [
+            "a",
+            "b",
+            "a"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a",
+            "b"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "a",
+            "b"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td03",
+        "input": {
+          "texts": [
+            " A ",
+            "a",
+            "B",
+            " b ",
+            ""
+          ]
+        },
+        "expected": {
+          "texts": [
+            " A ",
+            "B"
+          ]
+        },
+        "actual": {
+          "texts": [
+            " A ",
+            "B"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td04",
+        "input": {
+          "texts": [
+            " \t",
+            "\n",
+            "",
+            "  "
+          ]
+        },
+        "expected": {
+          "texts": []
+        },
+        "actual": {
+          "texts": []
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td05",
+        "input": {
+          "texts": [
+            "Straße",
+            "STRASSE",
+            "straße"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Straße"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "Straße"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td06",
+        "input": {
+          "texts": [
+            "Memory",
+            "MEMORY",
+            " memory ",
+            "MemoRy"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Memory"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "Memory"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td07",
+        "input": {
+          "texts": [
+            "a-b",
+            "a b",
+            "a_b",
+            "a-b"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a-b",
+            "a b",
+            "a_b"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "a-b",
+            "a b",
+            "a_b"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td08",
+        "input": {
+          "texts": [
+            "  原文  ",
+            "原文",
+            "另一条",
+            " 另一条 "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "  原文  ",
+            "另一条"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "  原文  ",
+            "另一条"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td09",
+        "input": {
+          "texts": [
+            "É",
+            "é",
+            "E",
+            "e"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "É",
+            "E"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "É",
+            "E"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td10",
+        "input": {
+          "texts": [
+            "a\nb",
+            "a\nb",
+            "a b",
+            " A\nB "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a\nb",
+            "a b"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "a\nb",
+            "a b"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td11",
+        "input": {
+          "texts": [
+            "Ａ",
+            "a",
+            "Ａ",
+            "A"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Ａ",
+            "a"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "Ａ",
+            "a"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td12",
+        "input": {
+          "texts": [
+            "é",
+            "é",
+            "É",
+            "É"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "é",
+            "é"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "é",
+            "é"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td13",
+        "input": {
+          "texts": [
+            "one",
+            "two",
+            "three",
+            "two",
+            "ONE"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "one",
+            "two",
+            "three"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "one",
+            "two",
+            "three"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td14",
+        "input": {
+          "texts": [
+            "0",
+            "false",
+            "null",
+            "0",
+            " FALSE "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "0",
+            "false",
+            "null"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "0",
+            "false",
+            "null"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td15",
+        "input": {
+          "texts": [
+            "name.",
+            "name",
+            "NAME.",
+            " name "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "name.",
+            "name"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "name.",
+            "name"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "td16",
+        "input": {
+          "texts": [
+            " 　 ",
+            "x",
+            "　X　",
+            "\tY\n",
+            "y"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "x",
+            "\tY\n"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "x",
+            "\tY\n"
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      }
+    ],
+    "authority": "human_expected_outputs_frozen_before_api_execution",
+    "feedback_sent_to_model": false
+  },
+  "business_verified": false
+}

@@ -1,0 +1,93 @@
+{
+  "title": "Extract all numbers from text",
+  "search_queries": [
+    "python regex extract all numbers from string",
+    "extract numbers from text python"
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string",
+        "description": "Input text from which numbers are extracted"
+      }
+    },
+    "required": [
+      "text"
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "numbers": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        },
+        "description": "List of numbers found in the text, in order of appearance"
+      }
+    },
+    "required": [
+      "numbers"
+    ]
+  },
+  "assumptions": [
+    "Numbers include integers and decimals, optionally with leading sign (+/-).",
+    "Numbers may be embedded in words or separated by punctuation.",
+    "Scientific notation (e.g., 1e5) is not considered a number.",
+    "Commas as thousand separators are not supported; '1,000' is treated as two numbers: 1 and 000.",
+    "The output numbers are converted to Python int or float as appropriate.",
+    "Overlapping matches are not possible; regex scans left to right."
+  ],
+  "limitations": [
+    "Does not handle numbers in scientific notation.",
+    "Does not handle numbers with thousand separators.",
+    "Does not handle fractions or mixed numbers.",
+    "Does not handle numbers written in words.",
+    "Only processes plain text; no HTML or markup stripping.",
+    "No locale-specific decimal separators (e.g., comma as decimal point)."
+  ],
+  "examples": [
+    {
+      "input": {
+        "text": "The price is 12.5 dollars and 3 items."
+      },
+      "expected": {
+        "numbers": [
+          12.5,
+          3
+        ]
+      }
+    },
+    {
+      "input": {
+        "text": "No numbers here!"
+      },
+      "expected": {
+        "numbers": []
+      }
+    },
+    {
+      "input": {
+        "text": "Negative -5 and positive +7.2"
+      },
+      "expected": {
+        "numbers": [
+          -5,
+          7.2
+        ]
+      }
+    },
+    {
+      "input": {
+        "text": "Version 1.2.3 has multiple dots"
+      },
+      "expected": {
+        "numbers": [
+          1.2,
+          3
+        ]
+      }
+    }
+  ]
+}

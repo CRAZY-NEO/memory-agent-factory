@@ -1,0 +1,68 @@
+{
+  "status": "replayed_original_search",
+  "repositories": [
+    {
+      "full_name": "mogesh-developer/NOLQERA",
+      "description": "An intelligent NLP middleware engine that bridges users and LLMs through semantic understanding, retrieval, ranking, and context optimization.",
+      "license": "MIT",
+      "stars": 2,
+      "url": "https://github.com/mogesh-developer/NOLQERA"
+    },
+    {
+      "full_name": "asmirrr/provenance",
+      "description": "Evidence-grounded financial AI system for retrieving, verifying, and tracing claims to their source documents.",
+      "license": "MIT",
+      "stars": 0,
+      "url": "https://github.com/asmirrr/provenance"
+    }
+  ],
+  "excluded": [
+    {
+      "repository": "apoorva1717/Intelligent-MDM-Pipeline",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "GodlyDonuts/sai-initiative",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "goodtime95/equity_strategist",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "JuneKim0712/research",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "daniish-ansarii/Python",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "Jaejuna/multilingual-parsing-book",
+      "reason": "private, invalid name or unsupported/unknown license"
+    },
+    {
+      "repository": "QandeelFatima04/NexaSearch",
+      "reason": "private, invalid name or unsupported/unknown license"
+    }
+  ],
+  "search_trace": [
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "python deduplicate list strings by stripped casefold key preserve first original order in:readme language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    },
+    {
+      "url": "https://api.github.com/search/repositories",
+      "params": {
+        "q": "text dedupe case-insensitive strip whitespace keep first occurrence Python in:name language:Python archived:false fork:false is:public",
+        "per_page": 10,
+        "sort": "stars"
+      }
+    }
+  ],
+  "source_run_id": "20261017T122029_79ed79b3"
+}

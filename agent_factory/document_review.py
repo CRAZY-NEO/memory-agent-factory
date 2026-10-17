@@ -9,10 +9,11 @@ import math
 from pathlib import Path
 
 from .document_contracts import (
+    EMAIL_BEHAVIORS,
     FIELD_BEHAVIORS,
-    MODELS,
     REFERENCE_BEHAVIORS,
     check_output,
+    models_for,
     parse_input,
 )
 from .models import CapabilityContract
@@ -22,35 +23,44 @@ from .task_base import TaskAdapter
 class DocumentReviewAdapter(TaskAdapter):
     """Two tasks share transport/evaluation, but keep independent typed contracts."""
 
-    def __init__(self, task):
+    def __init__(self, task, version='1'):
         self.id = task
+        self.version = str(version)
         fields = task == 'document_field_completeness'
+        if self.version != '1' and not (fields and self.version == '2'):
+            raise ValueError('Unsupported document contract version')
         self.filename = 'field_completeness.py' if fields else 'source_references.py'
-        self.config_file = 'config/' + task + '.json'
-        self.data_files = tuple('document_review/' + task + '/' + split + '.json' for split in ('validation', 'test'))
+        suffix = '_v2' if self.version == '2' else ''
+        self.config_file = 'config/' + task + suffix + '.json'
+        self.data_directory = task + suffix
+        self.data_files = tuple('document_review/' + self.data_directory + '/' + split + '.json' for split in ('validation', 'test'))
         self.metric = 'field_case_accuracy' if fields else 'reference_case_accuracy'
         self.latency_metric = 'field_p95_ms' if fields else 'reference_p95_ms'
         self.algorithm = 'field_presence' if fields else 'exact_citation'
-        input_model, output_model = MODELS[task]
+        input_model, output_model = models_for(task, self.version)
         payload_schema = input_model.model_json_schema()
         definitions = payload_schema.pop('$defs', {})
         self.contract = CapabilityContract(
-            task=task, domain='information_design', entrypoint='check_fields' if fields else 'check_references',
+            task=task, version=self.version, domain='information_design', entrypoint='check_fields' if fields else 'check_references',
             parameters=['payload'],
             input_schema={'type': 'object', '$defs': definitions, 'properties': {'payload': payload_schema},
                           'required': ['payload'], 'additionalProperties': False},
             output_schema=output_model.model_json_schema(),
-            behaviors=FIELD_BEHAVIORS if fields else REFERENCE_BEHAVIORS,
+            behaviors=(FIELD_BEHAVIORS[:2] + [
+                'Preserve record and required-field order. missing_fields contains precisely missing required keys. '
+                'complete means no missing required fields, independently of format validity. '
+                'Overall complete iff all record complete flags. Empty records is complete and valid. Never mutate inputs.'
+            ] + EMAIL_BEHAVIORS if self.version == '2' else FIELD_BEHAVIORS) if fields else REFERENCE_BEHAVIORS,
             environment='structured-review-v1')
         self.default_config = {
-            'task': task, 'algorithms': [self.algorithm], 'max_candidates': 1, 'max_repairs': 2,
+            'task': task, 'contract_version': self.version, 'algorithms': [self.algorithm], 'max_candidates': 1, 'max_repairs': 2,
             'metrics': {self.metric: {'min': 1.0}, self.latency_metric: {'max': 200}},
             'selection_order': [self.metric], 'timeout_seconds': 30}
 
     def load(self, directory, split, config=None):
         if split not in {'validation', 'test'}:
             raise ValueError('Unknown evaluation split')
-        path = Path(directory) / 'document_review' / self.id / (split + '.json')
+        path = Path(directory) / 'document_review' / self.data_directory / (split + '.json')
         rows = json.loads(path.read_text(encoding='utf-8'), parse_constant=lambda value: (_ for _ in ()).throw(ValueError('Nonfinite JSON')))
         if not isinstance(rows, list) or not rows:
             raise ValueError('Document evaluation needs nonempty labelled cases')
@@ -61,8 +71,8 @@ class DocumentReviewAdapter(TaskAdapter):
             if not isinstance(row['id'], str) or not row['id'] or not isinstance(row['category'], str):
                 raise ValueError('Invalid evaluation ID/category')
             ids.append(row['id'])
-            parse_input(self.id, row['payload'])
-            check_output(self.id, row['expected'], row['payload'])
+            parse_input(self.id, row['payload'], self.version)
+            check_output(self.id, row['expected'], row['payload'], self.version)
         if len(ids) != len(set(ids)):
             raise ValueError('Duplicate evaluation IDs')
         return None, rows
@@ -81,7 +91,7 @@ class DocumentReviewAdapter(TaskAdapter):
         if any(set(case) != {'case_id', 'payload'} for case in cases):
             raise ValueError('Only unlabelled payloads may enter document workers')
         for case in cases:
-            parse_input(self.id, case['payload'])
+            parse_input(self.id, case['payload'], self.version)
 
     def create_runtime(self, manifest, runner=None):
         from .runtime import _DocumentReviewer
@@ -95,8 +105,11 @@ class DocumentReviewAdapter(TaskAdapter):
 
     def example_input(self):
         if self.id == 'document_field_completeness':
-            return {'records': [{'record_id': 'company', 'fields': {'name': '示例公司', 'email': ''}}],
-                    'required_fields': ['name', 'email']}
+            result = {'records': [{'record_id': 'company', 'fields': {'name': '示例公司', 'email': ''}}],
+                      'required_fields': ['name', 'email']}
+            if self.version == '2':
+                result['field_formats'] = {'email': 'email'}
+            return result
         return {'sources': [{'source_id': 'doc', 'segments': [{'segment_id': 'p1', 'text': '示例公司'}]}],
                 'fields': [{'field_id': 'name', 'references': [{'source_id': 'doc', 'segment_id': 'p1',
                             'start': 0, 'end': 4, 'quote': '示例公司'}]}]}
@@ -114,7 +127,8 @@ class DocumentReviewAdapter(TaskAdapter):
         cases = [{'case_id': row['id'], 'payload': row['payload']} for row in examples]
         # Gold is retained exclusively in this trusted process. Three independent
         # executions check deterministic observations and mutation, not only scores.
-        runs = [runner.execute(code, cases, task=self.id) for _ in range(3)]
+        version_args = {'contract_version': self.version} if self.version != '1' else {}
+        runs = [runner.execute(code, cases, task=self.id, **version_args) for _ in range(3)]
         errors, diagnostics, per_case, durations, predictions = [], [], [], [], {}
         for run in runs:
             if 'error' in run:
@@ -136,7 +150,7 @@ class DocumentReviewAdapter(TaskAdapter):
                                             'error': observation.get('error_type', 'Error') + ': generated function failed'})
                     else:
                         try:
-                            checked = check_output(self.id, observation.get('result'), example['payload'])
+                            checked = check_output(self.id, observation.get('result'), example['payload'], self.version)
                             if result is None:
                                 result = checked
                             elif checked != result:

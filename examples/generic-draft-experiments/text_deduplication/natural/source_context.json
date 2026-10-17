@@ -1,0 +1,48 @@
+{
+  "local_components": [],
+  "repositories": [
+    {
+      "repository": "asmirrr/provenance",
+      "url": "https://github.com/asmirrr/provenance",
+      "commit": "f364390834cd916525e1b6c93bfbeff8deecfd4f",
+      "license": "MIT",
+      "source_functions": [
+        {
+          "path": "src/bm25.py",
+          "name": "tokenize",
+          "signature": "def tokenize(text)",
+          "code_excerpt": "def tokenize(text):\n    \"\"\"Casefold words; normalize numeric grouping, retaining decimal points.\n\n    No stop list, stemming, synonyms, units conversion, or sign interpretation.\n    Citation text is never modified by this search-only normalization.\n    \"\"\"\n    return [token.replace(\",\", \"\") for token in\n            re.findall(r\"\\d+(?:,\\d{3})*(?:\\.\\d+)?|[^\\W\\d_]+\", text.casefold())]\n",
+          "file_sha256": "21e0eb4abafa1a25c18a5efbddc2f63964e4ab42453f489b95ad14511c0a40a8"
+        },
+        {
+          "path": "src/evidence.py",
+          "name": "select_page_context",
+          "signature": "def select_page_context(document: ProcessedFiling, ranked_ids: list[str], *, max_chars: int=8000, policy: str='ranked-fit') -> dict",
+          "code_excerpt": "def select_page_context(document: ProcessedFiling, ranked_ids: list[str], *,\n                        max_chars: int = 8000, policy: str = \"ranked-fit\") -> dict:\n    \"\"\"Select whole pages in first-hit order, without access to evidence labels.\n\n    ranked-fit skips a page that cannot fit and continues to later candidates.\n    strict preserves the all-pages-or-error diagnostic policy.\n    \"\"\"\n    if max_chars < 1 or policy not in {\"strict\", \"ranked-fit\"}:\n        raise ValueError(\"Require positive context budget and a known page policy\")\n    validate_document(document)\n    chunks = {c.chunk_id: c for c in document.chunks}\n    if len(set(ranked_ids)) != len(ranked_ids) or any(cid not in chunks for cid in ranked_ids):\n        raise ValueError(\"Require unique known retrieved chunk IDs\")\n    pages = {p.page: p for p in document.pages}\n    first_hits = {}\n    for rank, cid in enumerate(ranked_ids, 1):\n        first_hits.setdefault(chunks[cid].page, rank)\n    required = sum(len(pages[p].text) for p in first_hits)\n    selected, omitted, used = [], [], 0\n    for page, rank in first_hits.items():\n        size = len(pages[page].text)\n        if policy == \"strict\" and required > max_chars:\n            reason = \"whole_request_over_budget\"\n        elif size > max_chars - used:\n            reason = \"page_exceeds_total_budget\" if size > max_chars else \"insufficient_remaining_budget\"\n        else:\n            selected.append(page)\n            used += size\n            continue\n        omitted.append({\"page\": page, \"first_rank\": rank, \"page_chars\": size,\n                        \"remaining_chars",
+          "file_sha256": "2cda9b50c2c991bd2048aa94bae5a956c93feadf70291db0120132844c31ed76"
+        },
+        {
+          "path": "src/evaluation.py",
+          "name": "evaluate_benchmark",
+          "signature": "def evaluate_benchmark(document: ProcessedFiling, benchmark: Benchmark) -> dict",
+          "code_excerpt": "def evaluate_benchmark(document: ProcessedFiling, benchmark: Benchmark) -> dict:\n    \"\"\"Expand each explicit evidence group into a context case, without retrieval.\n\n    Alternative support paths are separate cases, not independent questions.\n    Ground-truth mappings are draft annotations until reviewed by a human.\n    \"\"\"\n    bound = bind_benchmark(document, benchmark)\n    rows = []\n    for item in bound[\"items\"]:\n        for group in item[\"evidence_groups\"]:\n            anchors = group[\"evidence\"]\n            ids = group[\"supporting_chunk_ids\"]\n            target = anchors[-1]\n            target_ids = target[\"chunk_ids\"]\n            def contains(bundle):\n                return all(any(s[\"page\"] == a[\"page\"] and s[\"raw_start\"] <= a[\"raw_start\"]\n                               and s[\"raw_end\"] >= a[\"raw_end\"] for s in bundle[\"spans\"])\n                           for a in anchors)\n            try:\n                target_complete = contains(resolve_evidence(document, target_ids, context=\"page\", max_chars=8000))\n            except ValueError:\n                target_complete = False\n            try:\n                bundle = resolve_evidence(document, ids, context=\"page\", max_chars=8000)\n                explicit_complete, error = contains(bundle), None\n            except ValueError as exc:\n                explicit_complete, error = False, str(exc)\n            single = [c.chunk_id for c in document.chunks if all(\n                c.page == a[\"page\"] and c.raw_start <= a[\"raw_start\"] and c.raw_end >= a[\"raw_end\"]\n                for a in anchors)]\n            rows.append({\"case_id\": ",
+          "file_sha256": "500e9fe7532afc9122df88e7f506d64833a29c7150b6682e3ad9d738ba84f103"
+        }
+      ],
+      "licenses": [
+        {
+          "path": "LICENSE",
+          "text": "MIT License\n\nCopyright (c) 2026 Muhammad Asmir Khan\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+        }
+      ],
+      "executed_repository_code": false
+    }
+  ],
+  "errors": [
+    {
+      "repository": "mogesh-developer/NOLQERA",
+      "error": "Repository source snapshot exceeds file/byte budget"
+    }
+  ],
+  "untrusted_reference_evidence": true
+}

@@ -1,0 +1,199 @@
+{
+  "passed": true,
+  "technical_passed": true,
+  "examples_passed": true,
+  "failure_stage": null,
+  "business_verified": false,
+  "errors": [],
+  "example_authority": "model_proposed_not_independent_gold",
+  "example_matches": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "case_results": [
+    {
+      "case_id": "example_1",
+      "input": {
+        "texts": [
+          "apple",
+          " Apple ",
+          "banana",
+          "apple",
+          "   ",
+          "Banana"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "apple",
+          "banana"
+        ]
+      },
+      "actual": {
+        "texts": [
+          "apple",
+          "banana"
+        ]
+      },
+      "matched": true,
+      "first_difference": null,
+      "execution_error": null
+    },
+    {
+      "case_id": "example_2",
+      "input": {
+        "texts": []
+      },
+      "expected": {
+        "texts": []
+      },
+      "actual": {
+        "texts": []
+      },
+      "matched": true,
+      "first_difference": null,
+      "execution_error": null
+    },
+    {
+      "case_id": "example_3",
+      "input": {
+        "texts": [
+          "Hello World",
+          "hello world",
+          "HELLO WORLD",
+          " hello world "
+        ]
+      },
+      "expected": {
+        "texts": [
+          "Hello World"
+        ]
+      },
+      "actual": {
+        "texts": [
+          "Hello World"
+        ]
+      },
+      "matched": true,
+      "first_difference": null,
+      "execution_error": null
+    },
+    {
+      "case_id": "example_4",
+      "input": {
+        "texts": [
+          "a b",
+          "a  b",
+          "a\tb",
+          "\t",
+          "A B"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "a b",
+          "a  b",
+          "a\tb"
+        ]
+      },
+      "actual": {
+        "texts": [
+          "a b",
+          "a  b",
+          "a\tb"
+        ]
+      },
+      "matched": true,
+      "first_difference": null,
+      "execution_error": null
+    }
+  ],
+  "example_failures": [],
+  "observations": [
+    {
+      "case_id": "0",
+      "result": {
+        "texts": [
+          "apple",
+          "banana"
+        ]
+      },
+      "duration_ms": 0.0072080292738974094,
+      "mutated": false
+    },
+    {
+      "case_id": "1",
+      "result": {
+        "texts": []
+      },
+      "duration_ms": 0.0008330098353326321,
+      "mutated": false
+    },
+    {
+      "case_id": "2",
+      "result": {
+        "texts": [
+          "Hello World"
+        ]
+      },
+      "duration_ms": 0.00104197533801198,
+      "mutated": false
+    },
+    {
+      "case_id": "3",
+      "result": {
+        "texts": [
+          "a b",
+          "a  b",
+          "a\tb"
+        ]
+      },
+      "duration_ms": 0.0010830117389559746,
+      "mutated": false
+    },
+    {
+      "case_id": "4",
+      "result": {
+        "texts": [
+          "apple",
+          "banana"
+        ]
+      },
+      "duration_ms": 0.0008749775588512421,
+      "mutated": false
+    },
+    {
+      "case_id": "5",
+      "result": {
+        "texts": []
+      },
+      "duration_ms": 0.0014170072972774506,
+      "mutated": false
+    },
+    {
+      "case_id": "6",
+      "result": {
+        "texts": [
+          "Hello World"
+        ]
+      },
+      "duration_ms": 0.0005830079317092896,
+      "mutated": false
+    },
+    {
+      "case_id": "7",
+      "result": {
+        "texts": [
+          "a b",
+          "a  b",
+          "a\tb"
+        ]
+      },
+      "duration_ms": 0.0005830079317092896,
+      "mutated": false
+    }
+  ],
+  "independent_business_evaluation": "not_available"
+}

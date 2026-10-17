@@ -1,0 +1,401 @@
+{
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "runner": "docker",
+  "business_certified": false,
+  "no_new_production_task_adapter": true,
+  "protocol_sha256": "e4ba8d1588dae2cb4b6e5b3fd7d15b5f057260fad27a00d27460782e164f96a3",
+  "source_unchanged": true,
+  "tasks": [
+    {
+      "task": "word_frequency",
+      "passed": true,
+      "natural": {
+        "run_id": "20261017T121903_86613a6c",
+        "model_examples": 4,
+        "generation_revisions": 1,
+        "spec_review_rounds": 1,
+        "spec_review_acceptance": [
+          true
+        ],
+        "human_correct": 16,
+        "human_cases": 16,
+        "source_matches_model": true,
+        "zip_hashes_valid": true,
+        "no_human_case_ids_in_context": true,
+        "code_hash": "804cb3dabb066b0f187f1cce018059e7088ea38ad853f95eddf53a630b39a0e2",
+        "http_calls": [
+          {
+            "role": "component_router",
+            "http": true,
+            "error": null,
+            "thinking": "enabled"
+          },
+          {
+            "role": "draft_planner",
+            "http": true,
+            "error": null,
+            "thinking": "enabled"
+          },
+          {
+            "role": "draft_spec_reviewer",
+            "http": true,
+            "error": null,
+            "thinking": "enabled"
+          },
+          {
+            "role": "draft_coder",
+            "http": true,
+            "error": null,
+            "thinking": "disabled"
+          }
+        ],
+        "search_status": "searched",
+        "repositories": [
+          {
+            "repository": "necat101/python-counter-hapax-lab",
+            "commit": "ef5576903a24724307cf1b42c37d929c6b38049d",
+            "license": "MIT"
+          }
+        ],
+        "approved_versions": [],
+        "bindings": []
+      },
+      "repair": {
+        "run_id": "20261017T121957_01719425",
+        "model_examples": 4,
+        "generation_revisions": 2,
+        "spec_review_rounds": 1,
+        "spec_review_acceptance": [
+          true
+        ],
+        "human_correct": 16,
+        "human_cases": 16,
+        "source_matches_model": true,
+        "zip_hashes_valid": true,
+        "no_human_case_ids_in_context": true,
+        "code_hash": "f841ec4aa6cc38930e86d4f33f3e8b649826b17c110b9cdaa4d7f5c766863998",
+        "http_calls": [
+          {
+            "role": "draft_repairer",
+            "http": true,
+            "error": null,
+            "thinking": "disabled"
+          }
+        ],
+        "search_status": "replayed_original_search",
+        "repositories": [
+          {
+            "repository": "necat101/python-counter-hapax-lab",
+            "commit": "ef5576903a24724307cf1b42c37d929c6b38049d",
+            "license": "MIT"
+          }
+        ],
+        "fault": "increment_each_frequency_count",
+        "initial_failed_cases": 3,
+        "frozen_proposal_identical_to_natural": true
+      }
+    },
+    {
+      "task": "text_deduplication",
+      "passed": true,
+      "natural": {
+        "run_id": "20261017T122029_79ed79b3",
+        "model_examples": 4,
+        "generation_revisions": 1,
+        "spec_review_rounds": 2,
+        "spec_review_acceptance": [
+          false,
+          true
+        ],
+        "human_correct": 16,
+        "human_cases": 16,
+        "source_matches_model": true,
+        "zip_hashes_valid": true,
+        "no_human_case_ids_in_context": true,
+        "code_hash": "5b9994c476fa926128f51d8f260fc732bc1f725018dc5a094b3ddfbca2b64f14",
+        "http_calls": [
+          {
+            "role": "component_router",
+            "http": true,
+            "error": null,
+            "thinking": "enabled"
+          },
+          {
+            "role": "draft_planner",
+            "http": true,
+            "error": null,
+            "thinking": "enabled"
+          },
+          {
+            "role": "draft_spec_reviewer",
+            "http": true,
+            "error": null,
+            "thinking": "enabled"
+          },
+          {
+            "role": "draft_planner",
+            "http": true,
+            "error": null,
+            "thinking": "enabled"
+          },
+          {
+            "role": "draft_spec_reviewer",
+            "http": true,
+            "error": null,
+            "thinking": "enabled"
+          },
+          {
+            "role": "draft_coder",
+            "http": true,
+            "error": null,
+            "thinking": "disabled"
+          }
+        ],
+        "search_status": "searched",
+        "repositories": [
+          {
+            "repository": "asmirrr/provenance",
+            "commit": "f364390834cd916525e1b6c93bfbeff8deecfd4f",
+            "license": "MIT"
+          }
+        ],
+        "approved_versions": [],
+        "bindings": []
+      },
+      "repair": {
+        "run_id": "20261017T122246_891f3e2e",
+        "model_examples": 4,
+        "generation_revisions": 2,
+        "spec_review_rounds": 1,
+        "spec_review_acceptance": [
+          true
+        ],
+        "human_correct": 16,
+        "human_cases": 16,
+        "source_matches_model": true,
+        "zip_hashes_valid": true,
+        "no_human_case_ids_in_context": true,
+        "code_hash": "15d5401f36faa108e57c75c02d77cad45994d5bada6faa6602b5ef4c578fe872",
+        "http_calls": [
+          {
+            "role": "draft_repairer",
+            "http": true,
+            "error": null,
+            "thinking": "disabled"
+          }
+        ],
+        "search_status": "replayed_original_search",
+        "repositories": [
+          {
+            "repository": "asmirrr/provenance",
+            "commit": "f364390834cd916525e1b6c93bfbeff8deecfd4f",
+            "license": "MIT"
+          }
+        ],
+        "fault": "reverse_deduplicated_output",
+        "initial_failed_cases": 2,
+        "frozen_proposal_identical_to_natural": true
+      }
+    }
+  ],
+  "earlier_attempts": [
+    {
+      "workspace_label": "20261017T120647",
+      "tasks": [
+        {
+          "task": "word_frequency",
+          "natural_status": "draft",
+          "run_id": "20261017T120650_54061dde",
+          "whole_task_passed": true,
+          "routing_decision": {
+            "action": "draft",
+            "reason": "尚无可信业务验证规则；继续检索组件和公开来源、生成候选并执行基础检查。",
+            "task": "word_frequency",
+            "business_verified": false,
+            "unknown_requirements": [
+              "Word frequency counting with specific tokenization rules (ASCII letters only, lowercase, sorting by count then alphabetical)",
+              "Strict output schema {\"frequencies\": [{\"word\": string, \"count\": integer}]}",
+              "Use of execute(payload) -> dict interface",
+              "Pure Python standard library only"
+            ]
+          },
+          "error": null,
+          "failure_stage": null,
+          "final_errors": [],
+          "attempts": 1
+        },
+        {
+          "task": "text_deduplication",
+          "natural_status": "blocked",
+          "run_id": null,
+          "whole_task_passed": false,
+          "routing_decision": {
+            "action": "blocked",
+            "reason": "组件更新需要明确一个目标算法；多算法比较请使用原工厂生成入口。",
+            "unknown_requirements": [
+              "ambiguous_target_algorithm"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workspace_label": "20261017T120931",
+      "tasks": [
+        {
+          "task": "word_frequency",
+          "natural_status": "draft",
+          "run_id": "20261017T120940_a6324a26",
+          "whole_task_passed": true,
+          "routing_decision": {
+            "action": "draft",
+            "reason": "尚无可信业务验证规则；继续检索组件和公开来源、生成候选并执行基础检查。",
+            "task": "",
+            "business_verified": false,
+            "unknown_requirements": [
+              "Generate an English word frequency component with execute(payload) -> dict, input {\"text\": string}, output {\"frequencies\": [{\"word\": string, \"count\": positive integer}]}.",
+              "Words are strictly continuous ASCII English letters [A-Za-z]+, lowercased; digits, Chinese, apostrophes, hyphens, underscores, and other non-ASCII letters are separators.",
+              "Sort by count descending, then by lowercase word alphabetically.",
+              "Empty text or no English words returns empty frequencies list; do not modify input.",
+              "Use only pure Python standard library; no training, classification, or retrieval."
+            ]
+          },
+          "error": null,
+          "failure_stage": null,
+          "final_errors": [],
+          "attempts": 1
+        },
+        {
+          "task": "text_deduplication",
+          "natural_status": "draft_failed",
+          "run_id": "20261017T121109_65ab632e",
+          "whole_task_passed": false,
+          "routing_decision": {
+            "action": "draft",
+            "reason": "尚无可信业务验证规则；继续检索组件和公开来源、生成候选并执行基础检查。",
+            "task": "",
+            "business_verified": false,
+            "unknown_requirements": [
+              "生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {\"texts\": 字符串列表}，输出仅为 {\"texts\": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。"
+            ]
+          },
+          "error": null,
+          "failure_stage": null,
+          "final_errors": [
+            "proposed examples: output differs from model-authored expected result"
+          ],
+          "attempts": 3
+        }
+      ]
+    },
+    {
+      "workspace_label": "20261017T121335",
+      "tasks": [
+        {
+          "task": "word_frequency",
+          "natural_status": "draft_failed",
+          "run_id": "20261017T121341_093586f0",
+          "whole_task_passed": false,
+          "routing_decision": {
+            "action": "draft",
+            "reason": "尚无可信业务验证规则；继续检索组件和公开来源、生成候选并执行基础检查。",
+            "task": "",
+            "business_verified": false,
+            "unknown_requirements": [
+              "Generate an English word frequency component with execute(payload) -> dict, input {\"text\": string}, output {\"frequencies\": [{\"word\": string, \"count\": positive integer}]}.",
+              "Words are strictly continuous ASCII English letters [A-Za-z]+, lowercased; digits, Chinese, apostrophes, hyphens, underscores, and other non-ASCII letters are separators.",
+              "Sort by count descending, then by lowercase word alphabetically.",
+              "Empty text or no English words returns empty frequencies list; do not modify input.",
+              "Use only pure Python standard library; no training, classification, or retrieval."
+            ]
+          },
+          "error": null,
+          "failure_stage": "proposed_examples",
+          "final_errors": [
+            "proposed examples: output differs from model-authored expected result"
+          ],
+          "attempts": 3
+        },
+        {
+          "task": "text_deduplication",
+          "natural_status": "draft_failed",
+          "run_id": "20261017T121444_9c506cd3",
+          "whole_task_passed": false,
+          "routing_decision": {
+            "action": "draft",
+            "reason": "尚无可信业务验证规则；继续检索组件和公开来源、生成候选并执行基础检查。",
+            "task": "",
+            "business_verified": false,
+            "unknown_requirements": [
+              "生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {\"texts\": 字符串列表}，输出仅为 {\"texts\": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。"
+            ]
+          },
+          "error": null,
+          "failure_stage": "proposed_examples",
+          "final_errors": [
+            "proposed examples: output differs from model-authored expected result"
+          ],
+          "attempts": 3
+        }
+      ]
+    },
+    {
+      "workspace_label": "20261017T121621",
+      "tasks": [
+        {
+          "task": "word_frequency",
+          "natural_status": "draft_failed",
+          "run_id": "20261017T121628_45e5425a",
+          "whole_task_passed": false,
+          "routing_decision": {
+            "action": "draft",
+            "reason": "尚无可信业务验证规则；继续检索组件和公开来源、生成候选并执行基础检查。",
+            "task": "",
+            "business_verified": false,
+            "unknown_requirements": [
+              "生成英文词频统计组件，严格使用 execute(payload) -> dict。输入为 {\"text\": 字符串}，输出仅为 {\"frequencies\": [{\"word\": 字符串, \"count\": 正整数}]}。单词严格指连续 ASCII 英文字母 [A-Za-z]+，统一小写；数字、中文、撇号、连字符、下划线和其他非 ASCII 字母字符均作为分隔符。先按次数降序排列，同频按小写单词字母顺序排列。空文本或没有英文单词时返回空 frequencies 列表，不修改输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。"
+            ]
+          },
+          "error": "Specification needs clarification after bounded review: example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 5, \"actual_length\": 4}}; example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}",
+          "failure_stage": "specification",
+          "final_errors": [
+            "Specification needs clarification after bounded review: example_3 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"t\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"case\", \"count\": 1}, {\"word\": \"don\", \"count\": 1}, {\"word\": \"test\", \"count\": 1}, {\"word\": \"under\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 5, \"actual_length\": 4}}; example_6 planner/reviewer disagreement: {\"planner_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 2}]}, \"reviewer_expected\": {\"frequencies\": [{\"word\": \"a\", \"count\": 2}, {\"word\": \"aa\", \"count\": 1}, {\"word\": \"aa\", \"count\": 1}]}, \"first_difference\": {\"path\": \"$[\\\"frequencies\\\"]\", \"kind\": \"array_length\", \"expected_length\": 2, \"actual_length\": 3}}"
+          ],
+          "attempts": 0
+        },
+        {
+          "task": "text_deduplication",
+          "natural_status": "draft_failed",
+          "run_id": "20261017T121702_c28080f2",
+          "whole_task_passed": false,
+          "routing_decision": {
+            "action": "draft",
+            "reason": "尚无可信业务验证规则；继续检索组件和公开来源、生成候选并执行基础检查。",
+            "task": "",
+            "business_verified": false,
+            "unknown_requirements": [
+              "生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {\"texts\": 字符串列表}，输出仅为 {\"texts\": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。"
+            ]
+          },
+          "error": null,
+          "failure_stage": "proposed_examples",
+          "final_errors": [
+            "proposed examples: output differs from model-authored expected result"
+          ],
+          "attempts": 3
+        }
+      ]
+    }
+  ],
+  "actual_http_calls_final": 12,
+  "known_bad_spec_conflicts_caught": true,
+  "software_checks": {
+    "python_tests": 741,
+    "node_tests": 7,
+    "wheel_assets_and_isolated_install": true,
+    "reference_mode_ast_docker_smoke": true,
+    "note": "Original failed smoke/package attempts retained in local state; see experiment report.",
+    "component_lifecycle_and_three_docker_zip_exports": true
+  }
+}

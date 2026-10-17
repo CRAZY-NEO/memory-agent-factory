@@ -1,0 +1,128 @@
+# 候选组件报告
+
+需求：生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {"texts": 字符串列表}，输出仅为 {"texts": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。
+
+状态：draft
+
+此候选不进入已验证组件目录，也不会替换正在使用的版本。
+基础接口、安全和执行检查：True；提议示例一致性：True；独立业务验证：尚未提供。模型提议用例不等于可信评估。
+
+失败用例与差异：
+[]
+
+{
+  "title": "文本列表去重组件（strip+casefold 键，保留首个原文）",
+  "search_queries": [
+    "python deduplicate list strings by stripped casefold key preserve first original order",
+    "text dedupe case-insensitive strip whitespace keep first occurrence Python"
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "texts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "texts"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "texts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "texts"
+    ],
+    "additionalProperties": false
+  },
+  "assumptions": [
+    "输入 payload 必须是 dict 且包含 texts 键；texts 是字符串列表，忽略其他字段。",
+    "去重键为 text.strip().casefold()，strip 只去除首尾 Unicode 空白，casefold 用于大小写不敏感比较。",
+    "相同去重键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。",
+    "跳过 strip 后为空字符串的文本（如空串、纯空格、制表符或换行）。",
+    "不折叠内部空白、不移除标点、不做 Unicode 正规化（如 NFC/NFD 等）。",
+    "返回的 JSON 对象仅包含 texts 字段，不修改输入 payload。",
+    "texts 中每个元素都应为字符串，否则会抛出 AttributeError/TypeError。"
+  ],
+  "limitations": [
+    "不处理非字符串元素；若 texts 中包含非字符串将抛出 AttributeError/TypeError。",
+    "仅按字符串键精确去重，不进行语义去重、模糊匹配、分类或检索。",
+    "casefold 可能将某些 Unicode 字符扩展为多个字符（例如 ß→ss），这不等同于 Unicode 正规化，但会按全小写扩展结果比较。",
+    "需要将输入列表完整加载到内存中，内存占用与输入规模线性相关。",
+    "仅作为纯 JSON 变换组件运行，不访问网络、文件系统或外部服务。",
+    "空输入或全部文本仅含空白时返回 {\"texts\": []}。",
+    "输出字段固定为 texts，不保留输入 payload 中的其他字段。"
+  ],
+  "examples": [
+    {
+      "input": {
+        "texts": [
+          "apple",
+          " Apple ",
+          "banana",
+          "apple",
+          "   ",
+          "Banana"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "apple",
+          "banana"
+        ]
+      }
+    },
+    {
+      "input": {
+        "texts": []
+      },
+      "expected": {
+        "texts": []
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "Hello World",
+          "hello world",
+          "HELLO WORLD",
+          " hello world "
+        ]
+      },
+      "expected": {
+        "texts": [
+          "Hello World"
+        ]
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "a b",
+          "a  b",
+          "a\tb",
+          "\t",
+          "A B"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "a b",
+          "a  b",
+          "a\tb"
+        ]
+      }
+    }
+  ]
+}

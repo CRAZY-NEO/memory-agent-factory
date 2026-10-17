@@ -1,0 +1,603 @@
+{
+  "saved_source_matches_real_model_response": true,
+  "source_matches_zip": true,
+  "zip_artifact_hashes_valid": true,
+  "human_evaluation": {
+    "case_count": 16,
+    "correct": 16,
+    "passed": true,
+    "cases": [
+      {
+        "id": "wf01",
+        "input": {
+          "text": ""
+        },
+        "expected": {
+          "frequencies": []
+        },
+        "actual": {
+          "frequencies": []
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf02",
+        "input": {
+          "text": " \n\t !!! 123 中文"
+        },
+        "expected": {
+          "frequencies": []
+        },
+        "actual": {
+          "frequencies": []
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf03",
+        "input": {
+          "text": "Hello HELLO world"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf04",
+        "input": {
+          "text": "zoo Apple zoo apple banana"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 2
+            },
+            {
+              "word": "zoo",
+              "count": 2
+            },
+            {
+              "word": "banana",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 2
+            },
+            {
+              "word": "zoo",
+              "count": 2
+            },
+            {
+              "word": "banana",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf05",
+        "input": {
+          "text": "Don't re-use snake_case"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "don",
+              "count": 1
+            },
+            {
+              "word": "re",
+              "count": 1
+            },
+            {
+              "word": "snake",
+              "count": 1
+            },
+            {
+              "word": "t",
+              "count": 1
+            },
+            {
+              "word": "use",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "don",
+              "count": 1
+            },
+            {
+              "word": "re",
+              "count": 1
+            },
+            {
+              "word": "snake",
+              "count": 1
+            },
+            {
+              "word": "t",
+              "count": 1
+            },
+            {
+              "word": "use",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf06",
+        "input": {
+          "text": "abc123DEF 9xy"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "abc",
+              "count": 1
+            },
+            {
+              "word": "def",
+              "count": 1
+            },
+            {
+              "word": "xy",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "abc",
+              "count": 1
+            },
+            {
+              "word": "def",
+              "count": 1
+            },
+            {
+              "word": "xy",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf07",
+        "input": {
+          "text": "中文Agent中文AGENT 单词memory"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "agent",
+              "count": 2
+            },
+            {
+              "word": "memory",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "agent",
+              "count": 2
+            },
+            {
+              "word": "memory",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf08",
+        "input": {
+          "text": "éclair café naïve"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "caf",
+              "count": 1
+            },
+            {
+              "word": "clair",
+              "count": 1
+            },
+            {
+              "word": "na",
+              "count": 1
+            },
+            {
+              "word": "ve",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "caf",
+              "count": 1
+            },
+            {
+              "word": "clair",
+              "count": 1
+            },
+            {
+              "word": "na",
+              "count": 1
+            },
+            {
+              "word": "ve",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf09",
+        "input": {
+          "text": "B a b A c b"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "b",
+              "count": 3
+            },
+            {
+              "word": "a",
+              "count": 2
+            },
+            {
+              "word": "c",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "b",
+              "count": 3
+            },
+            {
+              "word": "a",
+              "count": 2
+            },
+            {
+              "word": "c",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf10",
+        "input": {
+          "text": "A_a-a'a"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "a",
+              "count": 4
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "a",
+              "count": 4
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf11",
+        "input": {
+          "text": "one\nTWO\tone\rtwo three"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "one",
+              "count": 2
+            },
+            {
+              "word": "two",
+              "count": 2
+            },
+            {
+              "word": "three",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "one",
+              "count": 2
+            },
+            {
+              "word": "two",
+              "count": 2
+            },
+            {
+              "word": "three",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf12",
+        "input": {
+          "text": "DOG dog. DOG! cat?"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "dog",
+              "count": 3
+            },
+            {
+              "word": "cat",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "dog",
+              "count": 3
+            },
+            {
+              "word": "cat",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf13",
+        "input": {
+          "text": "x xX xx X"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "x",
+              "count": 2
+            },
+            {
+              "word": "xx",
+              "count": 2
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "x",
+              "count": 2
+            },
+            {
+              "word": "xx",
+              "count": 2
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf14",
+        "input": {
+          "text": "I İ i ı"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "i",
+              "count": 2
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "i",
+              "count": 2
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf15",
+        "input": {
+          "text": "foo/foo\\bar:BAR"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "bar",
+              "count": 2
+            },
+            {
+              "word": "foo",
+              "count": 2
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "bar",
+              "count": 2
+            },
+            {
+              "word": "foo",
+              "count": 2
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      },
+      {
+        "id": "wf16",
+        "input": {
+          "text": "alpha beta alpha gamma beta alpha delta"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "alpha",
+              "count": 3
+            },
+            {
+              "word": "beta",
+              "count": 2
+            },
+            {
+              "word": "delta",
+              "count": 1
+            },
+            {
+              "word": "gamma",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "alpha",
+              "count": 3
+            },
+            {
+              "word": "beta",
+              "count": 2
+            },
+            {
+              "word": "delta",
+              "count": 1
+            },
+            {
+              "word": "gamma",
+              "count": 1
+            }
+          ]
+        },
+        "difference": null,
+        "mutated": false,
+        "error": null,
+        "passed": true
+      }
+    ],
+    "authority": "human_expected_outputs_frozen_before_api_execution",
+    "feedback_sent_to_model": false
+  },
+  "business_verified": false
+}

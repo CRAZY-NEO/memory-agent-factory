@@ -1,0 +1,6 @@
+{
+  "component": "company-review",
+  "description": "在现有字段完整性组件上新增邮箱格式检查，保留原有空值与顺序规则。",
+  "parameters": {"required_fields": ["name", "email"], "field_formats": {"email": "email"}},
+  "allow_contract_change": true
+}

@@ -12,12 +12,22 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import Field
 
+from .component_models import (
+    RULES,
+    ActivationRequest,
+    ComponentFeedback,
+    ComponentImport,
+    ComponentRequest,
+    RollbackRequest,
+    SlotInvocation,
+)
+from .component_store import ComponentStore
 from .demo_session import DemoSession
 from .exporting import export_run
 from .jobs import JobStore, QueueFull
 from .models import Contract, Memory
 from .providers import REAL_PROVIDERS
-from .tasks import TASKS, task_catalog, task_spec
+from .tasks import TASK_VERSIONS, TASKS, task_catalog, task_spec
 
 RUN_PATTERN = r"^\d{8}T\d{6}_[0-9a-f]{8}$"
 
@@ -35,6 +45,10 @@ class DiscoverySubmission(Contract):
     """Source discovery has its own policy; do not silently accept factory controls."""
 
     description: str = Field(min_length=5, max_length=6000)
+
+
+class DraftInvocation(Contract):
+    input: dict
 
 
 class CapabilityInvocation(Contract):
@@ -242,7 +256,67 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
 
     @app.get('/v1/capabilities', dependencies=[Depends(authenticate)])
     def capabilities():
-        return {'capabilities': task_catalog()}
+        return {'capabilities': task_catalog(),
+                'contract_versions': [adapter.contract.model_dump() for adapter in TASK_VERSIONS.values()]}
+
+    @app.get('/v1/components', dependencies=[Depends(authenticate)])
+    def component_catalog():
+        from .drafts import draft_records
+        catalog = ComponentStore(workspace)
+        return {'drafts': draft_records(workspace), 'versions': catalog.versions(), 'bindings': catalog.bindings(),
+                'rules': [{'id': uid, 'task': task, 'contract_version': version, 'description': text}
+                          for uid, (task, version, text) in RULES.items()]}
+
+    @app.get('/v1/components/history', dependencies=[Depends(authenticate)])
+    def component_history(slot: str | None = Query(default=None, pattern=r'^[a-z][a-z0-9_-]{0,79}$')):
+        return {'events': ComponentStore(workspace).history(slot)}
+
+    @app.post('/v1/components/drafts/{run_id}/invoke', status_code=202, dependencies=[Depends(authenticate)])
+    def try_draft(run_id: str, body: DraftInvocation):
+        run_directory(run_id)
+        return submit('component_draft_invoke', {'run_id': run_id, 'input': body.input})
+
+    @app.post('/v1/components/plan', status_code=202, dependencies=[Depends(authenticate)])
+    def plan_component(body: ComponentRequest):
+        return submit('component_plan', body.model_dump())
+
+    @app.post('/v1/components/ensure', status_code=202, dependencies=[Depends(authenticate)])
+    def ensure_component(body: ComponentRequest):
+        return submit('component_ensure', body.model_dump())
+
+    @app.post('/v1/components/import', status_code=202, dependencies=[Depends(authenticate)])
+    def import_component(body: ComponentImport):
+        run_directory(body.run_id)
+        return submit('component_import', body.model_dump())
+
+    def checked_slot(slot):
+        try:
+            return ComponentStore.name(slot)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get('/v1/components/slots/{slot}', dependencies=[Depends(authenticate)])
+    def component_slot(slot: str):
+        binding = ComponentStore(workspace).binding(checked_slot(slot))
+        if binding is None:
+            raise HTTPException(status_code=404, detail='Slot is not active')
+        return binding
+
+    @app.post('/v1/components/slots/{slot}/activate', status_code=202, dependencies=[Depends(authenticate)])
+    def activate_component(slot: str, body: ActivationRequest):
+        return submit('component_activate', {'slot': checked_slot(slot), **body.model_dump()})
+
+    @app.post('/v1/components/slots/{slot}/rollback', status_code=202, dependencies=[Depends(authenticate)])
+    def rollback_component(slot: str, body: RollbackRequest):
+        return submit('component_rollback', {'slot': checked_slot(slot), **body.model_dump()})
+
+    @app.post('/v1/components/slots/{slot}/invoke', status_code=202, dependencies=[Depends(authenticate)])
+    def invoke_component_slot(slot: str, body: SlotInvocation):
+        return submit('component_invoke', {'slot': checked_slot(slot), **body.model_dump()})
+
+    @app.post('/v1/components/slots/{slot}/feedback', status_code=202, dependencies=[Depends(authenticate)])
+    def component_feedback(slot: str, body: ComponentFeedback):
+        return submit('component_feedback', {'slot': checked_slot(slot), **body.model_dump()})
 
     @app.post('/v1/capabilities/invoke', status_code=202, dependencies=[Depends(authenticate)])
     def invoke_capability(body: CapabilityInvocation):
@@ -331,10 +405,18 @@ def create_app(workspace=None, token=None, bootstrap_ticket=None):
     def download(run_id: str, filename: str):
         if filename not in {*(adapter.selected_filename for adapter in TASKS.values()),
                             'capability_contract.json', 'plugin.json', 'report.json', 'report.md',
+                            'component-comparison.json', 'component-change.diff',
+                            'candidate.py', 'candidate.zip', 'draft_spec.json', 'draft_checks.json', 'draft_manifest.json',
                             'routing.json', 'search_results.json', 'proposal.json', 'source_context.json', 'source_contract.json', 'extracted_repository.json'}:
             raise HTTPException(status_code=404, detail='Artifact not found')
         if filename == 'report.json':
             return JSONResponse(report(run_id), headers={'Content-Disposition': 'attachment; filename="report.json"'})
+        if filename == 'candidate.zip':
+            directory = run_directory(run_id)
+            path = directory / filename
+            if path.is_symlink() or not path.is_file():
+                raise HTTPException(status_code=404, detail='Candidate bundle not ready')
+            return FileResponse(path, filename=run_id + '-candidate.zip', media_type='application/zip')
         return artifact(run_id, filename, filename)
 
     @app.get('/v1/runs/{run_id}/code/{algorithm}/{revision}', dependencies=[Depends(authenticate)])

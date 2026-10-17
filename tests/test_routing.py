@@ -54,6 +54,8 @@ def test_variant_is_not_substituted_and_offline_discovery_is_explicit(workspace)
     ('复刻 Sorensen Dice 用于技术记忆检索', ['Sorensen Dice']),
     ('Use BM25Plus for retrieval', []),  # Outside the conservative grammar; semantic role still handles it.
     ('使用 MySQL 排查记录作为技术记忆库', []),
+    ('生成组件，使用 execute(payload)，用 text.strip().casefold() 处理文本', []),
+    ('复刻 BM25Plus(query)，使用 execute(payload) 作为接口', ['BM25Plus']),
     ('为技术笔记生成检索算法，输入 query 和 memories', [])])
 def test_literal_anchors_have_bounded_business_scope(description, names):
     assert explicit_method_names(description, load_registry().catalog()['algorithms']) == names

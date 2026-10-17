@@ -50,7 +50,9 @@ jobs:
       - name: Check Python and browser JavaScript
         run: |
           .venv/bin/ruff check agent_factory tests scripts
+          node --check agent_factory/web/job-status.js
           node --check agent_factory/web/app.js
+          node --check agent_factory/web/components.js
 
       - name: Run isolated tests
         run: bash scripts/run_tests.sh -q --junitxml=state/ci/tests.xml
@@ -74,6 +76,10 @@ jobs:
       - name: Exercise retrieval to classification transfer and standalone ZIP exports
         timeout-minutes: 6
         run: .venv/bin/python scripts/smoke_transfer.py state/ci/transfer
+
+      - name: Exercise component reuse, update, regression, rollback and portable exports
+        timeout-minutes: 6
+        run: .venv/bin/python scripts/run_component_demo.py --provider mock --runner docker --workspace state/ci/components --verify-exports
 
       - name: Upload test results and workflow diagnostics
         if: ${{ always() }}

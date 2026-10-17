@@ -71,6 +71,10 @@ def explicit_method_names(description, catalog):
             if name.casefold() in ignored:
                 continue
             known = next((row['id'] for row in catalog if canonical(name) in aliases(row)), None)
+            start = description.find(name, match.start(1), match.end(1))
+            tail = description[start + len(name):] if start >= 0 else ''
+            if not known and name.isalpha() and name.islower() and re.match(r'\s*[.(]', tail):
+                continue  # execute(payload) and text.strip() are code symbols, not algorithm names.
             if known and known not in identities and any(row[0] == known for row in spans):
                 continue
             requested.append(known or name)

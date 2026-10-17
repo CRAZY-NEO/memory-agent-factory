@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "scope": "Two new pure-JSON tasks through the existing generic draft factory; no new production task adapter or complete template.",
+  "cases_authority": "human-authored before API execution; expected outputs never supplied to planner/coder/repairer",
+  "repair_design": "Natural generation is recorded unchanged. A separate replay injects a declared output fault into that actual generated source; frozen model-proposed examples drive real DeepSeek repair. Human cases run only after the candidate is frozen.",
+  "business_certification": false,
+  "tasks": [
+    {
+      "id": "word_frequency",
+      "description": "生成英文词频统计组件，严格使用 execute(payload) -> dict。输入为 {\"text\": 字符串}，输出仅为 {\"frequencies\": [{\"word\": 字符串, \"count\": 正整数}]}。单词严格指连续 ASCII 英文字母 [A-Za-z]+，统一小写；数字、中文、撇号、连字符、下划线和其他非 ASCII 字母字符均作为分隔符。先按次数降序排列，同频按小写单词字母顺序排列。空文本或没有英文单词时返回空 frequencies 列表，不修改输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。",
+      "fault": "increment_each_frequency_count",
+      "cases": [
+        {"id": "wf01", "input": {"text": ""}, "expected": {"frequencies": []}},
+        {"id": "wf02", "input": {"text": " \n\t !!! 123 中文"}, "expected": {"frequencies": []}},
+        {"id": "wf03", "input": {"text": "Hello HELLO world"}, "expected": {"frequencies": [{"word": "hello", "count": 2}, {"word": "world", "count": 1}]}},
+        {"id": "wf04", "input": {"text": "zoo Apple zoo apple banana"}, "expected": {"frequencies": [{"word": "apple", "count": 2}, {"word": "zoo", "count": 2}, {"word": "banana", "count": 1}]}},
+        {"id": "wf05", "input": {"text": "Don't re-use snake_case"}, "expected": {"frequencies": [{"word": "case", "count": 1}, {"word": "don", "count": 1}, {"word": "re", "count": 1}, {"word": "snake", "count": 1}, {"word": "t", "count": 1}, {"word": "use", "count": 1}]}},
+        {"id": "wf06", "input": {"text": "abc123DEF 9xy"}, "expected": {"frequencies": [{"word": "abc", "count": 1}, {"word": "def", "count": 1}, {"word": "xy", "count": 1}]}},
+        {"id": "wf07", "input": {"text": "中文Agent中文AGENT 单词memory"}, "expected": {"frequencies": [{"word": "agent", "count": 2}, {"word": "memory", "count": 1}]}},
+        {"id": "wf08", "input": {"text": "éclair café naïve"}, "expected": {"frequencies": [{"word": "caf", "count": 1}, {"word": "clair", "count": 1}, {"word": "na", "count": 1}, {"word": "ve", "count": 1}]}},
+        {"id": "wf09", "input": {"text": "B a b A c b"}, "expected": {"frequencies": [{"word": "b", "count": 3}, {"word": "a", "count": 2}, {"word": "c", "count": 1}]}},
+        {"id": "wf10", "input": {"text": "A_a-a'a"}, "expected": {"frequencies": [{"word": "a", "count": 4}]}},
+        {"id": "wf11", "input": {"text": "one\nTWO\tone\rtwo three"}, "expected": {"frequencies": [{"word": "one", "count": 2}, {"word": "two", "count": 2}, {"word": "three", "count": 1}]}},
+        {"id": "wf12", "input": {"text": "DOG dog. DOG! cat?"}, "expected": {"frequencies": [{"word": "dog", "count": 3}, {"word": "cat", "count": 1}]}},
+        {"id": "wf13", "input": {"text": "x xX xx X"}, "expected": {"frequencies": [{"word": "x", "count": 2}, {"word": "xx", "count": 2}]}},
+        {"id": "wf14", "input": {"text": "I İ i ı"}, "expected": {"frequencies": [{"word": "i", "count": 2}]}},
+        {"id": "wf15", "input": {"text": "foo/foo\\bar:BAR"}, "expected": {"frequencies": [{"word": "bar", "count": 2}, {"word": "foo", "count": 2}]}},
+        {"id": "wf16", "input": {"text": "alpha beta alpha gamma beta alpha delta"}, "expected": {"frequencies": [{"word": "alpha", "count": 3}, {"word": "beta", "count": 2}, {"word": "delta", "count": 1}, {"word": "gamma", "count": 1}]}}
+      ]
+    },
+    {
+      "id": "text_deduplication",
+      "description": "生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {\"texts\": 字符串列表}，输出仅为 {\"texts\": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。",
+      "fault": "reverse_deduplicated_output",
+      "cases": [
+        {"id": "td01", "input": {"texts": []}, "expected": {"texts": []}},
+        {"id": "td02", "input": {"texts": ["a", "b", "a"]}, "expected": {"texts": ["a", "b"]}},
+        {"id": "td03", "input": {"texts": [" A ", "a", "B", " b ", ""]}, "expected": {"texts": [" A ", "B"]}},
+        {"id": "td04", "input": {"texts": [" \t", "\n", "", "  "]}, "expected": {"texts": []}},
+        {"id": "td05", "input": {"texts": ["Straße", "STRASSE", "straße"]}, "expected": {"texts": ["Straße"]}},
+        {"id": "td06", "input": {"texts": ["Memory", "MEMORY", " memory ", "MemoRy"]}, "expected": {"texts": ["Memory"]}},
+        {"id": "td07", "input": {"texts": ["a-b", "a b", "a_b", "a-b"]}, "expected": {"texts": ["a-b", "a b", "a_b"]}},
+        {"id": "td08", "input": {"texts": ["  原文  ", "原文", "另一条", " 另一条 "]}, "expected": {"texts": ["  原文  ", "另一条"]}},
+        {"id": "td09", "input": {"texts": ["É", "é", "E", "e"]}, "expected": {"texts": ["É", "E"]}},
+        {"id": "td10", "input": {"texts": ["a\nb", "a\nb", "a b", " A\nB "]}, "expected": {"texts": ["a\nb", "a b"]}},
+        {"id": "td11", "input": {"texts": ["Ａ", "a", "Ａ", "A"]}, "expected": {"texts": ["Ａ", "a"]}},
+        {"id": "td12", "input": {"texts": ["é", "é", "É", "É"]}, "expected": {"texts": ["é", "é"]}},
+        {"id": "td13", "input": {"texts": ["one", "two", "three", "two", "ONE"]}, "expected": {"texts": ["one", "two", "three"]}},
+        {"id": "td14", "input": {"texts": ["0", "false", "null", "0", " FALSE "]}, "expected": {"texts": ["0", "false", "null"]}},
+        {"id": "td15", "input": {"texts": ["name.", "name", "NAME.", " name "]}, "expected": {"texts": ["name.", "name"]}},
+        {"id": "td16", "input": {"texts": [" 　 ", "x", "　X　", "\tY\n", "y"]}, "expected": {"texts": ["x", "\tY\n"]}}
+      ]
+    }
+  ]
+}

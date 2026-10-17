@@ -1,0 +1,202 @@
+{
+  "title": "英文词频统计组件",
+  "search_queries": [
+    "python word frequency count regex ascii letters",
+    "sort word frequency descending alphabetical python"
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "text"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "frequencies": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "word": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "word",
+            "count"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "frequencies"
+    ],
+    "additionalProperties": false
+  },
+  "assumptions": [
+    "输入 payload 必须为字典且包含字符串键 text，否则组件行为未定义。",
+    "单词定义为连续的一个或多个 ASCII 英文字母 [A-Za-z]+，匹配时统一转为小写。",
+    "所有非 ASCII 英文字母的字符（包括数字、中文、撇号、连字符、下划线、空格、标点等）均视为分隔符。",
+    "输出按 count 降序排列；count 相同时按 word 的字母顺序（Python 默认字符串比较）升序排列。",
+    "空字符串或没有任何英文单词的文本返回空 frequencies 列表。",
+    "输入文本不会被修改，组件仅返回新构建的结果字典。"
+  ],
+  "limitations": [
+    "仅支持纯 Python 标准库（re、collections 等），不依赖任何第三方库。",
+    "不处理 Unicode 字母（如带重音字符、希腊字母、西里尔字母等），它们会被当作分隔符。",
+    "不进行词形还原、停用词过滤或任何自然语言处理。",
+    "不涉及网络、文件系统或外部服务，仅做内存中的纯文本转换。",
+    "对于极大文本，内存占用与不同单词数量成正比，但未做流式优化。",
+    "输出中的 word 均为小写 ASCII 字母字符串，count 为正整数。"
+  ],
+  "examples": [
+    {
+      "input": {
+        "text": "Hello, world! Hello everyone."
+      },
+      "expected": {
+        "frequencies": [
+          {
+            "word": "hello",
+            "count": 2
+          },
+          {
+            "word": "everyone",
+            "count": 1
+          },
+          {
+            "word": "world",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "text": "apple banana apple cherry banana apple"
+      },
+      "expected": {
+        "frequencies": [
+          {
+            "word": "apple",
+            "count": 3
+          },
+          {
+            "word": "banana",
+            "count": 2
+          },
+          {
+            "word": "cherry",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "text": "Hello123world, test-case and under_score"
+      },
+      "expected": {
+        "frequencies": [
+          {
+            "word": "and",
+            "count": 1
+          },
+          {
+            "word": "case",
+            "count": 1
+          },
+          {
+            "word": "hello",
+            "count": 1
+          },
+          {
+            "word": "test",
+            "count": 1
+          },
+          {
+            "word": "under",
+            "count": 1
+          },
+          {
+            "word": "world",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "text": "   "
+      },
+      "expected": {
+        "frequencies": []
+      }
+    },
+    {
+      "input": {
+        "text": "123 456 中文 日本語"
+      },
+      "expected": {
+        "frequencies": []
+      }
+    },
+    {
+      "input": {
+        "text": "The quick brown fox jumps over the lazy dog. The dog barks."
+      },
+      "expected": {
+        "frequencies": [
+          {
+            "word": "the",
+            "count": 3
+          },
+          {
+            "word": "dog",
+            "count": 2
+          },
+          {
+            "word": "barks",
+            "count": 1
+          },
+          {
+            "word": "brown",
+            "count": 1
+          },
+          {
+            "word": "fox",
+            "count": 1
+          },
+          {
+            "word": "jumps",
+            "count": 1
+          },
+          {
+            "word": "lazy",
+            "count": 1
+          },
+          {
+            "word": "over",
+            "count": 1
+          },
+          {
+            "word": "quick",
+            "count": 1
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -28,7 +28,8 @@ async function main() {
     await page.getByText("访问密钥无效，请重新连接。", { exact: true }).waitFor();
     await page.locator("#token").fill(token);
     await page.locator("#connect").click();
-    await page.locator("#submit:enabled").waitFor();
+    await page.locator("#component-ensure:enabled").waitFor();
+    if (await page.locator("#research-tools").getAttribute("open") === null) await page.locator("#research-tools > summary").click();
     assert.equal(await page.locator("#token").inputValue(), "");
     assert(await page.evaluate(() => localStorage.length === 0 && sessionStorage.length === 0));
     await page.locator("#example").click();

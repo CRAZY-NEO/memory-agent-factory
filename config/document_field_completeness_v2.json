@@ -1,0 +1,21 @@
+{
+  "task": "document_field_completeness",
+  "contract_version": "2",
+  "algorithms": [
+    "field_presence"
+  ],
+  "max_candidates": 1,
+  "max_repairs": 2,
+  "metrics": {
+    "field_case_accuracy": {
+      "min": 1.0
+    },
+    "field_p95_ms": {
+      "max": 200
+    }
+  },
+  "selection_order": [
+    "field_case_accuracy"
+  ],
+  "timeout_seconds": 30
+}

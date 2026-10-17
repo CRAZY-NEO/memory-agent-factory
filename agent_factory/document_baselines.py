@@ -39,5 +39,29 @@ REFERENCES = """def check_references(payload):
 """
 
 
-def baseline(task):
+FORMATTED_FIELD = '''import re
+
+def check_fields(payload):
+    rows = []
+    for record in payload['records']:
+        missing = []
+        for key in payload['required_fields']:
+            value = record['fields'].get(key)
+            if value is None or isinstance(value, str) and not value.strip() or isinstance(value, (list, dict)) and not value:
+                missing.append(key)
+        invalid = []
+        for key in payload.get('field_formats', {}):
+            value = record['fields'].get(key)
+            absent = value is None or isinstance(value, str) and not value.strip() or isinstance(value, (list, dict)) and not value
+            if not absent and (not isinstance(value, str) or re.fullmatch(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+', value) is None):
+                invalid.append(key)
+        rows.append({'record_id': record['record_id'], 'missing_fields': missing, 'complete': not missing,
+                     'invalid_fields': invalid, 'valid': not missing and not invalid})
+    return {'records': rows, 'complete': all(row['complete'] for row in rows), 'valid': all(row['valid'] for row in rows)}
+'''
+
+
+def baseline(task, version='1'):
+    if task == 'document_field_completeness' and str(version) == '2':
+        return FORMATTED_FIELD
     return {'document_field_completeness': FIELD, 'document_source_references': REFERENCES}[task]

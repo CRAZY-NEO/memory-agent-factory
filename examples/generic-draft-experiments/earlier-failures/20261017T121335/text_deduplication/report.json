@@ -1,0 +1,1650 @@
+{
+  "kind": "component_draft",
+  "run_id": "20261017T121444_9c506cd3",
+  "status": "draft_failed",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "runner": "docker",
+  "request": {
+    "description": "生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {\"texts\": 字符串列表}，输出仅为 {\"texts\": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。",
+    "task": "python_draft"
+  },
+  "proposal": {
+    "title": "文本列表去重组件",
+    "search_queries": [
+      "python list deduplicate casefold strip preserve order",
+      "python remove duplicate strings case insensitive strip whitespace"
+    ],
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "texts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "texts"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "texts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "texts"
+      ],
+      "additionalProperties": false
+    },
+    "assumptions": [
+      "输入 texts 必须是字符串列表；非字符串元素会导致类型错误。",
+      "去重键为 text.strip().casefold()，即先去除两端空白，再转换为小写（Unicode 大小写折叠）。",
+      "strip 后为空的文本会被跳过，不包含在输出中。",
+      "相同去重键只保留第一次出现的原始字符串，保留其原始空白和大小写。",
+      "输出顺序与输入中首次出现的顺序一致。",
+      "只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。",
+      "空输入列表返回空列表。",
+      "不修改原始输入列表。"
+    ],
+    "limitations": [
+      "仅支持字符串列表，不支持其他可迭代对象或混合类型。",
+      "去重基于 Unicode casefold，可能将某些视觉上不同的字符视为相同（如 'ß' 和 'ss'）。",
+      "不处理嵌套列表或非字符串元素。",
+      "不进行语义去重或模糊匹配。",
+      "不保留被跳过空字符串的位置。",
+      "仅使用 Python 标准库，无外部依赖。"
+    ],
+    "examples": [
+      {
+        "input": {
+          "texts": [
+            "Apple",
+            "banana",
+            "apple",
+            "Banana",
+            "cherry"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Apple",
+            "banana",
+            "cherry"
+          ]
+        }
+      },
+      {
+        "input": {
+          "texts": [
+            "  Hello  ",
+            "hello",
+            "Hello",
+            "  hello  ",
+            "world"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "  Hello  ",
+            "world"
+          ]
+        }
+      },
+      {
+        "input": {
+          "texts": [
+            "",
+            "   ",
+            "apple",
+            "banana",
+            "apple"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        }
+      },
+      {
+        "input": {
+          "texts": [
+            "Straße",
+            "STRASSE",
+            "straße",
+            "strasse"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Straße",
+            "strasse"
+          ]
+        }
+      },
+      {
+        "input": {
+          "texts": []
+        },
+        "expected": {
+          "texts": []
+        }
+      },
+      {
+        "input": {
+          "texts": [
+            "a",
+            "A",
+            " a ",
+            "b",
+            "B",
+            " b "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    ]
+  },
+  "checks": {
+    "passed": false,
+    "technical_passed": true,
+    "examples_passed": false,
+    "failure_stage": "proposed_examples",
+    "business_verified": false,
+    "errors": [
+      "proposed examples: output differs from model-authored expected result"
+    ],
+    "example_authority": "model_proposed_not_independent_gold",
+    "example_matches": [
+      true,
+      true,
+      true,
+      false,
+      true,
+      true
+    ],
+    "case_results": [
+      {
+        "case_id": "example_1",
+        "input": {
+          "texts": [
+            "Apple",
+            "banana",
+            "apple",
+            "Banana",
+            "cherry"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Apple",
+            "banana",
+            "cherry"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "Apple",
+            "banana",
+            "cherry"
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_2",
+        "input": {
+          "texts": [
+            "  Hello  ",
+            "hello",
+            "Hello",
+            "  hello  ",
+            "world"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "  Hello  ",
+            "world"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "  Hello  ",
+            "world"
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_3",
+        "input": {
+          "texts": [
+            "",
+            "   ",
+            "apple",
+            "banana",
+            "apple"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_4",
+        "input": {
+          "texts": [
+            "Straße",
+            "STRASSE",
+            "straße",
+            "strasse"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Straße",
+            "strasse"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "Straße"
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"texts\"]",
+          "kind": "array_length",
+          "expected_length": 2,
+          "actual_length": 1
+        },
+        "execution_error": null
+      },
+      {
+        "case_id": "example_5",
+        "input": {
+          "texts": []
+        },
+        "expected": {
+          "texts": []
+        },
+        "actual": {
+          "texts": []
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_6",
+        "input": {
+          "texts": [
+            "a",
+            "A",
+            " a ",
+            "b",
+            "B",
+            " b "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a",
+            "b"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "a",
+            "b"
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      }
+    ],
+    "example_failures": [
+      {
+        "case_id": "example_4",
+        "input": {
+          "texts": [
+            "Straße",
+            "STRASSE",
+            "straße",
+            "strasse"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Straße",
+            "strasse"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "Straße"
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"texts\"]",
+          "kind": "array_length",
+          "expected_length": 2,
+          "actual_length": 1
+        },
+        "execution_error": null
+      }
+    ],
+    "observations": [
+      {
+        "case_id": "0",
+        "result": {
+          "texts": [
+            "Apple",
+            "banana",
+            "cherry"
+          ]
+        },
+        "duration_ms": 0.006458954885601997,
+        "mutated": false
+      },
+      {
+        "case_id": "1",
+        "result": {
+          "texts": [
+            "  Hello  ",
+            "world"
+          ]
+        },
+        "duration_ms": 0.0015409896150231361,
+        "mutated": false
+      },
+      {
+        "case_id": "2",
+        "result": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "duration_ms": 0.0011249794624745846,
+        "mutated": false
+      },
+      {
+        "case_id": "3",
+        "result": {
+          "texts": [
+            "Straße"
+          ]
+        },
+        "duration_ms": 0.004749977961182594,
+        "mutated": false
+      },
+      {
+        "case_id": "4",
+        "result": {
+          "texts": []
+        },
+        "duration_ms": 0.00033300602808594704,
+        "mutated": false
+      },
+      {
+        "case_id": "5",
+        "result": {
+          "texts": [
+            "a",
+            "b"
+          ]
+        },
+        "duration_ms": 0.0010840012691915035,
+        "mutated": false
+      },
+      {
+        "case_id": "6",
+        "result": {
+          "texts": [
+            "Apple",
+            "banana",
+            "cherry"
+          ]
+        },
+        "duration_ms": 0.0007500057108700275,
+        "mutated": false
+      },
+      {
+        "case_id": "7",
+        "result": {
+          "texts": [
+            "  Hello  ",
+            "world"
+          ]
+        },
+        "duration_ms": 0.000667001586407423,
+        "mutated": false
+      },
+      {
+        "case_id": "8",
+        "result": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "duration_ms": 0.0005839974619448185,
+        "mutated": false
+      },
+      {
+        "case_id": "9",
+        "result": {
+          "texts": [
+            "Straße"
+          ]
+        },
+        "duration_ms": 0.0006249756552278996,
+        "mutated": false
+      },
+      {
+        "case_id": "10",
+        "result": {
+          "texts": []
+        },
+        "duration_ms": 0.00024994369596242905,
+        "mutated": false
+      },
+      {
+        "case_id": "11",
+        "result": {
+          "texts": [
+            "a",
+            "b"
+          ]
+        },
+        "duration_ms": 0.0006660120561718941,
+        "mutated": false
+      }
+    ],
+    "independent_business_evaluation": "not_available"
+  },
+  "attempts": [
+    {
+      "revision": 0,
+      "code_hash": "f36472e29fb5ee2867436f1ae4c43385c4f3d3dc1ff372f0711e702198edd26e",
+      "implementation_fingerprint": "b910aeb0e7ce5ad2165edcdde1652cb5b383c12c80f9f51d53ab2d8e8931b95b",
+      "repeated_failed_implementation": false,
+      "repair_strategy": "generate_from_spec",
+      "explanation": "The function extracts the 'texts' list from the input payload. It iterates through each text, computes the deduplication key by stripping whitespace and applying casefold. Empty keys are skipped. If the key has not been seen before, the original text is appended to the result and the key is added to the seen set. This preserves the first occurrence order and original formatting. The output is a dictionary with the deduplicated list.",
+      "checks": {
+        "passed": false,
+        "technical_passed": true,
+        "examples_passed": false,
+        "failure_stage": "proposed_examples",
+        "business_verified": false,
+        "errors": [
+          "proposed examples: output differs from model-authored expected result"
+        ],
+        "example_authority": "model_proposed_not_independent_gold",
+        "example_matches": [
+          true,
+          true,
+          true,
+          false,
+          true,
+          true
+        ],
+        "case_results": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "texts": [
+                "Apple",
+                "banana",
+                "apple",
+                "Banana",
+                "cherry"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_2",
+            "input": {
+              "texts": [
+                "  Hello  ",
+                "hello",
+                "Hello",
+                "  hello  ",
+                "world"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_3",
+            "input": {
+              "texts": [
+                "",
+                "   ",
+                "apple",
+                "banana",
+                "apple"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "texts": [
+                "Straße",
+                "STRASSE",
+                "straße",
+                "strasse"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Straße",
+                "strasse"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"]",
+              "kind": "array_length",
+              "expected_length": 2,
+              "actual_length": 1
+            },
+            "execution_error": null
+          },
+          {
+            "case_id": "example_5",
+            "input": {
+              "texts": []
+            },
+            "expected": {
+              "texts": []
+            },
+            "actual": {
+              "texts": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_6",
+            "input": {
+              "texts": [
+                "a",
+                "A",
+                " a ",
+                "b",
+                "B",
+                " b "
+              ]
+            },
+            "expected": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          }
+        ],
+        "example_failures": [
+          {
+            "case_id": "example_4",
+            "input": {
+              "texts": [
+                "Straße",
+                "STRASSE",
+                "straße",
+                "strasse"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Straße",
+                "strasse"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"]",
+              "kind": "array_length",
+              "expected_length": 2,
+              "actual_length": 1
+            },
+            "execution_error": null
+          }
+        ],
+        "observations": [
+          {
+            "case_id": "0",
+            "result": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "duration_ms": 0.05583296297118068,
+            "mutated": false
+          },
+          {
+            "case_id": "1",
+            "result": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "duration_ms": 0.0029159709811210632,
+            "mutated": false
+          },
+          {
+            "case_id": "2",
+            "result": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "duration_ms": 0.0019170111045241356,
+            "mutated": false
+          },
+          {
+            "case_id": "3",
+            "result": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "duration_ms": 0.04133401671424508,
+            "mutated": false
+          },
+          {
+            "case_id": "4",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.0007500057108700275,
+            "mutated": false
+          },
+          {
+            "case_id": "5",
+            "result": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "duration_ms": 0.0017499551177024841,
+            "mutated": false
+          },
+          {
+            "case_id": "6",
+            "result": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "duration_ms": 0.001374981366097927,
+            "mutated": false
+          },
+          {
+            "case_id": "7",
+            "result": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "duration_ms": 0.0012919772416353226,
+            "mutated": false
+          },
+          {
+            "case_id": "8",
+            "result": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "duration_ms": 0.001207983586937189,
+            "mutated": false
+          },
+          {
+            "case_id": "9",
+            "result": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "duration_ms": 0.001334003172814846,
+            "mutated": false
+          },
+          {
+            "case_id": "10",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.0005839974619448185,
+            "mutated": false
+          },
+          {
+            "case_id": "11",
+            "result": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "duration_ms": 0.0014159595593810081,
+            "mutated": false
+          }
+        ],
+        "independent_business_evaluation": "not_available"
+      }
+    },
+    {
+      "revision": 1,
+      "code_hash": "f36472e29fb5ee2867436f1ae4c43385c4f3d3dc1ff372f0711e702198edd26e",
+      "implementation_fingerprint": "b910aeb0e7ce5ad2165edcdde1652cb5b383c12c80f9f51d53ab2d8e8931b95b",
+      "repeated_failed_implementation": true,
+      "repair_strategy": "targeted_repair",
+      "explanation": "The original implementation already follows the specification: it uses text.strip().casefold() as the deduplication key, skips empty strings after stripping, and preserves the first occurrence's original string. The failing example 4 expects ['Straße', 'strasse'] but the actual output is ['Straße']. This is because 'Straße'.casefold() equals 'strasse', so 'strasse' is considered a duplicate of 'Straße' and is skipped. The specification explicitly states to use casefold for deduplication, which treats 'ß' and 'ss' as equivalent. Therefore, the expected output in example 4 contradicts the specification. Since the specification is authoritative and the implementation correctly follows it, no code change is needed. The mismatch is due to an inconsistent example, not a logic error.",
+      "checks": {
+        "passed": false,
+        "technical_passed": true,
+        "examples_passed": false,
+        "failure_stage": "proposed_examples",
+        "business_verified": false,
+        "errors": [
+          "proposed examples: output differs from model-authored expected result"
+        ],
+        "example_authority": "model_proposed_not_independent_gold",
+        "example_matches": [
+          true,
+          true,
+          true,
+          false,
+          true,
+          true
+        ],
+        "case_results": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "texts": [
+                "Apple",
+                "banana",
+                "apple",
+                "Banana",
+                "cherry"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_2",
+            "input": {
+              "texts": [
+                "  Hello  ",
+                "hello",
+                "Hello",
+                "  hello  ",
+                "world"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_3",
+            "input": {
+              "texts": [
+                "",
+                "   ",
+                "apple",
+                "banana",
+                "apple"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "texts": [
+                "Straße",
+                "STRASSE",
+                "straße",
+                "strasse"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Straße",
+                "strasse"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"]",
+              "kind": "array_length",
+              "expected_length": 2,
+              "actual_length": 1
+            },
+            "execution_error": null
+          },
+          {
+            "case_id": "example_5",
+            "input": {
+              "texts": []
+            },
+            "expected": {
+              "texts": []
+            },
+            "actual": {
+              "texts": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_6",
+            "input": {
+              "texts": [
+                "a",
+                "A",
+                " a ",
+                "b",
+                "B",
+                " b "
+              ]
+            },
+            "expected": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          }
+        ],
+        "example_failures": [
+          {
+            "case_id": "example_4",
+            "input": {
+              "texts": [
+                "Straße",
+                "STRASSE",
+                "straße",
+                "strasse"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Straße",
+                "strasse"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"]",
+              "kind": "array_length",
+              "expected_length": 2,
+              "actual_length": 1
+            },
+            "execution_error": null
+          }
+        ],
+        "observations": [
+          {
+            "case_id": "0",
+            "result": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "duration_ms": 0.00662502134218812,
+            "mutated": false
+          },
+          {
+            "case_id": "1",
+            "result": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "duration_ms": 0.001500011421740055,
+            "mutated": false
+          },
+          {
+            "case_id": "2",
+            "result": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "duration_ms": 0.0011249794624745846,
+            "mutated": false
+          },
+          {
+            "case_id": "3",
+            "result": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "duration_ms": 0.004208006430417299,
+            "mutated": false
+          },
+          {
+            "case_id": "4",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.000333995558321476,
+            "mutated": false
+          },
+          {
+            "case_id": "5",
+            "result": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "duration_ms": 0.00100000761449337,
+            "mutated": false
+          },
+          {
+            "case_id": "6",
+            "result": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "duration_ms": 0.0007500057108700275,
+            "mutated": false
+          },
+          {
+            "case_id": "7",
+            "result": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "duration_ms": 0.000667001586407423,
+            "mutated": false
+          },
+          {
+            "case_id": "8",
+            "result": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "duration_ms": 0.0005830079317092896,
+            "mutated": false
+          },
+          {
+            "case_id": "9",
+            "result": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "duration_ms": 0.0005839974619448185,
+            "mutated": false
+          },
+          {
+            "case_id": "10",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.00029103830456733704,
+            "mutated": false
+          },
+          {
+            "case_id": "11",
+            "result": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "duration_ms": 0.0007080379873514175,
+            "mutated": false
+          }
+        ],
+        "independent_business_evaluation": "not_available"
+      }
+    },
+    {
+      "revision": 2,
+      "code_hash": "f36472e29fb5ee2867436f1ae4c43385c4f3d3dc1ff372f0711e702198edd26e",
+      "implementation_fingerprint": "b910aeb0e7ce5ad2165edcdde1652cb5b383c12c80f9f51d53ab2d8e8931b95b",
+      "repeated_failed_implementation": true,
+      "repair_strategy": "rebuild_from_spec",
+      "explanation": "The original implementation already follows the specification: it uses text.strip().casefold() as the deduplication key, skips empty strings after stripping, and preserves the first occurrence of each unique key. The failing example 4 expects ['Straße', 'strasse'] but the actual output is ['Straße']. This is because 'Straße'.casefold() equals 'strasse', so 'strasse' is considered a duplicate of 'Straße' and is skipped. The specification explicitly states to use casefold for deduplication, which treats 'ß' and 'ss' as equivalent. Therefore, the expected output in example 4 contradicts the specification. Since the specification is authoritative and the implementation correctly follows it, no code change is needed. The mismatch is due to an inconsistency in the proposed example, not a bug in the code.",
+      "checks": {
+        "passed": false,
+        "technical_passed": true,
+        "examples_passed": false,
+        "failure_stage": "proposed_examples",
+        "business_verified": false,
+        "errors": [
+          "proposed examples: output differs from model-authored expected result"
+        ],
+        "example_authority": "model_proposed_not_independent_gold",
+        "example_matches": [
+          true,
+          true,
+          true,
+          false,
+          true,
+          true
+        ],
+        "case_results": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "texts": [
+                "Apple",
+                "banana",
+                "apple",
+                "Banana",
+                "cherry"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_2",
+            "input": {
+              "texts": [
+                "  Hello  ",
+                "hello",
+                "Hello",
+                "  hello  ",
+                "world"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_3",
+            "input": {
+              "texts": [
+                "",
+                "   ",
+                "apple",
+                "banana",
+                "apple"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "texts": [
+                "Straße",
+                "STRASSE",
+                "straße",
+                "strasse"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Straße",
+                "strasse"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"]",
+              "kind": "array_length",
+              "expected_length": 2,
+              "actual_length": 1
+            },
+            "execution_error": null
+          },
+          {
+            "case_id": "example_5",
+            "input": {
+              "texts": []
+            },
+            "expected": {
+              "texts": []
+            },
+            "actual": {
+              "texts": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_6",
+            "input": {
+              "texts": [
+                "a",
+                "A",
+                " a ",
+                "b",
+                "B",
+                " b "
+              ]
+            },
+            "expected": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          }
+        ],
+        "example_failures": [
+          {
+            "case_id": "example_4",
+            "input": {
+              "texts": [
+                "Straße",
+                "STRASSE",
+                "straße",
+                "strasse"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Straße",
+                "strasse"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"]",
+              "kind": "array_length",
+              "expected_length": 2,
+              "actual_length": 1
+            },
+            "execution_error": null
+          }
+        ],
+        "observations": [
+          {
+            "case_id": "0",
+            "result": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "duration_ms": 0.006458954885601997,
+            "mutated": false
+          },
+          {
+            "case_id": "1",
+            "result": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "duration_ms": 0.0015409896150231361,
+            "mutated": false
+          },
+          {
+            "case_id": "2",
+            "result": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "duration_ms": 0.0011249794624745846,
+            "mutated": false
+          },
+          {
+            "case_id": "3",
+            "result": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "duration_ms": 0.004749977961182594,
+            "mutated": false
+          },
+          {
+            "case_id": "4",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.00033300602808594704,
+            "mutated": false
+          },
+          {
+            "case_id": "5",
+            "result": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "duration_ms": 0.0010840012691915035,
+            "mutated": false
+          },
+          {
+            "case_id": "6",
+            "result": {
+              "texts": [
+                "Apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "duration_ms": 0.0007500057108700275,
+            "mutated": false
+          },
+          {
+            "case_id": "7",
+            "result": {
+              "texts": [
+                "  Hello  ",
+                "world"
+              ]
+            },
+            "duration_ms": 0.000667001586407423,
+            "mutated": false
+          },
+          {
+            "case_id": "8",
+            "result": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "duration_ms": 0.0005839974619448185,
+            "mutated": false
+          },
+          {
+            "case_id": "9",
+            "result": {
+              "texts": [
+                "Straße"
+              ]
+            },
+            "duration_ms": 0.0006249756552278996,
+            "mutated": false
+          },
+          {
+            "case_id": "10",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.00024994369596242905,
+            "mutated": false
+          },
+          {
+            "case_id": "11",
+            "result": {
+              "texts": [
+                "a",
+                "b"
+              ]
+            },
+            "duration_ms": 0.0006660120561718941,
+            "mutated": false
+          }
+        ],
+        "independent_business_evaluation": "not_available"
+      }
+    }
+  ],
+  "error": null,
+  "spec_reviews": [
+    {
+      "revision": 0,
+      "proposal_hash": "8de17d4a04e9e22330a1c1bc99df0e9545a41ba3e7994343e9b22aebe67ec2c7",
+      "review": {
+        "consistent": true,
+        "issues": []
+      }
+    }
+  ],
+  "spec_review_authority": "model_consistency_review_not_independent_gold",
+  "failure_stage": "proposed_examples",
+  "business_verified": false,
+  "auto_activated": false,
+  "missing_validation": [
+    "生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {\"texts\": 字符串列表}，输出仅为 {\"texts\": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。"
+  ],
+  "search": {
+    "status": "searched",
+    "repositories": [
+      {
+        "full_name": "9001/copyparty",
+        "description": "Portable file server with accelerated resumable uploads, dedup, WebDAV, SFTP, FTP, TFTP, zeroconf, media indexer, thumbnails++ all in one file",
+        "license": "MIT",
+        "stars": 47056,
+        "url": "https://github.com/9001/copyparty"
+      },
+      {
+        "full_name": "mogesh-developer/NOLQERA",
+        "description": "An intelligent NLP middleware engine that bridges users and LLMs through semantic understanding, retrieval, ranking, and context optimization.",
+        "license": "MIT",
+        "stars": 2,
+        "url": "https://github.com/mogesh-developer/NOLQERA"
+      },
+      {
+        "full_name": "SUBRAHMANYA2726/amazon-ml-entity-resolution",
+        "description": "End-to-end solution for the Amazon ML Challenge 2026, focused on scalable business entity resolution, candidate retrieval, ML matching, and F0.5-optimized predictions.",
+        "license": "MIT",
+        "stars": 0,
+        "url": "https://github.com/SUBRAHMANYA2726/amazon-ml-entity-resolution"
+      }
+    ],
+    "excluded": [
+      {
+        "repository": "isotopp/pysembr",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "GodlyDonuts/sai-initiative",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "apoorva1717/Intelligent-MDM-Pipeline",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "MUsmankhanzada/Structured_RG3_Name_Index",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "rajaryan1111/graphone-intelligence-pipeline",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "goodtime95/equity_strategist",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "Dhruvgohil07/Entity-Resolver",
+        "reason": "private, invalid name or unsupported/unknown license"
+      }
+    ],
+    "search_trace": [
+      {
+        "url": "https://api.github.com/search/repositories",
+        "params": {
+          "q": "python list deduplicate casefold strip preserve order in:readme language:Python archived:false fork:false is:public",
+          "per_page": 10,
+          "sort": "stars"
+        }
+      },
+      {
+        "url": "https://api.github.com/search/repositories",
+        "params": {
+          "q": "python remove duplicate strings case insensitive strip whitespace in:name language:Python archived:false fork:false is:public",
+          "per_page": 10,
+          "sort": "stars"
+        }
+      }
+    ]
+  },
+  "sources": {
+    "local_components": [],
+    "repositories": [],
+    "errors": [
+      {
+        "repository": "9001/copyparty",
+        "error": "Repository archive contains links or special files"
+      },
+      {
+        "repository": "mogesh-developer/NOLQERA",
+        "error": "Repository source snapshot exceeds file/byte budget"
+      }
+    ],
+    "untrusted_reference_evidence": true
+  },
+  "code_hash": "f36472e29fb5ee2867436f1ae4c43385c4f3d3dc1ff372f0711e702198edd26e",
+  "generation_backend": "llm"
+}

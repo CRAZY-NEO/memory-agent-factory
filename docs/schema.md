@@ -77,3 +77,8 @@ Capability.task 和 FactoryRun.request.task 可为 memory_retrieval / memory_cla
 ## 能力契约与交付证据
 
 FactoryRun 与发布清单新增 capability_contract 和 contract_hash。契约包含 task/domain/version、入口与参数、输入输出 JSON Schema、公开行为、执行环境与允许依赖；同一任务的不同实现必须遵守同一可信契约。摘要同时保存数据哈希与选定实现哈希。契约 JSON 单独落盘并在评估、调用、导出时复核。它保存算法组件接口，不保存个人记忆或客户文档事实；当前没有新增业务记忆图谱。
+
+组件目录位于独立的 state/components/catalog.sqlite。versions 保存逻辑组件、序号、base_version、task/contract_version、规则、run、冻结证据哈希、指标和比较结果；bindings 保存 slot→version、默认参数及 revision；events 记录决策、前后绑定、回退和分类反馈；operations 保存 request_id 与请求哈希以防重复生成。默认参数及审计快照保留具有业务意义的映射顺序。它是交付与运行目录，不保存业务知识实体，也不替代原有能力知识图谱。
+
+
+新任务未完成独立业务验证时保存为 `DraftCandidate` 节点，记录 run_id、需求、标题、状态、business_verified=false 与 draft_manifest 哈希。建议接口与模型提议用例保存在 draft_spec.json，基础执行证据保存在 draft_checks.json；这些不冒充 Capability 的已验证契约。候选不写入组件 approved 版本表，也不会改变调用绑定。

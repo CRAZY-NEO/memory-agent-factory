@@ -24,6 +24,31 @@ def execute_job(workspace, job, provider, model, base_url, runner, store=None):
     kind, payload = job["kind"], job["payload"]
     if provider in REAL_PROVIDERS and runner != 'docker':
         raise ValueError('The API worker requires Docker for real generated code')
+    if kind.startswith('component_'):
+        from .components import ComponentService
+        service = ComponentService(workspace, provider, model, base_url, runner)
+        if kind == 'component_plan':
+            return service.plan(payload)
+        if kind == 'component_ensure':
+            return service.ensure({**payload, 'request_id': payload.get('request_id') or job['id']},
+                                  on_run=(lambda run_id: store.attach_run(job['id'], run_id)) if store else None)
+        if kind == 'component_import':
+            return service.import_run(**payload)
+        if kind == 'component_draft_invoke':
+            from .drafts import invoke_draft
+            return invoke_draft(workspace, payload['run_id'], payload['input'], runner)
+        slot = payload['slot']
+        options = {key: value for key, value in payload.items() if key != 'slot'}
+        if kind == 'component_activate':
+            return service.activate(slot, **options)
+        if kind == 'component_rollback':
+            return service.rollback(slot, **options)
+        if kind == 'component_feedback':
+            return service.feedback(slot, options)
+        if kind == 'component_invoke':
+            options['payload'] = options.pop('input')
+            return service.invoke(slot, **options)
+        raise ValueError('Unsupported component operation')
     if kind == 'discovery':
         if provider not in REAL_PROVIDERS or runner != 'docker':
             raise ValueError('Repository discovery requires a real model and Docker')
@@ -96,9 +121,15 @@ def process_one(store, workspace, provider="mock", model="mock-template-v1",
     heartbeat.start()
     try:
         result = execute_job(Path(workspace), job, provider, model, base_url, runner, store=store)
-        error = None if result["status"] == "passed" else "Factory validation did not pass"
+        # A lifecycle operation can complete with a blocked demand, rejected
+        # candidate or migration-required decision. Preserve that domain result
+        # instead of converting it to a transport/worker failure.
+        if job['kind'].startswith('component_'):
+            error = 'Component operation failed' if result.get('status') == 'error' else None
+        else:
+            error = None if result['status'] == 'passed' else 'Factory validation did not pass'
         store.finish(job["id"], result=result, error=error)
-        LOGGER.info("Job %s finished: %s", job["id"], result["status"])
+        LOGGER.info("Job %s finished: %s", job["id"], result.get('status', 'completed'))
     except RoutingError as exc:
         LOGGER.warning('Job %s routing stopped: %s', job['id'], exc)
         store.finish(job['id'], error=str(exc))

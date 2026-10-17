@@ -1,0 +1,43 @@
+{
+  "local_components": [],
+  "repositories": [
+    {
+      "repository": "necat101/python-counter-hapax-lab",
+      "url": "https://github.com/necat101/python-counter-hapax-lab",
+      "commit": "ef5576903a24724307cf1b42c37d929c6b38049d",
+      "license": "MIT",
+      "source_functions": [
+        {
+          "path": "methods/feature_methods.py",
+          "name": "counter_lowercase_baseline",
+          "signature": "def counter_lowercase_baseline(records: list[str]) -> dict",
+          "code_excerpt": "def counter_lowercase_baseline(records: list[str]) -> dict:\n    \"\"\"Counter with re.findall(r\"\\\\w+\"), case-normalized.\"\"\"\n    return _run_pipeline(records, tokenize_word_regex_lower)\n",
+          "file_sha256": "fcc25f3026bc432576669a57f9c6250ff20c676917e424f35566cd105823c11a"
+        },
+        {
+          "path": "methods/feature_methods.py",
+          "name": "tokenize_word_regex",
+          "signature": "def tokenize_word_regex(text: str) -> list[str]",
+          "code_excerpt": "def tokenize_word_regex(text: str) -> list[str]:\n    \"\"\"re.findall(r\"\\\\w+\", text) – word chars only, case-sensitive.\"\"\"\n    return re.findall(r\"\\w+\", text)\n",
+          "file_sha256": "fcc25f3026bc432576669a57f9c6250ff20c676917e424f35566cd105823c11a"
+        },
+        {
+          "path": "methods/feature_methods.py",
+          "name": "tokenize_word_regex_lower",
+          "signature": "def tokenize_word_regex_lower(text: str) -> list[str]",
+          "code_excerpt": "def tokenize_word_regex_lower(text: str) -> list[str]:\n    \"\"\"re.findall(r\"\\\\w+\", text.lower()) – word chars, case-normalized.\"\"\"\n    return re.findall(r\"\\w+\", text.lower())\n",
+          "file_sha256": "fcc25f3026bc432576669a57f9c6250ff20c676917e424f35566cd105823c11a"
+        }
+      ],
+      "licenses": [
+        {
+          "path": "LICENSE",
+          "text": "MIT License\n\nCopyright (c) 2026\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+        }
+      ],
+      "executed_repository_code": false
+    }
+  ],
+  "errors": [],
+  "untrusted_reference_evidence": true
+}

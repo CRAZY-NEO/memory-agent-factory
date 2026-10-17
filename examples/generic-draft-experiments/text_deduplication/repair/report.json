@@ -1,0 +1,1002 @@
+{
+  "kind": "component_draft",
+  "run_id": "20261017T122246_891f3e2e",
+  "status": "draft",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "runner": "docker",
+  "request": {
+    "description": "生成文本列表去重组件，严格使用 execute(payload) -> dict。输入 {\"texts\": 字符串列表}，输出仅为 {\"texts\": 去重后的字符串列表}。对每条文本用 text.strip().casefold() 作为去重键，跳过 strip 后为空的文本；相同键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。空输入返回空列表，不修改原始输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。",
+    "task": "python_draft"
+  },
+  "proposal": {
+    "title": "文本列表去重组件（strip+casefold 键，保留首个原文）",
+    "search_queries": [
+      "python deduplicate list strings by stripped casefold key preserve first original order",
+      "text dedupe case-insensitive strip whitespace keep first occurrence Python"
+    ],
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "texts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "texts"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "texts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "texts"
+      ],
+      "additionalProperties": false
+    },
+    "assumptions": [
+      "输入 payload 必须是 dict 且包含 texts 键；texts 是字符串列表，忽略其他字段。",
+      "去重键为 text.strip().casefold()，strip 只去除首尾 Unicode 空白，casefold 用于大小写不敏感比较。",
+      "相同去重键只保留第一次出现的原始字符串，保留该字符串原有的空白和大小写，并保持首次出现顺序。",
+      "跳过 strip 后为空字符串的文本（如空串、纯空格、制表符或换行）。",
+      "不折叠内部空白、不移除标点、不做 Unicode 正规化（如 NFC/NFD 等）。",
+      "返回的 JSON 对象仅包含 texts 字段，不修改输入 payload。",
+      "texts 中每个元素都应为字符串，否则会抛出 AttributeError/TypeError。"
+    ],
+    "limitations": [
+      "不处理非字符串元素；若 texts 中包含非字符串将抛出 AttributeError/TypeError。",
+      "仅按字符串键精确去重，不进行语义去重、模糊匹配、分类或检索。",
+      "casefold 可能将某些 Unicode 字符扩展为多个字符（例如 ß→ss），这不等同于 Unicode 正规化，但会按全小写扩展结果比较。",
+      "需要将输入列表完整加载到内存中，内存占用与输入规模线性相关。",
+      "仅作为纯 JSON 变换组件运行，不访问网络、文件系统或外部服务。",
+      "空输入或全部文本仅含空白时返回 {\"texts\": []}。",
+      "输出字段固定为 texts，不保留输入 payload 中的其他字段。"
+    ],
+    "examples": [
+      {
+        "input": {
+          "texts": [
+            "apple",
+            " Apple ",
+            "banana",
+            "apple",
+            "   ",
+            "Banana"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        }
+      },
+      {
+        "input": {
+          "texts": []
+        },
+        "expected": {
+          "texts": []
+        }
+      },
+      {
+        "input": {
+          "texts": [
+            "Hello World",
+            "hello world",
+            "HELLO WORLD",
+            " hello world "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Hello World"
+          ]
+        }
+      },
+      {
+        "input": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb",
+            "\t",
+            "A B"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb"
+          ]
+        }
+      }
+    ]
+  },
+  "checks": {
+    "passed": true,
+    "technical_passed": true,
+    "examples_passed": true,
+    "failure_stage": null,
+    "business_verified": false,
+    "errors": [],
+    "example_authority": "model_proposed_not_independent_gold",
+    "example_matches": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "case_results": [
+      {
+        "case_id": "example_1",
+        "input": {
+          "texts": [
+            "apple",
+            " Apple ",
+            "banana",
+            "apple",
+            "   ",
+            "Banana"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_2",
+        "input": {
+          "texts": []
+        },
+        "expected": {
+          "texts": []
+        },
+        "actual": {
+          "texts": []
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_3",
+        "input": {
+          "texts": [
+            "Hello World",
+            "hello world",
+            "HELLO WORLD",
+            " hello world "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Hello World"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "Hello World"
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_4",
+        "input": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb",
+            "\t",
+            "A B"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb"
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      }
+    ],
+    "example_failures": [],
+    "observations": [
+      {
+        "case_id": "0",
+        "result": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "duration_ms": 0.0072080292738974094,
+        "mutated": false
+      },
+      {
+        "case_id": "1",
+        "result": {
+          "texts": []
+        },
+        "duration_ms": 0.0008330098353326321,
+        "mutated": false
+      },
+      {
+        "case_id": "2",
+        "result": {
+          "texts": [
+            "Hello World"
+          ]
+        },
+        "duration_ms": 0.00104197533801198,
+        "mutated": false
+      },
+      {
+        "case_id": "3",
+        "result": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb"
+          ]
+        },
+        "duration_ms": 0.0010830117389559746,
+        "mutated": false
+      },
+      {
+        "case_id": "4",
+        "result": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "duration_ms": 0.0008749775588512421,
+        "mutated": false
+      },
+      {
+        "case_id": "5",
+        "result": {
+          "texts": []
+        },
+        "duration_ms": 0.0014170072972774506,
+        "mutated": false
+      },
+      {
+        "case_id": "6",
+        "result": {
+          "texts": [
+            "Hello World"
+          ]
+        },
+        "duration_ms": 0.0005830079317092896,
+        "mutated": false
+      },
+      {
+        "case_id": "7",
+        "result": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb"
+          ]
+        },
+        "duration_ms": 0.0005830079317092896,
+        "mutated": false
+      }
+    ],
+    "independent_business_evaluation": "not_available"
+  },
+  "attempts": [
+    {
+      "revision": 0,
+      "code_hash": "e6e0327956dc38a469b60bcbed9a0f2291f9ec4464a6ea69b410e1a122c5ebd2",
+      "implementation_fingerprint": "93bb36167aa9e80db6c256d7063e4858cfc3832ad4a49023c43f16d89d30eaed",
+      "repeated_failed_implementation": false,
+      "repair_strategy": "generate_from_spec",
+      "explanation": "EXPERIMENT: fault injected into the real natural-run source; this initial code is not a new model response.",
+      "checks": {
+        "passed": false,
+        "technical_passed": true,
+        "examples_passed": false,
+        "failure_stage": "proposed_examples",
+        "business_verified": false,
+        "errors": [
+          "proposed examples: output differs from model-authored expected result"
+        ],
+        "example_authority": "model_proposed_not_independent_gold",
+        "example_matches": [
+          false,
+          true,
+          true,
+          false
+        ],
+        "case_results": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "texts": [
+                "apple",
+                " Apple ",
+                "banana",
+                "apple",
+                "   ",
+                "Banana"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "banana",
+                "apple"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"][0]",
+              "kind": "value",
+              "expected": "apple",
+              "actual": "banana"
+            },
+            "execution_error": null
+          },
+          {
+            "case_id": "example_2",
+            "input": {
+              "texts": []
+            },
+            "expected": {
+              "texts": []
+            },
+            "actual": {
+              "texts": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_3",
+            "input": {
+              "texts": [
+                "Hello World",
+                "hello world",
+                "HELLO WORLD",
+                " hello world "
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Hello World"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Hello World"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb",
+                "\t",
+                "A B"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "a\tb",
+                "a  b",
+                "a b"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"][0]",
+              "kind": "value",
+              "expected": "a b",
+              "actual": "a\tb"
+            },
+            "execution_error": null
+          }
+        ],
+        "example_failures": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "texts": [
+                "apple",
+                " Apple ",
+                "banana",
+                "apple",
+                "   ",
+                "Banana"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "banana",
+                "apple"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"][0]",
+              "kind": "value",
+              "expected": "apple",
+              "actual": "banana"
+            },
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb",
+                "\t",
+                "A B"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "a\tb",
+                "a  b",
+                "a b"
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"texts\"][0]",
+              "kind": "value",
+              "expected": "a b",
+              "actual": "a\tb"
+            },
+            "execution_error": null
+          }
+        ],
+        "observations": [
+          {
+            "case_id": "0",
+            "result": {
+              "texts": [
+                "banana",
+                "apple"
+              ]
+            },
+            "duration_ms": 0.005708017852157354,
+            "mutated": false
+          },
+          {
+            "case_id": "1",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.00104197533801198,
+            "mutated": false
+          },
+          {
+            "case_id": "2",
+            "result": {
+              "texts": [
+                "Hello World"
+              ]
+            },
+            "duration_ms": 0.001292035449296236,
+            "mutated": false
+          },
+          {
+            "case_id": "3",
+            "result": {
+              "texts": [
+                "a\tb",
+                "a  b",
+                "a b"
+              ]
+            },
+            "duration_ms": 0.001207983586937189,
+            "mutated": false
+          },
+          {
+            "case_id": "4",
+            "result": {
+              "texts": [
+                "banana",
+                "apple"
+              ]
+            },
+            "duration_ms": 0.000959029421210289,
+            "mutated": false
+          },
+          {
+            "case_id": "5",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.0010840012691915035,
+            "mutated": false
+          },
+          {
+            "case_id": "6",
+            "result": {
+              "texts": [
+                "Hello World"
+              ]
+            },
+            "duration_ms": 0.0006249756552278996,
+            "mutated": false
+          },
+          {
+            "case_id": "7",
+            "result": {
+              "texts": [
+                "a\tb",
+                "a  b",
+                "a b"
+              ]
+            },
+            "duration_ms": 0.000667001586407423,
+            "mutated": false
+          }
+        ],
+        "independent_business_evaluation": "not_available"
+      }
+    },
+    {
+      "revision": 1,
+      "code_hash": "15d5401f36faa108e57c75c02d77cad45994d5bada6faa6602b5ef4c578fe872",
+      "implementation_fingerprint": "b910aeb0e7ce5ad2165edcdde1652cb5b383c12c80f9f51d53ab2d8e8931b95b",
+      "repeated_failed_implementation": false,
+      "repair_strategy": "targeted_repair",
+      "explanation": "The previous implementation reversed the result list before returning, causing the order to be reversed. The fix removes the reversal so that the first occurrence order is preserved as required. This addresses the mismatches in examples 1 and 4 where the output order was reversed.",
+      "checks": {
+        "passed": true,
+        "technical_passed": true,
+        "examples_passed": true,
+        "failure_stage": null,
+        "business_verified": false,
+        "errors": [],
+        "example_authority": "model_proposed_not_independent_gold",
+        "example_matches": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "case_results": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "texts": [
+                "apple",
+                " Apple ",
+                "banana",
+                "apple",
+                "   ",
+                "Banana"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_2",
+            "input": {
+              "texts": []
+            },
+            "expected": {
+              "texts": []
+            },
+            "actual": {
+              "texts": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_3",
+            "input": {
+              "texts": [
+                "Hello World",
+                "hello world",
+                "HELLO WORLD",
+                " hello world "
+              ]
+            },
+            "expected": {
+              "texts": [
+                "Hello World"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "Hello World"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb",
+                "\t",
+                "A B"
+              ]
+            },
+            "expected": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb"
+              ]
+            },
+            "actual": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb"
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          }
+        ],
+        "example_failures": [],
+        "observations": [
+          {
+            "case_id": "0",
+            "result": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "duration_ms": 0.0072080292738974094,
+            "mutated": false
+          },
+          {
+            "case_id": "1",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.0008330098353326321,
+            "mutated": false
+          },
+          {
+            "case_id": "2",
+            "result": {
+              "texts": [
+                "Hello World"
+              ]
+            },
+            "duration_ms": 0.00104197533801198,
+            "mutated": false
+          },
+          {
+            "case_id": "3",
+            "result": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb"
+              ]
+            },
+            "duration_ms": 0.0010830117389559746,
+            "mutated": false
+          },
+          {
+            "case_id": "4",
+            "result": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            },
+            "duration_ms": 0.0008749775588512421,
+            "mutated": false
+          },
+          {
+            "case_id": "5",
+            "result": {
+              "texts": []
+            },
+            "duration_ms": 0.0014170072972774506,
+            "mutated": false
+          },
+          {
+            "case_id": "6",
+            "result": {
+              "texts": [
+                "Hello World"
+              ]
+            },
+            "duration_ms": 0.0005830079317092896,
+            "mutated": false
+          },
+          {
+            "case_id": "7",
+            "result": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb"
+              ]
+            },
+            "duration_ms": 0.0005830079317092896,
+            "mutated": false
+          }
+        ],
+        "independent_business_evaluation": "not_available"
+      }
+    }
+  ],
+  "error": null,
+  "spec_reviews": [
+    {
+      "revision": 0,
+      "proposal_hash": "5e5b44515d5e215a93289468f91e1bf76e9ff645433aef6b20411784d13c7085",
+      "review": {
+        "consistent": true,
+        "issues": [],
+        "example_expectations": [
+          {
+            "case_id": "example_1",
+            "expected": {
+              "texts": [
+                "apple",
+                "banana"
+              ]
+            }
+          },
+          {
+            "case_id": "example_2",
+            "expected": {
+              "texts": []
+            }
+          },
+          {
+            "case_id": "example_3",
+            "expected": {
+              "texts": [
+                "Hello World"
+              ]
+            }
+          },
+          {
+            "case_id": "example_4",
+            "expected": {
+              "texts": [
+                "a b",
+                "a  b",
+                "a\tb"
+              ]
+            }
+          }
+        ]
+      },
+      "accepted": true,
+      "issues": [],
+      "reviewer_saw_planner_expectations": false
+    }
+  ],
+  "spec_review_authority": "model_consistency_review_not_independent_gold",
+  "failure_stage": null,
+  "business_verified": false,
+  "auto_activated": false,
+  "missing_validation": [
+    "Generate a standalone text-list deduplicate component with entrypoint execute(payload) -> dict, exact input schema {\"texts\": string[]} and exact output schema {\"texts\": deduped string[]}",
+    "Use text.strip().casefold() as deduplication key, skip entries whose stripped text is empty, keep the first original string for each key and preserve original whitespace/case and first-occurrence order",
+    "Strip only leading/trailing whitespace; do not collapse internal whitespace, remove punctuation, or perform Unicode normalization",
+    "Empty input returns an empty list; do not mutate the original input",
+    "Use only allowed pure Python standard library",
+    "No training, classification, or retrieval"
+  ],
+  "search": {
+    "status": "replayed_original_search",
+    "repositories": [
+      {
+        "full_name": "mogesh-developer/NOLQERA",
+        "description": "An intelligent NLP middleware engine that bridges users and LLMs through semantic understanding, retrieval, ranking, and context optimization.",
+        "license": "MIT",
+        "stars": 2,
+        "url": "https://github.com/mogesh-developer/NOLQERA"
+      },
+      {
+        "full_name": "asmirrr/provenance",
+        "description": "Evidence-grounded financial AI system for retrieving, verifying, and tracing claims to their source documents.",
+        "license": "MIT",
+        "stars": 0,
+        "url": "https://github.com/asmirrr/provenance"
+      }
+    ],
+    "excluded": [
+      {
+        "repository": "apoorva1717/Intelligent-MDM-Pipeline",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "GodlyDonuts/sai-initiative",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "goodtime95/equity_strategist",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "JuneKim0712/research",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "daniish-ansarii/Python",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "Jaejuna/multilingual-parsing-book",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "QandeelFatima04/NexaSearch",
+        "reason": "private, invalid name or unsupported/unknown license"
+      }
+    ],
+    "search_trace": [
+      {
+        "url": "https://api.github.com/search/repositories",
+        "params": {
+          "q": "python deduplicate list strings by stripped casefold key preserve first original order in:readme language:Python archived:false fork:false is:public",
+          "per_page": 10,
+          "sort": "stars"
+        }
+      },
+      {
+        "url": "https://api.github.com/search/repositories",
+        "params": {
+          "q": "text dedupe case-insensitive strip whitespace keep first occurrence Python in:name language:Python archived:false fork:false is:public",
+          "per_page": 10,
+          "sort": "stars"
+        }
+      }
+    ],
+    "source_run_id": "20261017T122029_79ed79b3"
+  },
+  "sources": {
+    "local_components": [],
+    "repositories": [
+      {
+        "repository": "asmirrr/provenance",
+        "url": "https://github.com/asmirrr/provenance",
+        "commit": "f364390834cd916525e1b6c93bfbeff8deecfd4f",
+        "license": "MIT",
+        "source_functions": [
+          {
+            "path": "src/bm25.py",
+            "name": "tokenize",
+            "signature": "def tokenize(text)",
+            "code_excerpt": "def tokenize(text):\n    \"\"\"Casefold words; normalize numeric grouping, retaining decimal points.\n\n    No stop list, stemming, synonyms, units conversion, or sign interpretation.\n    Citation text is never modified by this search-only normalization.\n    \"\"\"\n    return [token.replace(\",\", \"\") for token in\n            re.findall(r\"\\d+(?:,\\d{3})*(?:\\.\\d+)?|[^\\W\\d_]+\", text.casefold())]\n",
+            "file_sha256": "21e0eb4abafa1a25c18a5efbddc2f63964e4ab42453f489b95ad14511c0a40a8"
+          },
+          {
+            "path": "src/evidence.py",
+            "name": "select_page_context",
+            "signature": "def select_page_context(document: ProcessedFiling, ranked_ids: list[str], *, max_chars: int=8000, policy: str='ranked-fit') -> dict",
+            "code_excerpt": "def select_page_context(document: ProcessedFiling, ranked_ids: list[str], *,\n                        max_chars: int = 8000, policy: str = \"ranked-fit\") -> dict:\n    \"\"\"Select whole pages in first-hit order, without access to evidence labels.\n\n    ranked-fit skips a page that cannot fit and continues to later candidates.\n    strict preserves the all-pages-or-error diagnostic policy.\n    \"\"\"\n    if max_chars < 1 or policy not in {\"strict\", \"ranked-fit\"}:\n        raise ValueError(\"Require positive context budget and a known page policy\")\n    validate_document(document)\n    chunks = {c.chunk_id: c for c in document.chunks}\n    if len(set(ranked_ids)) != len(ranked_ids) or any(cid not in chunks for cid in ranked_ids):\n        raise ValueError(\"Require unique known retrieved chunk IDs\")\n    pages = {p.page: p for p in document.pages}\n    first_hits = {}\n    for rank, cid in enumerate(ranked_ids, 1):\n        first_hits.setdefault(chunks[cid].page, rank)\n    required = sum(len(pages[p].text) for p in first_hits)\n    selected, omitted, used = [], [], 0\n    for page, rank in first_hits.items():\n        size = len(pages[page].text)\n        if policy == \"strict\" and required > max_chars:\n            reason = \"whole_request_over_budget\"\n        elif size > max_chars - used:\n            reason = \"page_exceeds_total_budget\" if size > max_chars else \"insufficient_remaining_budget\"\n        else:\n            selected.append(page)\n            used += size\n            continue\n        omitted.append({\"page\": page, \"first_rank\": rank, \"page_chars\": size,\n                        \"remaining_chars",
+            "file_sha256": "2cda9b50c2c991bd2048aa94bae5a956c93feadf70291db0120132844c31ed76"
+          },
+          {
+            "path": "src/evaluation.py",
+            "name": "evaluate_benchmark",
+            "signature": "def evaluate_benchmark(document: ProcessedFiling, benchmark: Benchmark) -> dict",
+            "code_excerpt": "def evaluate_benchmark(document: ProcessedFiling, benchmark: Benchmark) -> dict:\n    \"\"\"Expand each explicit evidence group into a context case, without retrieval.\n\n    Alternative support paths are separate cases, not independent questions.\n    Ground-truth mappings are draft annotations until reviewed by a human.\n    \"\"\"\n    bound = bind_benchmark(document, benchmark)\n    rows = []\n    for item in bound[\"items\"]:\n        for group in item[\"evidence_groups\"]:\n            anchors = group[\"evidence\"]\n            ids = group[\"supporting_chunk_ids\"]\n            target = anchors[-1]\n            target_ids = target[\"chunk_ids\"]\n            def contains(bundle):\n                return all(any(s[\"page\"] == a[\"page\"] and s[\"raw_start\"] <= a[\"raw_start\"]\n                               and s[\"raw_end\"] >= a[\"raw_end\"] for s in bundle[\"spans\"])\n                           for a in anchors)\n            try:\n                target_complete = contains(resolve_evidence(document, target_ids, context=\"page\", max_chars=8000))\n            except ValueError:\n                target_complete = False\n            try:\n                bundle = resolve_evidence(document, ids, context=\"page\", max_chars=8000)\n                explicit_complete, error = contains(bundle), None\n            except ValueError as exc:\n                explicit_complete, error = False, str(exc)\n            single = [c.chunk_id for c in document.chunks if all(\n                c.page == a[\"page\"] and c.raw_start <= a[\"raw_start\"] and c.raw_end >= a[\"raw_end\"]\n                for a in anchors)]\n            rows.append({\"case_id\": ",
+            "file_sha256": "500e9fe7532afc9122df88e7f506d64833a29c7150b6682e3ad9d738ba84f103"
+          }
+        ],
+        "licenses": [
+          {
+            "path": "LICENSE",
+            "text": "MIT License\n\nCopyright (c) 2026 Muhammad Asmir Khan\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+          }
+        ],
+        "executed_repository_code": false
+      }
+    ],
+    "errors": [
+      {
+        "repository": "mogesh-developer/NOLQERA",
+        "error": "Repository source snapshot exceeds file/byte budget"
+      }
+    ],
+    "untrusted_reference_evidence": true
+  },
+  "code_hash": "15d5401f36faa108e57c75c02d77cad45994d5bada6faa6602b5ef4c578fe872",
+  "generation_backend": "llm"
+}

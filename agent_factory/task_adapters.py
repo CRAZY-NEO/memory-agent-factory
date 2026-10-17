@@ -61,6 +61,10 @@ class RetrievalAdapter(TaskAdapter):
         from .llm import CODE_RULES
         return CODE_RULES
 
+    def example_input(self):
+        return {'query': '日志', 'memories': [
+            {'id': 'demo', 'text': 'Python 日志排查', 'source': 'synthetic://demo'}], 'top_k': 1}
+
 
 class ClassificationAdapter(TaskAdapter):
     id = 'memory_classification'
@@ -146,3 +150,6 @@ class ClassificationAdapter(TaskAdapter):
     def code_rules(self):
         from .llm import CLASSIFICATION_RULES
         return CLASSIFICATION_RULES
+
+    def example_input(self):
+        return {'texts': ['Python 异常日志排查']}

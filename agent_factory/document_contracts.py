@@ -85,6 +85,27 @@ class FieldOutput(ReviewModel):
     complete: StrictBool
 
 
+class FormattedFieldInput(FieldInput):
+    field_formats: dict[str, Literal['email']] = Field(default_factory=dict)
+
+    @model_validator(mode='after')
+    def format_keys(self):
+        if any(not name for name in self.field_formats):
+            raise ValueError('Format field names must be nonempty literal keys')
+        return self
+
+
+class FormattedFieldResult(FieldResult):
+    invalid_fields: list[str]
+    valid: StrictBool
+
+
+class FormattedFieldOutput(ReviewModel):
+    records: list[FormattedFieldResult]
+    complete: StrictBool
+    valid: StrictBool
+
+
 class ReferenceResult(ReviewModel):
     index: StrictInt
     status: Literal['valid', 'source_missing', 'segment_missing', 'invalid_range', 'quote_mismatch']
@@ -130,19 +151,41 @@ REFERENCE_BEHAVIORS = [
     'or factually true. A valid quote does not establish semantic truth.',
 ]
 
+EMAIL_BEHAVIORS = [
+    'Contract version 2 extends field completeness. payload also accepts optional field_formats, '
+    'an insertion-ordered mapping of literal field names to "email", default {}. '
+    'For each mapped field skip absent or missing values using the same missing-value definition. '
+    'For present values, only strings matching re.fullmatch(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+", value) '
+    'are valid emails. Do not strip or normalize; non-string present values are invalid. '
+    'This is a deliberately bounded email syntax rule, not RFC validation or deliverability checking.',
+    'Version 2 output records have exactly record_id, missing_fields, complete, invalid_fields, valid. '
+    'invalid_fields follows field_formats insertion order. valid is complete AND no invalid_fields. '
+    'Overall output has exactly records, complete, valid; overall valid iff all record valid flags. '
+    'Keep completeness semantics unchanged. With no field_formats, invalid_fields=[] and valid=complete. '
+    'This is an explicit output-schema version change; version 1 callers must retain their old binding.',
+]
+
 MODELS = {
     'document_field_completeness': (FieldInput, FieldOutput),
     'document_source_references': (ReferenceInput, ReferenceOutput),
 }
 
 
-def parse_input(task, payload):
+def models_for(task, version='1'):
+    if str(version) == '2' and task == 'document_field_completeness':
+        return FormattedFieldInput, FormattedFieldOutput
+    if str(version) != '1':
+        raise ValueError('Unknown portable contract version')
+    return MODELS[task]
+
+
+def parse_input(task, payload, version='1'):
     json.dumps(payload, allow_nan=False)
-    return MODELS[task][0].model_validate(payload).model_dump()
+    return models_for(task, version)[0].model_validate(payload).model_dump()
 
 
-def check_output(task, result, payload):
-    normalized = MODELS[task][1].model_validate(result).model_dump()
+def check_output(task, result, payload, version='1'):
+    normalized = models_for(task, version)[1].model_validate(result).model_dump()
     if task == 'document_field_completeness':
         if [row['record_id'] for row in normalized['records']] != [row['record_id'] for row in payload['records']]:
             raise ValueError('Output must preserve every record ID and order')
@@ -156,6 +199,16 @@ def check_output(task, result, payload):
                 raise ValueError('Record complete flag conflicts with missing fields')
         if normalized['complete'] != all(row['complete'] for row in normalized['records']):
             raise ValueError('Overall complete flag conflicts with records')
+        if str(version) == '2':
+            formats = payload.get('field_formats', {})
+            for row in normalized['records']:
+                invalid = row['invalid_fields']
+                if len(invalid) != len(set(invalid)) or invalid != [key for key in formats if key in invalid]:
+                    raise ValueError('Invalid fields must be unique format keys in declared order')
+                if any(key not in formats for key in invalid) or row['valid'] != (row['complete'] and not invalid):
+                    raise ValueError('Validity flag conflicts with invalid/missing fields')
+            if normalized['valid'] != all(row['valid'] for row in normalized['records']):
+                raise ValueError('Overall valid flag conflicts with records')
     else:
         if [row['field_id'] for row in normalized['fields']] != [row['field_id'] for row in payload['fields']]:
             raise ValueError('Output must preserve every field ID and order')

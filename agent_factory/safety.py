@@ -27,8 +27,8 @@ def inspect_code(code, task="memory_retrieval"):
     """Reject syntax errors, dangerous imports/reflection and missing plugin entrypoint."""
     from .tasks import task_spec
     try:
-        entrypoint = task_spec(task).entrypoint
-        imports = allowed_imports(task)
+        entrypoint = 'execute' if task == 'python_draft' else task_spec(task).entrypoint
+        imports = {'math', 're', 'collections'} if task == 'python_draft' else allowed_imports(task)
     except ValueError:
         return [f"interface: unsupported task {task}"]
     try:
@@ -36,6 +36,8 @@ def inspect_code(code, task="memory_retrieval"):
     except SyntaxError as exc:
         return [f"syntax: {exc.msg} at line {exc.lineno}"]
     errors = []
+    if task == 'python_draft' and any(not isinstance(node, (ast.Import, ast.ImportFrom, ast.FunctionDef)) for node in tree.body):
+        errors.append('safety: draft module may contain imports and functions only')
     functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)]
     if not any(node.name == entrypoint for node in functions):
         errors.append(f"interface: missing top-level {entrypoint} function")

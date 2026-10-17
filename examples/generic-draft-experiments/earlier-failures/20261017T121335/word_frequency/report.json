@@ -1,0 +1,2969 @@
+{
+  "kind": "component_draft",
+  "run_id": "20261017T121341_093586f0",
+  "status": "draft_failed",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "runner": "docker",
+  "request": {
+    "description": "生成英文词频统计组件，严格使用 execute(payload) -> dict。输入为 {\"text\": 字符串}，输出仅为 {\"frequencies\": [{\"word\": 字符串, \"count\": 正整数}]}。单词严格指连续 ASCII 英文字母 [A-Za-z]+，统一小写；数字、中文、撇号、连字符、下划线和其他非 ASCII 字母字符均作为分隔符。先按次数降序排列，同频按小写单词字母顺序排列。空文本或没有英文单词时返回空 frequencies 列表，不修改输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。",
+    "task": "python_draft"
+  },
+  "proposal": {
+    "title": "英文词频统计组件",
+    "search_queries": [
+      "python word frequency count regex ascii letters",
+      "sort word frequency descending alphabetical python"
+    ],
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "frequencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "word": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "word",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "frequencies"
+      ],
+      "additionalProperties": false
+    },
+    "assumptions": [
+      "输入 payload 必须为字典且包含字符串键 text，否则组件行为未定义。",
+      "单词定义为连续的一个或多个 ASCII 英文字母 [A-Za-z]+，匹配时统一转为小写。",
+      "所有非 ASCII 英文字母的字符（包括数字、中文、撇号、连字符、下划线、空格、标点等）均视为分隔符。",
+      "输出按 count 降序排列；count 相同时按 word 的字母顺序（Python 默认字符串比较）升序排列。",
+      "空字符串或没有任何英文单词的文本返回空 frequencies 列表。",
+      "输入文本不会被修改，组件仅返回新构建的结果字典。"
+    ],
+    "limitations": [
+      "仅支持纯 Python 标准库（re、collections 等），不依赖任何第三方库。",
+      "不处理 Unicode 字母（如带重音字符、希腊字母、西里尔字母等），它们会被当作分隔符。",
+      "不进行词形还原、停用词过滤或任何自然语言处理。",
+      "不涉及网络、文件系统或外部服务，仅做内存中的纯文本转换。",
+      "对于极大文本，内存占用与不同单词数量成正比，但未做流式优化。",
+      "输出中的 word 均为小写 ASCII 字母字符串，count 为正整数。"
+    ],
+    "examples": [
+      {
+        "input": {
+          "text": "Hello, world! Hello everyone."
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "everyone",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "text": "apple banana apple cherry banana apple"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            },
+            {
+              "word": "cherry",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "text": "Hello123world, test-case and under_score"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "and",
+              "count": 1
+            },
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "hello",
+              "count": 1
+            },
+            {
+              "word": "test",
+              "count": 1
+            },
+            {
+              "word": "under",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "text": "   "
+        },
+        "expected": {
+          "frequencies": []
+        }
+      },
+      {
+        "input": {
+          "text": "123 456 中文 日本語"
+        },
+        "expected": {
+          "frequencies": []
+        }
+      },
+      {
+        "input": {
+          "text": "The quick brown fox jumps over the lazy dog. The dog barks."
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "the",
+              "count": 3
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "barks",
+              "count": 1
+            },
+            {
+              "word": "brown",
+              "count": 1
+            },
+            {
+              "word": "fox",
+              "count": 1
+            },
+            {
+              "word": "jumps",
+              "count": 1
+            },
+            {
+              "word": "lazy",
+              "count": 1
+            },
+            {
+              "word": "over",
+              "count": 1
+            },
+            {
+              "word": "quick",
+              "count": 1
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "checks": {
+    "passed": false,
+    "technical_passed": true,
+    "examples_passed": false,
+    "failure_stage": "proposed_examples",
+    "business_verified": false,
+    "errors": [
+      "proposed examples: output differs from model-authored expected result"
+    ],
+    "example_authority": "model_proposed_not_independent_gold",
+    "example_matches": [
+      true,
+      true,
+      false,
+      true,
+      true,
+      true
+    ],
+    "case_results": [
+      {
+        "case_id": "example_1",
+        "input": {
+          "text": "Hello, world! Hello everyone."
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "everyone",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "everyone",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_2",
+        "input": {
+          "text": "apple banana apple cherry banana apple"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            },
+            {
+              "word": "cherry",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            },
+            {
+              "word": "cherry",
+              "count": 1
+            }
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_3",
+        "input": {
+          "text": "Hello123world, test-case and under_score"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "and",
+              "count": 1
+            },
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "hello",
+              "count": 1
+            },
+            {
+              "word": "test",
+              "count": 1
+            },
+            {
+              "word": "under",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "and",
+              "count": 1
+            },
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "hello",
+              "count": 1
+            },
+            {
+              "word": "score",
+              "count": 1
+            },
+            {
+              "word": "test",
+              "count": 1
+            },
+            {
+              "word": "under",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"frequencies\"]",
+          "kind": "array_length",
+          "expected_length": 6,
+          "actual_length": 7
+        },
+        "execution_error": null
+      },
+      {
+        "case_id": "example_4",
+        "input": {
+          "text": "   "
+        },
+        "expected": {
+          "frequencies": []
+        },
+        "actual": {
+          "frequencies": []
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_5",
+        "input": {
+          "text": "123 456 中文 日本語"
+        },
+        "expected": {
+          "frequencies": []
+        },
+        "actual": {
+          "frequencies": []
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_6",
+        "input": {
+          "text": "The quick brown fox jumps over the lazy dog. The dog barks."
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "the",
+              "count": 3
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "barks",
+              "count": 1
+            },
+            {
+              "word": "brown",
+              "count": 1
+            },
+            {
+              "word": "fox",
+              "count": 1
+            },
+            {
+              "word": "jumps",
+              "count": 1
+            },
+            {
+              "word": "lazy",
+              "count": 1
+            },
+            {
+              "word": "over",
+              "count": 1
+            },
+            {
+              "word": "quick",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "the",
+              "count": 3
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "barks",
+              "count": 1
+            },
+            {
+              "word": "brown",
+              "count": 1
+            },
+            {
+              "word": "fox",
+              "count": 1
+            },
+            {
+              "word": "jumps",
+              "count": 1
+            },
+            {
+              "word": "lazy",
+              "count": 1
+            },
+            {
+              "word": "over",
+              "count": 1
+            },
+            {
+              "word": "quick",
+              "count": 1
+            }
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      }
+    ],
+    "example_failures": [
+      {
+        "case_id": "example_3",
+        "input": {
+          "text": "Hello123world, test-case and under_score"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "and",
+              "count": 1
+            },
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "hello",
+              "count": 1
+            },
+            {
+              "word": "test",
+              "count": 1
+            },
+            {
+              "word": "under",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "and",
+              "count": 1
+            },
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "hello",
+              "count": 1
+            },
+            {
+              "word": "score",
+              "count": 1
+            },
+            {
+              "word": "test",
+              "count": 1
+            },
+            {
+              "word": "under",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"frequencies\"]",
+          "kind": "array_length",
+          "expected_length": 6,
+          "actual_length": 7
+        },
+        "execution_error": null
+      }
+    ],
+    "observations": [
+      {
+        "case_id": "0",
+        "result": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "everyone",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.16325002070516348,
+        "mutated": false
+      },
+      {
+        "case_id": "1",
+        "result": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            },
+            {
+              "word": "cherry",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.019707949832081795,
+        "mutated": false
+      },
+      {
+        "case_id": "2",
+        "result": {
+          "frequencies": [
+            {
+              "word": "and",
+              "count": 1
+            },
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "hello",
+              "count": 1
+            },
+            {
+              "word": "score",
+              "count": 1
+            },
+            {
+              "word": "test",
+              "count": 1
+            },
+            {
+              "word": "under",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.010541989468038082,
+        "mutated": false
+      },
+      {
+        "case_id": "3",
+        "result": {
+          "frequencies": []
+        },
+        "duration_ms": 0.0034580007195472717,
+        "mutated": false
+      },
+      {
+        "case_id": "4",
+        "result": {
+          "frequencies": []
+        },
+        "duration_ms": 0.004458997864276171,
+        "mutated": false
+      },
+      {
+        "case_id": "5",
+        "result": {
+          "frequencies": [
+            {
+              "word": "the",
+              "count": 3
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "barks",
+              "count": 1
+            },
+            {
+              "word": "brown",
+              "count": 1
+            },
+            {
+              "word": "fox",
+              "count": 1
+            },
+            {
+              "word": "jumps",
+              "count": 1
+            },
+            {
+              "word": "lazy",
+              "count": 1
+            },
+            {
+              "word": "over",
+              "count": 1
+            },
+            {
+              "word": "quick",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.016208039596676826,
+        "mutated": false
+      },
+      {
+        "case_id": "6",
+        "result": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "everyone",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.005209003575146198,
+        "mutated": false
+      },
+      {
+        "case_id": "7",
+        "result": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            },
+            {
+              "word": "cherry",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.005083042196929455,
+        "mutated": false
+      },
+      {
+        "case_id": "8",
+        "result": {
+          "frequencies": [
+            {
+              "word": "and",
+              "count": 1
+            },
+            {
+              "word": "case",
+              "count": 1
+            },
+            {
+              "word": "hello",
+              "count": 1
+            },
+            {
+              "word": "score",
+              "count": 1
+            },
+            {
+              "word": "test",
+              "count": 1
+            },
+            {
+              "word": "under",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.007166992872953415,
+        "mutated": false
+      },
+      {
+        "case_id": "9",
+        "result": {
+          "frequencies": []
+        },
+        "duration_ms": 0.0027909991331398487,
+        "mutated": false
+      },
+      {
+        "case_id": "10",
+        "result": {
+          "frequencies": []
+        },
+        "duration_ms": 0.002834014594554901,
+        "mutated": false
+      },
+      {
+        "case_id": "11",
+        "result": {
+          "frequencies": [
+            {
+              "word": "the",
+              "count": 3
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "barks",
+              "count": 1
+            },
+            {
+              "word": "brown",
+              "count": 1
+            },
+            {
+              "word": "fox",
+              "count": 1
+            },
+            {
+              "word": "jumps",
+              "count": 1
+            },
+            {
+              "word": "lazy",
+              "count": 1
+            },
+            {
+              "word": "over",
+              "count": 1
+            },
+            {
+              "word": "quick",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.01091597368940711,
+        "mutated": false
+      }
+    ],
+    "independent_business_evaluation": "not_available"
+  },
+  "attempts": [
+    {
+      "revision": 0,
+      "code_hash": "401a3eb996aba9a0d6d2b6855c92e9e08385f598d369498e328bec1c53dc26c1",
+      "implementation_fingerprint": "3679c13568e1cf0c9b0be38d5cfb9658184939752cf2b0263e055b670b6a2c5c",
+      "repeated_failed_implementation": false,
+      "repair_strategy": "generate_from_spec",
+      "explanation": "Uses regex to extract ASCII letter sequences, lowercases them, counts with Counter, sorts by count descending then word ascending, and returns the required structure.",
+      "checks": {
+        "passed": false,
+        "technical_passed": true,
+        "examples_passed": false,
+        "failure_stage": "proposed_examples",
+        "business_verified": false,
+        "errors": [
+          "proposed examples: output differs from model-authored expected result"
+        ],
+        "example_authority": "model_proposed_not_independent_gold",
+        "example_matches": [
+          true,
+          true,
+          false,
+          true,
+          true,
+          true
+        ],
+        "case_results": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "text": "Hello, world! Hello everyone."
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_2",
+            "input": {
+              "text": "apple banana apple cherry banana apple"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_3",
+            "input": {
+              "text": "Hello123world, test-case and under_score"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"frequencies\"]",
+              "kind": "array_length",
+              "expected_length": 6,
+              "actual_length": 7
+            },
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "text": "   "
+            },
+            "expected": {
+              "frequencies": []
+            },
+            "actual": {
+              "frequencies": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_5",
+            "input": {
+              "text": "123 456 中文 日本語"
+            },
+            "expected": {
+              "frequencies": []
+            },
+            "actual": {
+              "frequencies": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_6",
+            "input": {
+              "text": "The quick brown fox jumps over the lazy dog. The dog barks."
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          }
+        ],
+        "example_failures": [
+          {
+            "case_id": "example_3",
+            "input": {
+              "text": "Hello123world, test-case and under_score"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"frequencies\"]",
+              "kind": "array_length",
+              "expected_length": 6,
+              "actual_length": 7
+            },
+            "execution_error": null
+          }
+        ],
+        "observations": [
+          {
+            "case_id": "0",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.1123330439440906,
+            "mutated": false
+          },
+          {
+            "case_id": "1",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.007125025149434805,
+            "mutated": false
+          },
+          {
+            "case_id": "2",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.00462500611320138,
+            "mutated": false
+          },
+          {
+            "case_id": "3",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.001667009200900793,
+            "mutated": false
+          },
+          {
+            "case_id": "4",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.00204198295250535,
+            "mutated": false
+          },
+          {
+            "case_id": "5",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.012666976545006037,
+            "mutated": false
+          },
+          {
+            "case_id": "6",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.0028329668566584587,
+            "mutated": false
+          },
+          {
+            "case_id": "7",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.002374988980591297,
+            "mutated": false
+          },
+          {
+            "case_id": "8",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.0030829687602818012,
+            "mutated": false
+          },
+          {
+            "case_id": "9",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.0011669471859931946,
+            "mutated": false
+          },
+          {
+            "case_id": "10",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.001291045919060707,
+            "mutated": false
+          },
+          {
+            "case_id": "11",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.011832977179437876,
+            "mutated": false
+          }
+        ],
+        "independent_business_evaluation": "not_available"
+      }
+    },
+    {
+      "revision": 1,
+      "code_hash": "401a3eb996aba9a0d6d2b6855c92e9e08385f598d369498e328bec1c53dc26c1",
+      "implementation_fingerprint": "3679c13568e1cf0c9b0be38d5cfb9658184939752cf2b0263e055b670b6a2c5c",
+      "repeated_failed_implementation": true,
+      "repair_strategy": "targeted_repair",
+      "explanation": "The original code follows the spec: extract ASCII letters, lowercase, count, sort. Example 3 expects no 'score' from 'under_score', but spec says underscores are separators, so 'score' should appear. This is contradictory; no general fix can satisfy both without special-casing. Keeping original code.",
+      "checks": {
+        "passed": false,
+        "technical_passed": true,
+        "examples_passed": false,
+        "failure_stage": "proposed_examples",
+        "business_verified": false,
+        "errors": [
+          "proposed examples: output differs from model-authored expected result"
+        ],
+        "example_authority": "model_proposed_not_independent_gold",
+        "example_matches": [
+          true,
+          true,
+          false,
+          true,
+          true,
+          true
+        ],
+        "case_results": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "text": "Hello, world! Hello everyone."
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_2",
+            "input": {
+              "text": "apple banana apple cherry banana apple"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_3",
+            "input": {
+              "text": "Hello123world, test-case and under_score"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"frequencies\"]",
+              "kind": "array_length",
+              "expected_length": 6,
+              "actual_length": 7
+            },
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "text": "   "
+            },
+            "expected": {
+              "frequencies": []
+            },
+            "actual": {
+              "frequencies": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_5",
+            "input": {
+              "text": "123 456 中文 日本語"
+            },
+            "expected": {
+              "frequencies": []
+            },
+            "actual": {
+              "frequencies": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_6",
+            "input": {
+              "text": "The quick brown fox jumps over the lazy dog. The dog barks."
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          }
+        ],
+        "example_failures": [
+          {
+            "case_id": "example_3",
+            "input": {
+              "text": "Hello123world, test-case and under_score"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"frequencies\"]",
+              "kind": "array_length",
+              "expected_length": 6,
+              "actual_length": 7
+            },
+            "execution_error": null
+          }
+        ],
+        "observations": [
+          {
+            "case_id": "0",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.06529100937768817,
+            "mutated": false
+          },
+          {
+            "case_id": "1",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.007374968845397234,
+            "mutated": false
+          },
+          {
+            "case_id": "2",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.005165988113731146,
+            "mutated": false
+          },
+          {
+            "case_id": "3",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.0017500133253633976,
+            "mutated": false
+          },
+          {
+            "case_id": "4",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.0019999570213258266,
+            "mutated": false
+          },
+          {
+            "case_id": "5",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.006749993190169334,
+            "mutated": false
+          },
+          {
+            "case_id": "6",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.014959019608795643,
+            "mutated": false
+          },
+          {
+            "case_id": "7",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.0032910029403865337,
+            "mutated": false
+          },
+          {
+            "case_id": "8",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.0034589902497828007,
+            "mutated": false
+          },
+          {
+            "case_id": "9",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.0012500095181167126,
+            "mutated": false
+          },
+          {
+            "case_id": "10",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.001334003172814846,
+            "mutated": false
+          },
+          {
+            "case_id": "11",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.005582987796515226,
+            "mutated": false
+          }
+        ],
+        "independent_business_evaluation": "not_available"
+      }
+    },
+    {
+      "revision": 2,
+      "code_hash": "401a3eb996aba9a0d6d2b6855c92e9e08385f598d369498e328bec1c53dc26c1",
+      "implementation_fingerprint": "3679c13568e1cf0c9b0be38d5cfb9658184939752cf2b0263e055b670b6a2c5c",
+      "repeated_failed_implementation": true,
+      "repair_strategy": "rebuild_from_spec",
+      "explanation": "The code correctly implements the spec: extract ASCII letters, lowercase, count, sort by count desc then word asc. Example 3 expected output omits 'score' from 'under_score', but spec says underscores are separators, so 'score' should be included. The example is inconsistent with spec. No repair possible without violating spec or special-casing, which is prohibited.",
+      "checks": {
+        "passed": false,
+        "technical_passed": true,
+        "examples_passed": false,
+        "failure_stage": "proposed_examples",
+        "business_verified": false,
+        "errors": [
+          "proposed examples: output differs from model-authored expected result"
+        ],
+        "example_authority": "model_proposed_not_independent_gold",
+        "example_matches": [
+          true,
+          true,
+          false,
+          true,
+          true,
+          true
+        ],
+        "case_results": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "text": "Hello, world! Hello everyone."
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_2",
+            "input": {
+              "text": "apple banana apple cherry banana apple"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_3",
+            "input": {
+              "text": "Hello123world, test-case and under_score"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"frequencies\"]",
+              "kind": "array_length",
+              "expected_length": 6,
+              "actual_length": 7
+            },
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "text": "   "
+            },
+            "expected": {
+              "frequencies": []
+            },
+            "actual": {
+              "frequencies": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_5",
+            "input": {
+              "text": "123 456 中文 日本語"
+            },
+            "expected": {
+              "frequencies": []
+            },
+            "actual": {
+              "frequencies": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_6",
+            "input": {
+              "text": "The quick brown fox jumps over the lazy dog. The dog barks."
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          }
+        ],
+        "example_failures": [
+          {
+            "case_id": "example_3",
+            "input": {
+              "text": "Hello123world, test-case and under_score"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": false,
+            "first_difference": {
+              "path": "$[\"frequencies\"]",
+              "kind": "array_length",
+              "expected_length": 6,
+              "actual_length": 7
+            },
+            "execution_error": null
+          }
+        ],
+        "observations": [
+          {
+            "case_id": "0",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.16325002070516348,
+            "mutated": false
+          },
+          {
+            "case_id": "1",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.019707949832081795,
+            "mutated": false
+          },
+          {
+            "case_id": "2",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.010541989468038082,
+            "mutated": false
+          },
+          {
+            "case_id": "3",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.0034580007195472717,
+            "mutated": false
+          },
+          {
+            "case_id": "4",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.004458997864276171,
+            "mutated": false
+          },
+          {
+            "case_id": "5",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.016208039596676826,
+            "mutated": false
+          },
+          {
+            "case_id": "6",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "everyone",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.005209003575146198,
+            "mutated": false
+          },
+          {
+            "case_id": "7",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                },
+                {
+                  "word": "cherry",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.005083042196929455,
+            "mutated": false
+          },
+          {
+            "case_id": "8",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "and",
+                  "count": 1
+                },
+                {
+                  "word": "case",
+                  "count": 1
+                },
+                {
+                  "word": "hello",
+                  "count": 1
+                },
+                {
+                  "word": "score",
+                  "count": 1
+                },
+                {
+                  "word": "test",
+                  "count": 1
+                },
+                {
+                  "word": "under",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.007166992872953415,
+            "mutated": false
+          },
+          {
+            "case_id": "9",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.0027909991331398487,
+            "mutated": false
+          },
+          {
+            "case_id": "10",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.002834014594554901,
+            "mutated": false
+          },
+          {
+            "case_id": "11",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "the",
+                  "count": 3
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "barks",
+                  "count": 1
+                },
+                {
+                  "word": "brown",
+                  "count": 1
+                },
+                {
+                  "word": "fox",
+                  "count": 1
+                },
+                {
+                  "word": "jumps",
+                  "count": 1
+                },
+                {
+                  "word": "lazy",
+                  "count": 1
+                },
+                {
+                  "word": "over",
+                  "count": 1
+                },
+                {
+                  "word": "quick",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.01091597368940711,
+            "mutated": false
+          }
+        ],
+        "independent_business_evaluation": "not_available"
+      }
+    }
+  ],
+  "error": null,
+  "spec_reviews": [
+    {
+      "revision": 0,
+      "proposal_hash": "de4de1e1a6e30be10952ef3e3baf879f08b6513b6ffe6b7369e2c2be73e1c657",
+      "review": {
+        "consistent": true,
+        "issues": []
+      }
+    }
+  ],
+  "spec_review_authority": "model_consistency_review_not_independent_gold",
+  "failure_stage": "proposed_examples",
+  "business_verified": false,
+  "auto_activated": false,
+  "missing_validation": [
+    "Generate an English word frequency component with execute(payload) -> dict, input {\"text\": string}, output {\"frequencies\": [{\"word\": string, \"count\": positive integer}]}.",
+    "Words are strictly continuous ASCII English letters [A-Za-z]+, lowercased; digits, Chinese, apostrophes, hyphens, underscores, and other non-ASCII letters are separators.",
+    "Sort by count descending, then by lowercase word alphabetically.",
+    "Empty text or no English words returns empty frequencies list; do not modify input.",
+    "Use only pure Python standard library; no training, classification, or retrieval."
+  ],
+  "search": {
+    "status": "searched",
+    "repositories": [
+      {
+        "full_name": "bytedance/deer-flow",
+        "description": "An open-source long-horizon SuperAgent harness that researches, codes, and creates. With the help of sandboxes, memories, tools, skill, subagents and message gateway, it handles different levels of tasks that could take minutes to hours.",
+        "license": "MIT",
+        "stars": 83998,
+        "url": "https://github.com/bytedance/deer-flow"
+      },
+      {
+        "full_name": "qiyuangong/leetcode",
+        "description": "Python & JAVA Solutions for Leetcode",
+        "license": "MIT",
+        "stars": 5301,
+        "url": "https://github.com/qiyuangong/leetcode"
+      },
+      {
+        "full_name": "viktorbezdek/awesome-github-projects",
+        "description": "Curated list of GitHub projects I starred over the years",
+        "license": "CC0-1.0",
+        "stars": 834,
+        "url": "https://github.com/viktorbezdek/awesome-github-projects"
+      }
+    ],
+    "excluded": [
+      {
+        "repository": "toolleeo/awesome-cli-apps-in-a-csv",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "rspeer/wordfreq",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "learning-zone/python-basics",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "Berkanktk/CyberSecurity",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "hevalhazalkurt/codewars_python_solutions",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "krzemienski/awesome-from-stars",
+        "reason": "private, invalid name or unsupported/unknown license"
+      }
+    ],
+    "search_trace": [
+      {
+        "url": "https://api.github.com/search/repositories",
+        "params": {
+          "q": "python word frequency count regex ascii letters in:readme language:Python archived:false fork:false is:public",
+          "per_page": 10,
+          "sort": "stars"
+        }
+      },
+      {
+        "url": "https://api.github.com/search/repositories",
+        "params": {
+          "q": "sort word frequency descending alphabetical python in:name language:Python archived:false fork:false is:public",
+          "per_page": 10,
+          "sort": "stars"
+        }
+      }
+    ]
+  },
+  "sources": {
+    "local_components": [],
+    "repositories": [],
+    "errors": [
+      {
+        "repository": "bytedance/deer-flow",
+        "error": "GitHub response exceeds download budget"
+      },
+      {
+        "repository": "qiyuangong/leetcode",
+        "error": "Repository source snapshot exceeds file/byte budget"
+      }
+    ],
+    "untrusted_reference_evidence": true
+  },
+  "code_hash": "401a3eb996aba9a0d6d2b6855c92e9e08385f598d369498e328bec1c53dc26c1",
+  "generation_backend": "llm"
+}

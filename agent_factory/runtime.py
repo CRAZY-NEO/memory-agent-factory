@@ -107,7 +107,7 @@ class _DocumentReviewer:
         from .tasks import task_spec
         self.path = Path(manifest)
         self.manifest = json.loads(self.path.read_text(encoding='utf-8'))
-        self.task = task_spec(self.manifest['task'])
+        self.task = task_spec(self.manifest['task'], self.manifest.get('capability_contract', {}).get('version', '1'))
         if self.task.contract.domain != 'information_design':
             raise ValueError('DocumentReviewer requires a document-review capability')
         self.code = (self.path.parent / self.task.selected_filename).read_text(encoding='utf-8')
@@ -117,9 +117,10 @@ class _DocumentReviewer:
 
     def invoke(self, payload):
         from .document_contracts import check_output, parse_input
-        normalized = parse_input(self.task.id, payload)
+        normalized = parse_input(self.task.id, payload, self.task.contract.version)
         case = {'case_id': 'invoke', 'payload': normalized}
-        result = self.runner.execute(self.code, [case], task=self.task.id)
+        version_args = {'contract_version': self.task.contract.version} if self.task.contract.version != '1' else {}
+        result = self.runner.execute(self.code, [case], task=self.task.id, **version_args)
         if 'error' in result:
             raise RuntimeError(result['error'])
         rows = result.get('observations', [])
@@ -130,7 +131,7 @@ class _DocumentReviewer:
             raise RuntimeError(row['error'])
         if row.get('mutated'):
             raise ValueError('Capability mutated inputs')
-        return check_output(self.task.id, row.get('result'), normalized)
+        return check_output(self.task.id, row.get('result'), normalized, self.task.contract.version)
 
 
 class CapabilityPlugin:
@@ -147,7 +148,7 @@ class CapabilityPlugin:
         if path.is_symlink() or not path.is_file() or path.stat().st_size > 1024 * 1024:
             raise ValueError('Unsafe capability manifest')
         self.manifest = json.loads(path.read_text(encoding='utf-8'))
-        self.adapter = task_spec(self.manifest['task'])
+        self.adapter = task_spec(self.manifest['task'], self.manifest.get('capability_contract', {}).get('version', '1'))
         contract = self.manifest.get('capability_contract')
         if contract is None:
             raise ValueError('Unified SDK requires a versioned capability contract')

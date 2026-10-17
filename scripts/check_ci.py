@@ -142,10 +142,13 @@ def smoke(workspace):
         shutil.copytree(ROOT / directory, workspace / directory)
     shutil.copyfile(ROOT / "config.json", workspace / "config.json")
     prefix = [sys.executable, "-m", "agent_factory", "--workspace", str(workspace), "--verbose"]
+    # This smoke explicitly checks source-to-implementation provenance. Default
+    # spec generation deliberately omits source text, so use reference here;
+    # it is not evidence of generation without a complete reference.
     commands = [prefix + ["ingest-repo", str(ROOT), "--include", "agent_factory/templates/jaccard.py",
                           "--algorithm", "jaccard"],
                 prefix + ["run", "--provider", "mock", "--model", "mock-template-v1",
-                          "--runner", "docker", "--inject-fault", "--request-file",
+                          "--runner", "docker", "--inject-fault", "--generation-mode", "reference", "--request-file",
                           str(ROOT / "examples/plugins/request.txt")]]
     log = workspace / "workflow.log"
     with log.open("w", encoding="utf-8") as output:

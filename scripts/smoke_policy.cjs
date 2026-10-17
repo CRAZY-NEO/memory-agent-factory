@@ -29,7 +29,8 @@ async function main() {
     await page.goto("/");
     await page.locator("#token").fill(token);
     await page.locator("#connect").click();
-    await page.locator("#submit:enabled").waitFor();
+    await page.locator("#component-ensure:enabled").waitFor();
+    if (await page.locator("#research-tools").getAttribute("open") === null) await page.locator("#research-tools > summary").click();
     await page.locator(".mode-options summary").click();
     assert.equal(await page.locator("#generation-mode").inputValue(), "spec");
     assert.equal(await page.locator("#history-mode").inputValue(), "on");
@@ -112,7 +113,8 @@ async function main() {
           await capture.goto("/");
           await capture.locator("#token").fill(token);
           await capture.locator("#connect").click();
-          await capture.locator("#submit:enabled").waitFor();
+          await capture.locator("#component-ensure:enabled").waitFor();
+          if (await capture.locator("#research-tools").getAttribute("open") === null) await capture.locator("#research-tools > summary").click();
           await capture.locator("#classification-example").click();
           await capture.locator(".mode-options summary").click();
           await capture.locator("#generation-mode").selectOption(scenario.mode);

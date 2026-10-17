@@ -1,0 +1,156 @@
+{
+  "task": "document_field_completeness",
+  "version": "2",
+  "domain": "information_design",
+  "entrypoint": "check_fields",
+  "parameters": [
+    "payload"
+  ],
+  "defaults": {},
+  "input_schema": {
+    "type": "object",
+    "$defs": {
+      "JsonValue": {},
+      "Record": {
+        "additionalProperties": false,
+        "properties": {
+          "record_id": {
+            "minLength": 1,
+            "title": "Record Id",
+            "type": "string"
+          },
+          "fields": {
+            "additionalProperties": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "title": "Fields",
+            "type": "object"
+          }
+        },
+        "required": [
+          "record_id",
+          "fields"
+        ],
+        "title": "Record",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "payload": {
+        "additionalProperties": false,
+        "properties": {
+          "records": {
+            "items": {
+              "$ref": "#/$defs/Record"
+            },
+            "title": "Records",
+            "type": "array"
+          },
+          "required_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Fields",
+            "type": "array"
+          },
+          "field_formats": {
+            "additionalProperties": {
+              "const": "email",
+              "type": "string"
+            },
+            "title": "Field Formats",
+            "type": "object"
+          }
+        },
+        "required": [
+          "records",
+          "required_fields"
+        ],
+        "title": "FormattedFieldInput",
+        "type": "object"
+      }
+    },
+    "required": [
+      "payload"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "$defs": {
+      "FormattedFieldResult": {
+        "additionalProperties": false,
+        "properties": {
+          "record_id": {
+            "title": "Record Id",
+            "type": "string"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Fields",
+            "type": "array"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "invalid_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Invalid Fields",
+            "type": "array"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "record_id",
+          "missing_fields",
+          "complete",
+          "invalid_fields",
+          "valid"
+        ],
+        "title": "FormattedFieldResult",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "records": {
+        "items": {
+          "$ref": "#/$defs/FormattedFieldResult"
+        },
+        "title": "Records",
+        "type": "array"
+      },
+      "complete": {
+        "title": "Complete",
+        "type": "boolean"
+      },
+      "valid": {
+        "title": "Valid",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "records",
+      "complete",
+      "valid"
+    ],
+    "title": "FormattedFieldOutput",
+    "type": "object"
+  },
+  "behaviors": [
+    "Implement check_fields(payload). payload has records [{record_id, fields}] and required_fields [str]. Field names are literal top-level keys, including dots; never split a dotted name into a path.",
+    "A required value is missing only if its key is absent, its value is None, a string whose strip() is empty, or an empty list or dict. Numeric zero and boolean False are present. Nonempty lists/dicts are present without recursively checking their contents. Do not treat every falsy value as missing.",
+    "Preserve record and required-field order. missing_fields contains precisely missing required keys. complete means no missing required fields, independently of format validity. Overall complete iff all record complete flags. Empty records is complete and valid. Never mutate inputs.",
+    "Contract version 2 extends field completeness. payload also accepts optional field_formats, an insertion-ordered mapping of literal field names to \"email\", default {}. For each mapped field skip absent or missing values using the same missing-value definition. For present values, only strings matching re.fullmatch(r\"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+\", value) are valid emails. Do not strip or normalize; non-string present values are invalid. This is a deliberately bounded email syntax rule, not RFC validation or deliverability checking.",
+    "Version 2 output records have exactly record_id, missing_fields, complete, invalid_fields, valid. invalid_fields follows field_formats insertion order. valid is complete AND no invalid_fields. Overall output has exactly records, complete, valid; overall valid iff all record valid flags. Keep completeness semantics unchanged. With no field_formats, invalid_fields=[] and valid=complete. This is an explicit output-schema version change; version 1 callers must retain their old binding."
+  ],
+  "environment": "structured-review-v1",
+  "allowed_dependencies": []
+}

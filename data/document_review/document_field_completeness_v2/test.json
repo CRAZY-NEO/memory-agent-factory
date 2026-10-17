@@ -1,0 +1,1019 @@
+[
+  {
+    "id": "v2-test_present",
+    "category": "present",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_present",
+          "fields": {
+            "project": "文字"
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_present",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        }
+      ],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "v2-test_absent",
+    "category": "absent",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_absent",
+          "fields": {}
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_absent",
+          "missing_fields": [
+            "project"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "v2-test_null",
+    "category": "null",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_null",
+          "fields": {
+            "project": null
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_null",
+          "missing_fields": [
+            "project"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "v2-test_whitespace",
+    "category": "whitespace",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_whitespace",
+          "fields": {
+            "project": " \t\n"
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_whitespace",
+          "missing_fields": [
+            "project"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "v2-test_zero",
+    "category": "zero",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_zero",
+          "fields": {
+            "project": 0
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_zero",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        }
+      ],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "v2-test_false",
+    "category": "false",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_false",
+          "fields": {
+            "project": false
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_false",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        }
+      ],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "v2-test_empty_list",
+    "category": "empty_list",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_empty_list",
+          "fields": {
+            "project": []
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_empty_list",
+          "missing_fields": [
+            "project"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "v2-test_empty_dict",
+    "category": "empty_dict",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_empty_dict",
+          "fields": {
+            "project": {}
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_empty_dict",
+          "missing_fields": [
+            "project"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "v2-test_nested_present",
+    "category": "nested_present",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_nested_present",
+          "fields": {
+            "project": {
+              "child": null
+            }
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_nested_present",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        }
+      ],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "v2-test_list_present",
+    "category": "list_present",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_list_present",
+          "fields": {
+            "project": [
+              null
+            ]
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_list_present",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        }
+      ],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "v2-test_literal_dot",
+    "category": "literal_dot",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_literal_dot",
+          "fields": {
+            "project.name": "ok"
+          }
+        }
+      ],
+      "required_fields": [
+        "project.name"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_literal_dot",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        }
+      ],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "v2-test_no_path_traversal",
+    "category": "no_path_traversal",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_no_path_traversal",
+          "fields": {
+            "project": {
+              "name": "ok"
+            }
+          }
+        }
+      ],
+      "required_fields": [
+        "project.name"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_no_path_traversal",
+          "missing_fields": [
+            "project.name"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "v2-test_required_order",
+    "category": "required_order",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_required_order",
+          "fields": {}
+        }
+      ],
+      "required_fields": [
+        "z_project",
+        "a_project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_required_order",
+          "missing_fields": [
+            "z_project",
+            "a_project"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "v2-test_record_order",
+    "category": "record_order",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_record_order",
+          "fields": {
+            "project": "ok"
+          }
+        },
+        {
+          "record_id": "test_record_order_empty",
+          "fields": {}
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_record_order",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        },
+        {
+          "record_id": "test_record_order_empty",
+          "missing_fields": [
+            "project"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "v2-test_optional_ignored",
+    "category": "optional_ignored",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_optional_ignored",
+          "fields": {
+            "optional": null
+          }
+        }
+      ],
+      "required_fields": []
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_optional_ignored",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        }
+      ],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "v2-test_empty_records",
+    "category": "empty_records",
+    "payload": {
+      "records": [],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "v2-test_nonblank",
+    "category": "nonblank",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_nonblank",
+          "fields": {
+            "project": "  内容  "
+          }
+        }
+      ],
+      "required_fields": [
+        "project"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_nonblank",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        }
+      ],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "v2-test_mixed_missing",
+    "category": "mixed_missing",
+    "payload": {
+      "records": [
+        {
+          "record_id": "test_mixed_missing",
+          "fields": {
+            "project": false,
+            "extra": null
+          }
+        }
+      ],
+      "required_fields": [
+        "project",
+        "extra",
+        "absent"
+      ]
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "test_mixed_missing",
+          "missing_fields": [
+            "extra",
+            "absent"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-valid",
+    "category": "email_valid",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-valid",
+          "fields": {
+            "email": "first_last@sub.example.org"
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-valid",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [],
+          "valid": true
+        }
+      ],
+      "complete": true,
+      "valid": true
+    }
+  },
+  {
+    "id": "final-no-at",
+    "category": "email_no-at",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-no-at",
+          "fields": {
+            "email": "bad.example.org"
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-no-at",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [
+            "email"
+          ],
+          "valid": false
+        }
+      ],
+      "complete": true,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-no-dot",
+    "category": "email_no-dot",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-no-dot",
+          "fields": {
+            "email": "person@internal"
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-no-dot",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [
+            "email"
+          ],
+          "valid": false
+        }
+      ],
+      "complete": true,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-space",
+    "category": "email_space",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-space",
+          "fields": {
+            "email": "x@example.org "
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-space",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [
+            "email"
+          ],
+          "valid": false
+        }
+      ],
+      "complete": true,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-unicode",
+    "category": "email_unicode",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-unicode",
+          "fields": {
+            "email": "x@例子.org"
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-unicode",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [
+            "email"
+          ],
+          "valid": false
+        }
+      ],
+      "complete": true,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-zero",
+    "category": "email_zero",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-zero",
+          "fields": {
+            "email": 12
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-zero",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [
+            "email"
+          ],
+          "valid": false
+        }
+      ],
+      "complete": true,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-false",
+    "category": "email_false",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-false",
+          "fields": {
+            "email": true
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-false",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [
+            "email"
+          ],
+          "valid": false
+        }
+      ],
+      "complete": true,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-blank",
+    "category": "email_blank",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-blank",
+          "fields": {
+            "email": "\t"
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-blank",
+          "missing_fields": [
+            "email"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-null",
+    "category": "email_null",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-null",
+          "fields": {
+            "email": null
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-null",
+          "missing_fields": [
+            "email"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-empty-list",
+    "category": "email_empty-list",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-empty-list",
+          "fields": {
+            "email": []
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-empty-list",
+          "missing_fields": [
+            "email"
+          ],
+          "complete": false,
+          "invalid_fields": [],
+          "valid": false
+        }
+      ],
+      "complete": false,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-nonempty-list",
+    "category": "email_nonempty-list",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-nonempty-list",
+          "fields": {
+            "email": [
+              "y"
+            ]
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-nonempty-list",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [
+            "email"
+          ],
+          "valid": false
+        }
+      ],
+      "complete": true,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-newline",
+    "category": "email_newline",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final-newline",
+          "fields": {
+            "email": "x@example.org\r\n"
+          }
+        }
+      ],
+      "required_fields": [
+        "email"
+      ],
+      "field_formats": {
+        "email": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final-newline",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [
+            "email"
+          ],
+          "valid": false
+        }
+      ],
+      "complete": true,
+      "valid": false
+    }
+  },
+  {
+    "id": "final-ordered-formats",
+    "category": "format_order",
+    "payload": {
+      "records": [
+        {
+          "record_id": "final",
+          "fields": {
+            "a": "bad",
+            "b": 0
+          }
+        }
+      ],
+      "required_fields": [],
+      "field_formats": {
+        "b": "email",
+        "a": "email",
+        "absent": "email"
+      }
+    },
+    "expected": {
+      "records": [
+        {
+          "record_id": "final",
+          "missing_fields": [],
+          "complete": true,
+          "invalid_fields": [
+            "b",
+            "a"
+          ],
+          "valid": false
+        }
+      ],
+      "complete": true,
+      "valid": false
+    }
+  }
+]

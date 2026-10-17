@@ -1,0 +1,151 @@
+{
+  "title": "文本列表去重组件",
+  "search_queries": [
+    "python list deduplicate casefold strip preserve order",
+    "python remove duplicate strings case insensitive strip whitespace"
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "texts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "待去重的字符串列表"
+      }
+    },
+    "required": [
+      "texts"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "texts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "去重后的字符串列表，保持首次出现顺序"
+      }
+    },
+    "required": [
+      "texts"
+    ],
+    "additionalProperties": false
+  },
+  "assumptions": [
+    "输入 payload 必须包含键 'texts'，且其值为字符串列表。",
+    "去重键为 text.strip().casefold()，即先去除两端空白，再进行 Unicode 大小写折叠。",
+    "strip 后为空的文本将被跳过，不包含在输出中。",
+    "相同去重键只保留第一次出现的原始字符串，保留其原有空白和大小写。",
+    "输出顺序与输入中首次出现的顺序一致。",
+    "只去除两端空白，不合并内部空白，不移除标点，不做 Unicode 规范化。",
+    "空输入列表返回空列表。",
+    "不修改原始输入列表。"
+  ],
+  "limitations": [
+    "仅支持字符串列表，不支持其他类型元素。",
+    "去重基于 casefold 和 strip，可能将不同 Unicode 规范化形式的文本视为不同。",
+    "不处理嵌套列表或非字符串输入。",
+    "不进行语义去重或模糊匹配。",
+    "仅使用 Python 标准库，不依赖外部服务。",
+    "输出仅包含去重后的 texts 字段，不返回其他元数据。"
+  ],
+  "examples": [
+    {
+      "input": {
+        "texts": [
+          "  Apple  ",
+          "banana",
+          "apple",
+          "  ",
+          "Banana",
+          "cherry"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "  Apple  ",
+          "banana",
+          "cherry"
+        ]
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "Hello",
+          "hello",
+          "HELLO",
+          "World",
+          "world"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "Hello",
+          "World"
+        ]
+      }
+    },
+    {
+      "input": {
+        "texts": []
+      },
+      "expected": {
+        "texts": []
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "  ",
+          "\t",
+          "  unique  ",
+          "unique"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "  unique  "
+        ]
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "Straße",
+          "STRASSE",
+          "straße"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "Straße",
+          "STRASSE"
+        ]
+      }
+    },
+    {
+      "input": {
+        "texts": [
+          "  apple  ",
+          "banana",
+          "  apple",
+          "banana  ",
+          "cherry"
+        ]
+      },
+      "expected": {
+        "texts": [
+          "  apple  ",
+          "banana",
+          "cherry"
+        ]
+      }
+    }
+  ]
+}

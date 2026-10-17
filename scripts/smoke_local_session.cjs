@@ -18,7 +18,8 @@ async function main() {
     const unauthenticated = await browser.newContext();
     assert.equal((await unauthenticated.request.get(url.origin + "/v1/settings")).status(), 401);
     await page.goto(link);
-    await page.locator("#submit:enabled").waitFor();
+    await page.locator("#component-ensure:enabled").waitFor();
+    if (await page.locator("#research-tools").getAttribute("open") === null) await page.locator("#research-tools > summary").click();
     assert.equal(new URL(page.url()).hash, "");
     assert(await page.locator("#token").isHidden());
     assert.equal(await page.locator("#token").inputValue(), "");
@@ -26,7 +27,8 @@ async function main() {
     const cookie = (await page.context().cookies()).find((item) => item.name === "factory_demo_session");
     assert(cookie.httpOnly && cookie.sameSite === "Strict" && cookie.expires === -1);
     await page.reload();
-    await page.locator("#submit:enabled").waitFor();
+    await page.locator("#component-ensure:enabled").waitFor();
+    if (await page.locator("#research-tools").getAttribute("open") === null) await page.locator("#research-tools > summary").click();
     // A cookie-authenticated write is exercised by a real factory submission.
     await page.locator("#example").click();
     const queued = page.waitForResponse((response) => response.url().endsWith("/v1/factory/runs") && response.status() === 202);

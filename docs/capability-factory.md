@@ -4,6 +4,8 @@
 
 ## 当前范围
 
+组件目录、版本选择、定向更新、重写和回退见 [组件生命周期](component-lifecycle.md)。字段任务新增独立契约版本 2；下表原有契约 1 与原接口继续保留。
+
 | 任务 ID | 领域 | 生成入口 | 可信质量门槛 |
 | --- | --- | --- | --- |
 | memory_retrieval | personal_memory | retrieve(query, memories, top_k=5) | Recall、MRR、可配置业务扩展及稳定性 |
@@ -11,7 +13,7 @@
 | document_field_completeness | information_design | check_fields(payload) | 18 条验证与 18 条最终测试，整例精确匹配 100% |
 | document_source_references | information_design | check_references(payload) | 22 条验证与 22 条最终测试，整例精确匹配 100% |
 
-这不是任意任务的通用编程系统。未登记可信契约和评估适配器的任务会被拒绝。两个文档任务处理现有文档解析器的结构化 JSON，不做 OCR、多模态理解、语义事实核查或网页视觉评分。
+完整业务验收仍限定于已登记的可信契约和评估适配器。组件入口遇到未登记任务时会继续检索和生成待验证候选，并运行通用安全与执行检查；没有业务验证器时不会认证或自动启用。通用候选暂限定纯 Python JSON 数据处理，详见 [组件生命周期](component-lifecycle.md)。两个文档任务处理现有文档解析器的结构化 JSON，不做 OCR、多模态理解、语义事实核查或网页视觉评分。
 
 ## 一套契约与任务适配机制
 

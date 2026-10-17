@@ -489,7 +489,7 @@ def focused_context(state, registry, config=None):
                'validated_lessons': (compact_lessons(knowledge, plugin.id, config.task)
                                      if config.history_mode == 'on' else [])}
     from .tasks import task_spec
-    context['capability_contract'] = task_spec(config.task).contract.model_dump()
+    context['capability_contract'] = task_spec(config.task, config.contract_version).contract.model_dump()
     if config.generation_mode == 'reference':
         capabilities = [cap for cap in knowledge['capabilities'] if cap['id'] == candidate['capability_id']]
         source_ids = {cap['source_id'] for cap in capabilities}

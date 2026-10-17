@@ -1,0 +1,8 @@
+{"node": "draft_plan", "time": "2026-10-17T12:19:58.120433+00:00", "candidate_index": null, "revision": null}
+{"node": "draft_spec_review", "time": "2026-10-17T12:19:58.120749+00:00", "candidate_index": null, "revision": null}
+{"node": "replay_original_sources", "time": "2026-10-17T12:19:58.121141+00:00", "candidate_index": null, "revision": null}
+{"node": "draft_generate", "time": "2026-10-17T12:19:58.121424+00:00", "candidate_index": null, "revision": null}
+{"node": "draft_validate", "time": "2026-10-17T12:19:58.121609+00:00", "candidate_index": null, "revision": null}
+{"node": "draft_repair", "time": "2026-10-17T12:19:58.602066+00:00", "candidate_index": null, "revision": null}
+{"node": "draft_validate", "time": "2026-10-17T12:20:01.463356+00:00", "candidate_index": null, "revision": null}
+{"node": "draft_persist", "time": "2026-10-17T12:20:01.998176+00:00", "candidate_index": null, "revision": null}

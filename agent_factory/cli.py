@@ -38,6 +38,8 @@ def parser():
     root.add_argument("--verbose", action="store_true")
     root.add_argument("--config", type=Path, help="覆盖工作目录的 config.json")
     commands = root.add_subparsers(dest="command", required=True)
+    from .component_cli import add_commands
+    add_commands(commands, provider_options)
     commands.add_parser("capabilities", help="列出统一能力契约及可信任务适配器")
     invoke = commands.add_parser("invoke", help="使用统一 JSON 接口调用已验证能力组件")
     invoke.add_argument("--run", required=True, help="已通过最终测试的运行 ID")
@@ -118,6 +120,10 @@ def main(argv=None):
             if arguments.runner == 'local' or arguments.allow_local:
                 raise ValueError('DeepSeek 生成的代码必须使用 Docker 执行')
             arguments.runner = 'docker'
+        if arguments.command == 'components':
+            from .component_cli import execute
+            print(json.dumps(execute(arguments, workspace), ensure_ascii=False, indent=2))
+            return 0
         # Export is based on the frozen run, independent of today's workspace config.
         if arguments.command == 'export' and arguments.run_id:
             output = export_run(workspace, arguments.run_id)

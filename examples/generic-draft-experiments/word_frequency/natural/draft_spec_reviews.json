@@ -1,0 +1,74 @@
+[
+  {
+    "revision": 0,
+    "proposal_hash": "d21875b3a8ef4afba244a61378cb09a0638bbb11705e90774da07184100b25ad",
+    "review": {
+      "consistent": true,
+      "issues": [],
+      "example_expectations": [
+        {
+          "case_id": "example_1",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "hello",
+                "count": 2
+              },
+              {
+                "word": "there",
+                "count": 1
+              },
+              {
+                "word": "world",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_2",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "apple",
+                "count": 3
+              },
+              {
+                "word": "banana",
+                "count": 2
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_3",
+          "expected": {
+            "frequencies": [
+              {
+                "word": "cat",
+                "count": 2
+              },
+              {
+                "word": "dog",
+                "count": 2
+              },
+              {
+                "word": "bird",
+                "count": 1
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "example_4",
+          "expected": {
+            "frequencies": []
+          }
+        }
+      ]
+    },
+    "accepted": true,
+    "issues": [],
+    "reviewer_saw_planner_expectations": false
+  }
+]

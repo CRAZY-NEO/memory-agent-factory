@@ -1,0 +1,5 @@
+{
+  "component": "company-review",
+  "description": "为信息设计系统生成字段完整性检查组件，检查必填字段，保留顺序，正确处理空值、0 和 false。",
+  "parameters": {"required_fields": ["name", "email"]}
+}

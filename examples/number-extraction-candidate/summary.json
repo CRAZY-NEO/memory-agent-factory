@@ -1,0 +1,146 @@
+{
+  "status": "candidate_basic_checks_passed_business_validation_pending",
+  "run_id": "20261017T111442_58e22fe1",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "runner": "docker",
+  "description": "帮我生成一个文本信息提取组件，提取文本中的所有数字",
+  "code_hash": "1141bd2164eb1910d7b69f7c9c4b2aa4156e9241c0df188a37fc8a95a2d937b6",
+  "candidate_revisions": 1,
+  "model_proposed_cases": 4,
+  "manual_acceptance": [
+    {
+      "input": {
+        "text": "温度-12.5℃，数量3，编号003"
+      },
+      "expected": {
+        "numbers": [
+          -12.5,
+          3,
+          3
+        ]
+      },
+      "actual": {
+        "numbers": [
+          -12.5,
+          3,
+          3
+        ]
+      },
+      "passed": true,
+      "job_id": "9b4d40508e2748bb99720553f35d0eab"
+    },
+    {
+      "input": {
+        "text": "7和7，再来+9"
+      },
+      "expected": {
+        "numbers": [
+          7,
+          7,
+          9
+        ]
+      },
+      "actual": {
+        "numbers": [
+          7,
+          7,
+          9
+        ]
+      },
+      "passed": true,
+      "job_id": "d0d41a2c4f9a467798a95d33ca900c46"
+    },
+    {
+      "input": {
+        "text": "a9b8c7"
+      },
+      "expected": {
+        "numbers": [
+          9,
+          8,
+          7
+        ]
+      },
+      "actual": {
+        "numbers": [
+          9,
+          8,
+          7
+        ]
+      },
+      "passed": true,
+      "job_id": "4e8e9ca0572c48c4b4a1623d9c90cf32"
+    },
+    {
+      "input": {
+        "text": "A+2.0 B-0.25 C0"
+      },
+      "expected": {
+        "numbers": [
+          2.0,
+          -0.25,
+          0
+        ]
+      },
+      "actual": {
+        "numbers": [
+          2.0,
+          -0.25,
+          0
+        ]
+      },
+      "passed": true,
+      "job_id": "feaec58ae149495f86fce3b398d38fdd"
+    },
+    {
+      "input": {
+        "text": "纯中文无数值"
+      },
+      "expected": {
+        "numbers": []
+      },
+      "actual": {
+        "numbers": []
+      },
+      "passed": true,
+      "job_id": "4f4e00b7f788414e9131f1f5333241e0"
+    },
+    {
+      "input": {
+        "text": ""
+      },
+      "expected": {
+        "numbers": []
+      },
+      "actual": {
+        "numbers": []
+      },
+      "passed": true,
+      "job_id": "a0ef21657bda4d4da4ea0ce0536adec0"
+    }
+  ],
+  "business_verified": false,
+  "auto_activated": false,
+  "source_exactly_matches_real_model_response": true,
+  "sources": [
+    {
+      "repository": "jsvine/pdfplumber",
+      "commit": "4c64b92d5caccd71c645e98e0fabb0c4dba7ff45",
+      "license": "MIT"
+    }
+  ],
+  "search_queries": [
+    "python regex extract all numbers from string",
+    "extract numbers from text python"
+  ],
+  "limitations": [
+    "Does not handle numbers in scientific notation.",
+    "Does not handle numbers with thousand separators.",
+    "Does not handle fractions or mixed numbers.",
+    "Does not handle numbers written in words.",
+    "Only processes plain text; no HTML or markup stripping.",
+    "No locale-specific decimal separators (e.g., comma as decimal point)."
+  ],
+  "evidence_directory": "state/draft-number-real-20261017"
+}

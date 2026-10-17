@@ -1,0 +1,128 @@
+{
+  "task": "document_field_completeness",
+  "version": "1",
+  "domain": "information_design",
+  "entrypoint": "check_fields",
+  "parameters": [
+    "payload"
+  ],
+  "defaults": {},
+  "input_schema": {
+    "type": "object",
+    "$defs": {
+      "JsonValue": {},
+      "Record": {
+        "additionalProperties": false,
+        "properties": {
+          "record_id": {
+            "minLength": 1,
+            "title": "Record Id",
+            "type": "string"
+          },
+          "fields": {
+            "additionalProperties": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "title": "Fields",
+            "type": "object"
+          }
+        },
+        "required": [
+          "record_id",
+          "fields"
+        ],
+        "title": "Record",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "payload": {
+        "additionalProperties": false,
+        "properties": {
+          "records": {
+            "items": {
+              "$ref": "#/$defs/Record"
+            },
+            "title": "Records",
+            "type": "array"
+          },
+          "required_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "records",
+          "required_fields"
+        ],
+        "title": "FieldInput",
+        "type": "object"
+      }
+    },
+    "required": [
+      "payload"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "$defs": {
+      "FieldResult": {
+        "additionalProperties": false,
+        "properties": {
+          "record_id": {
+            "title": "Record Id",
+            "type": "string"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Fields",
+            "type": "array"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "record_id",
+          "missing_fields",
+          "complete"
+        ],
+        "title": "FieldResult",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "records": {
+        "items": {
+          "$ref": "#/$defs/FieldResult"
+        },
+        "title": "Records",
+        "type": "array"
+      },
+      "complete": {
+        "title": "Complete",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "records",
+      "complete"
+    ],
+    "title": "FieldOutput",
+    "type": "object"
+  },
+  "behaviors": [
+    "Implement check_fields(payload). payload has records [{record_id, fields}] and required_fields [str]. Field names are literal top-level keys, including dots; never split a dotted name into a path.",
+    "A required value is missing only if its key is absent, its value is None, a string whose strip() is empty, or an empty list or dict. Numeric zero and boolean False are present. Nonempty lists/dicts are present without recursively checking their contents. Do not treat every falsy value as missing.",
+    "Return {records: [{record_id, missing_fields, complete}], complete}. Preserve record order and required_fields order in missing_fields. Each record complete iff no missing fields; overall complete iff all records complete. Empty records yields records=[] and complete=True; no required fields makes every record complete. Never mutate inputs. Return only these exact keys."
+  ],
+  "environment": "structured-review-v1",
+  "allowed_dependencies": []
+}

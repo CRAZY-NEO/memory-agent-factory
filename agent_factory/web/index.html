@@ -5,23 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>算法能力工厂</title>
   <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/job-status.js" defer></script>
   <script src="/assets/app.js" defer></script>
+  <script src="/assets/components.js" defer></script>
 </head>
 <body>
-  <header class="topbar"><div class="brand"><span class="brand-mark">AF</span><div><strong>算法能力工厂</strong><span>个人记忆 · 文档信息审查</span></div></div><span class="connection" id="connection">未连接</span></header>
+  <header class="topbar"><div class="brand"><span class="brand-mark">AF</span><div><strong>算法能力工厂</strong><span>个人记忆 · 文档信息审查</span></div></div><div class="account-controls"><span class="connection" id="connection">未连接</span><button type="button" id="disconnect" class="secondary" hidden>断开</button></div></header>
   <main>
-    <section class="intro"><p class="eyebrow">从需求到可验证的算法</p><h1>描述能力，生成代码，查看证据。</h1><p>根据检索、分类、字段完整性或来源引用检查需求生成组件，执行独立验证与有限修复，交付可复用代码。</p></section>
-    <section class="card access" aria-labelledby="access-title"><div><h2 id="access-title">连接工作空间</h2><p>本地启动器自动连接；远程访问可使用密钥连接。</p></div><form id="access-form"><label for="token">访问密钥</label><div class="inline"><input type="password" id="token" required autocomplete="off" placeholder="输入启动时生成的访问密钥"><button type="submit" id="connect">连接</button><button type="button" id="disconnect" class="secondary" hidden>断开</button></div></form></section>
+    <section class="intro"><p class="eyebrow">从需求到可验证的算法</p><h1>描述需求，交付可用组件。</h1><p>已有能力自动复用或更新；新能力继续检索来源、生成候选。检查结果会注明哪些已验证、哪些仍待确认。</p></section>
+    <section id="access-panel" class="card access" aria-labelledby="access-title"><div><h2 id="access-title">连接工作空间</h2><p>本地启动器自动连接；远程访问可使用密钥连接。</p></div><form id="access-form"><label for="token">访问密钥</label><div class="inline"><input type="password" id="token" required autocomplete="off" placeholder="输入启动时生成的访问密钥"><button type="submit" id="connect">连接</button></div></form></section>
     <p id="message" class="message" role="alert" hidden></p>
     <div class="workbench">
-      <section class="card" aria-labelledby="request-title"><p class="eyebrow">01 / 开发需求</p><h2 id="request-title">你希望算法具备什么能力？</h2><form id="factory-form"><label for="description">能力描述</label><textarea id="description" rows="9" minlength="5" maxlength="6000" required placeholder="例如：为技术笔记生成分类算法，根据标注的训练样本预测类别；或输入查询，从记忆库检索相关内容……"></textarea><div class="form-meta"><button type="button" class="text-button" id="example">填入三算法比较示例</button><button type="button" class="text-button" id="new-example">填入新方法示例</button><button type="button" class="text-button" id="classification-example">填入文本分类示例</button><button type="button" class="text-button" id="fields-example">字段完整性示例</button><button type="button" class="text-button" id="references-example">来源引用示例</button><span id="character-count">0 / 6000</span></div><p id="routing-hint" class="muted">自动识别四种已支持能力；文档检查接收结构化解析结果，不包含 OCR 或语义事实核查。</p><details class="mode-options"><summary>高级选项</summary><label for="mode">执行模式</label><select id="mode" disabled><option value="auto" selected>自动判断（默认）</option><option value="reuse">仅使用已有能力</option><option value="discover">发现新算法</option></select>
+      <section class="card demand-card" aria-labelledby="components-title">
+        <p class="eyebrow">01 / 描述需求</p><h2 id="components-title">你需要什么组件？</h2>
+        <p class="muted">填写需求后，系统自动选择复用、更新或生成。</p>
+        <form id="component-form">
+          <label for="component-description">需求描述</label><textarea id="component-description" rows="4" minlength="5" maxlength="6000" required placeholder="例如：帮我生成一个公司资料检查组件，检查名称和邮箱是否齐全；以后再增加邮箱格式检查。"></textarea>
+          <label for="component-example" class="example-label">试试示例</label><select id="component-example">
+            <option value="">选择一个示例（可选）</option><option value="fields">检查资料完整性</option><option value="email">为完整性组件增加邮箱检查</option><option value="retrieval">检索个人记忆</option><option value="classification">为技术笔记分类</option><option value="references">检查来源引用</option><option value="numbers">提取文本中的数字（新能力）</option>
+          </select>
+          <button type="submit" id="component-ensure" class="primary-action" disabled>开始执行 <span aria-hidden="true">↗</span></button>
+          <details id="component-advanced" class="advanced-options"><summary>高级设置</summary>
+            <p class="muted">通常使用默认值即可。版本切换和回退在下方“组件与版本管理”中。</p>
+            <label for="component-name">组件名称（留空则按任务自动选择）</label><input id="component-name" pattern="[a-z][a-z0-9_-]{0,79}" placeholder="自动选择">
+            <label for="component-action">生成方式</label><select id="component-action"><option value="auto">自动匹配、复用或更新</option><option value="update">基于旧版本修改</option><option value="rewrite">按目标规格重新实现</option><option value="create">创建新版本</option></select>
+            <label for="component-parameters">调用默认参数（JSON）</label><textarea id="component-parameters" rows="3" spellcheck="false">{}</textarea>
+            <button type="button" id="component-plan" class="text-button" disabled>仅预览处理计划</button>
+          </details>
+        </form>
+      </section>
+      <section class="card progress-card" aria-labelledby="progress-title"><div class="section-heading"><div><p class="eyebrow">执行进度</p><h2 id="progress-title">工作流</h2></div><span id="job-status" class="badge">等待提交</span></div><p id="job-caption" class="muted">提交需求后，查看实际执行阶段与修复轮次。</p><ol id="events" class="timeline"><li class="empty">理解 → 检索 → 规划 → 生成 → 验证 → 修复 → 最终测试 → 回写</li></ol><div class="recent"><h3>最近任务</h3><ul id="jobs"><li class="muted">连接后查看。</li></ul></div></section>
+    </div>
+    <section class="card component-output" id="component-output" hidden aria-labelledby="component-output-title">
+      <div class="section-heading"><h2 id="component-output-title">处理结果</h2><span id="component-state" class="badge"></span></div>
+      <p id="component-progress" role="status"></p><p id="component-summary"></p><div id="component-artifacts" class="downloads"></div>
+      <div id="component-migration" class="migration-note" hidden>
+        <h3>新版已验证，使用前请确认接口变化</h3><p id="component-migration-note"></p>
+        <button id="component-confirm-migration" type="button">确认使用新版</button>
+      </div>
+      <details id="component-result-details"><summary>查看处理详情</summary><pre id="component-result"></pre></details>
+      <section id="component-trial" class="component-trial" hidden aria-labelledby="component-trial-title">
+        <h3 id="component-trial-title">试用组件</h3><p id="component-trial-caption" class="muted"></p><div id="component-trial-fields"></div>
+        <details id="component-json-options"><summary>开发者输入（JSON）</summary><label class="checkbox-label"><input type="checkbox" id="component-use-json">使用 JSON 代替上方表单</label><label for="component-input">调用输入</label><textarea id="component-input" rows="5" spellcheck="false">{}</textarea></details>
+        <button id="component-invoke" type="button">运行试用</button><p id="component-trial-summary" role="status"></p>
+        <details id="component-trial-details" hidden><summary>查看返回数据</summary><pre id="component-trial-result"></pre></details>
+      </section>
+    </section>
+    <section id="draft-report" class="card" hidden aria-label="候选代码与检查记录"></section>
+    <details class="card management" id="component-management"><summary>组件与版本管理 <span id="component-catalog-caption" class="muted">连接后查看</span></summary>
+      <p id="component-empty" class="muted">还没有启用的组件，先在上方提交需求即可。</p>
+      <div id="component-management-controls" hidden>
+        <label for="component-target">选择组件</label><select id="component-target"></select><ul id="component-bindings"></ul><button type="button" id="component-open" class="secondary">打开当前组件</button>
+        <details><summary>历史版本与回退</summary><ul id="component-versions"></ul>
+          <label for="component-version">已验证版本</label><select id="component-version"></select>
+          <div class="downloads"><button id="component-activate" type="button" class="secondary">使用所选版本</button><button id="component-rollback" type="button" class="secondary">恢复上一次版本</button></div>
+        </details>
+        <details><summary>反馈与审计记录</summary>
+          <label for="component-feedback-kind">反馈类型</label><select id="component-feedback-kind"><option value="data_issue">资料本身有问题</option><option value="execution_error">组件执行异常</option><option value="quality_issue">结果质量待核实</option><option value="new_requirement">新增能力需求</option></select>
+          <label for="component-feedback-text">反馈说明</label><textarea id="component-feedback-text" rows="2"></textarea>
+          <div class="downloads"><button id="component-feedback" type="button">记录反馈</button><button id="component-history" type="button" class="secondary">查看操作记录</button></div>
+        </details>
+      </div>
+      <details id="component-draft-library" hidden><summary>候选记录（尚未认证）</summary><ul id="component-draft-list"></ul></details>
+      <details><summary>登记已有生成结果</summary><label for="component-import-run">运行 ID</label><input id="component-import-run" placeholder="从运行档案中复制运行 ID"><button id="component-import" type="button">登记为组件版本</button></details>
+      <div class="downloads"><button type="button" id="component-refresh" class="text-button">刷新目录</button><button id="refresh" type="button" class="text-button" disabled>重新检查任务状态</button></div>
+    </details>
+
+    <section class="card result-card" id="result" hidden aria-labelledby="result-title"><div class="section-heading"><div><p class="eyebrow">03 / 验证证据</p><h2 id="result-title">候选比较与最终结果</h2></div><span class="badge" id="run-status"></span></div><p id="run-caption" class="muted"></p><p id="design"></p><div id="routing-evidence" hidden></div><div id="discovery-evidence" hidden></div><div id="metric-cards" class="metric-cards"></div><div class="table-scroll"><table id="candidates"><caption>所有候选与修复版本 · 以下指标来自验证集</caption><thead><tr><th>算法 / 版本</th><th>通过</th><th>问题与代码</th></tr></thead><tbody></tbody></table></div><div id="category-analysis"></div><details><summary>查看逐样本失败案例</summary><div id="failures"></div></details><div class="downloads" id="downloads"></div><p id="export-note" class="muted" hidden></p></section>
+    <details class="card research-tools" id="research-tools"><summary>更多工具：算法比较与 GitHub 发现</summary><p class="muted">需要比较多个候选或发现新算法时使用，日常组件生成请使用上方入口。</p>
+<section class="card" aria-labelledby="request-title"><p class="eyebrow">01 / 开发需求</p><h2 id="request-title">你希望算法具备什么能力？</h2><form id="factory-form"><label for="description">能力描述</label><textarea id="description" rows="9" minlength="5" maxlength="6000" required placeholder="例如：为技术笔记生成分类算法，根据标注的训练样本预测类别；或输入查询，从记忆库检索相关内容……"></textarea><div class="form-meta"><button type="button" class="text-button" id="example">填入三算法比较示例</button><button type="button" class="text-button" id="new-example">填入新方法示例</button><button type="button" class="text-button" id="classification-example">填入文本分类示例</button><button type="button" class="text-button" id="fields-example">字段完整性示例</button><button type="button" class="text-button" id="references-example">来源引用示例</button><span id="character-count">0 / 6000</span></div><p id="routing-hint" class="muted">自动识别四种已支持能力；文档检查接收结构化解析结果，不包含 OCR 或语义事实核查。</p><details class="mode-options"><summary>高级选项</summary><label for="mode">执行模式</label><select id="mode" disabled><option value="auto" selected>自动判断（默认）</option><option value="reuse">仅使用已有能力</option><option value="discover">发现新算法</option></select>
 <label for="history-mode">历史经验</label><select id="history-mode"><option value="on" selected>启用相关已验证经验</option><option value="off">关闭跨运行历史经验</option></select>
 <label for="requirement-profile">额外业务要求</label><select id="requirement-profile"><option value="">基础接口要求</option><option value="retrieval">检索：排除归档记忆并去重</option><option value="classification">分类：排除禁用训练样本并去重</option></select>
 <p class="muted">额外要求会进入生成规格及验证门禁，请选择与描述一致的任务。离线 mock 使用模板基线，可能无法满足额外要求。历史经验是否有益需要独立对照实验。</p>
 </details><button type="submit" id="submit" disabled>提交生成任务 <span aria-hidden="true">↗</span></button></form><div class="dataset-note"><strong>当前评估数据</strong><p id="dataset">连接后查看数据规模与版本。</p><p>检索包含同义改写、相近负例和多相关文档；分类将训练、验证、最终测试严格分开。最终测试在候选选定后执行。</p></div></section>
-      <section class="card progress-card" aria-labelledby="progress-title"><div class="section-heading"><div><p class="eyebrow">02 / 执行进度</p><h2 id="progress-title">工作流</h2></div><span id="job-status" class="badge">等待提交</span></div><p id="job-caption" class="muted">提交需求后，查看实际执行阶段与修复轮次。</p><ol id="events" class="timeline"><li class="empty">理解 → 检索 → 规划 → 生成 → 验证 → 修复 → 最终测试 → 回写</li></ol><div class="recent"><h3>最近任务</h3><ul id="jobs"><li class="muted">连接后查看。</li></ul><button id="refresh" type="button" class="text-button" disabled>刷新任务与运行记录</button></div></section>
-    </div>
-    <section class="card result-card" id="result" hidden aria-labelledby="result-title"><div class="section-heading"><div><p class="eyebrow">03 / 验证证据</p><h2 id="result-title">候选比较与最终结果</h2></div><span class="badge" id="run-status"></span></div><p id="run-caption" class="muted"></p><p id="design"></p><div id="routing-evidence" hidden></div><div id="discovery-evidence" hidden></div><div id="metric-cards" class="metric-cards"></div><div class="table-scroll"><table id="candidates"><caption>所有候选与修复版本 · 以下指标来自验证集</caption><thead><tr><th>算法 / 版本</th><th>通过</th><th>问题与代码</th></tr></thead><tbody></tbody></table></div><div id="category-analysis"></div><details><summary>查看逐样本失败案例</summary><div id="failures"></div></details><div class="downloads" id="downloads"></div><p id="export-note" class="muted" hidden></p></section>
+    </details>
     <section class="card" aria-labelledby="history-title"><div class="section-heading"><div><p class="eyebrow">运行档案</p><h2 id="history-title">历史结果</h2></div><a href="/docs" target="_blank" rel="noreferrer" class="text-button">API 文档 ↗</a></div><ul id="runs" class="run-list"><li class="muted">连接后查看已归档的成功与失败运行。</li></ul></section>
     <footer>模型输出经过真实代码执行与评分。模拟评估成绩不代表真实业务泛化能力。</footer>
   </main>

@@ -1,0 +1,295 @@
+{
+  "kind": "controlled_fault_not_natural_model_failure",
+  "fault": "reverse_deduplicated_output",
+  "original_run_id": "20261017T122029_79ed79b3",
+  "original_code_hash": "5b9994c476fa926128f51d8f260fc732bc1f725018dc5a094b3ddfbca2b64f14",
+  "injected_code_hash": "e6e0327956dc38a469b60bcbed9a0f2291f9ec4464a6ea69b410e1a122c5ebd2",
+  "initial_checks": {
+    "passed": false,
+    "technical_passed": true,
+    "examples_passed": false,
+    "failure_stage": "proposed_examples",
+    "business_verified": false,
+    "errors": [
+      "proposed examples: output differs from model-authored expected result"
+    ],
+    "example_authority": "model_proposed_not_independent_gold",
+    "example_matches": [
+      false,
+      true,
+      true,
+      false
+    ],
+    "case_results": [
+      {
+        "case_id": "example_1",
+        "input": {
+          "texts": [
+            "apple",
+            " Apple ",
+            "banana",
+            "apple",
+            "   ",
+            "Banana"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "banana",
+            "apple"
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"texts\"][0]",
+          "kind": "value",
+          "expected": "apple",
+          "actual": "banana"
+        },
+        "execution_error": null
+      },
+      {
+        "case_id": "example_2",
+        "input": {
+          "texts": []
+        },
+        "expected": {
+          "texts": []
+        },
+        "actual": {
+          "texts": []
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_3",
+        "input": {
+          "texts": [
+            "Hello World",
+            "hello world",
+            "HELLO WORLD",
+            " hello world "
+          ]
+        },
+        "expected": {
+          "texts": [
+            "Hello World"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "Hello World"
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_4",
+        "input": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb",
+            "\t",
+            "A B"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "a\tb",
+            "a  b",
+            "a b"
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"texts\"][0]",
+          "kind": "value",
+          "expected": "a b",
+          "actual": "a\tb"
+        },
+        "execution_error": null
+      }
+    ],
+    "example_failures": [
+      {
+        "case_id": "example_1",
+        "input": {
+          "texts": [
+            "apple",
+            " Apple ",
+            "banana",
+            "apple",
+            "   ",
+            "Banana"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "banana",
+            "apple"
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"texts\"][0]",
+          "kind": "value",
+          "expected": "apple",
+          "actual": "banana"
+        },
+        "execution_error": null
+      },
+      {
+        "case_id": "example_4",
+        "input": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb",
+            "\t",
+            "A B"
+          ]
+        },
+        "expected": {
+          "texts": [
+            "a b",
+            "a  b",
+            "a\tb"
+          ]
+        },
+        "actual": {
+          "texts": [
+            "a\tb",
+            "a  b",
+            "a b"
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"texts\"][0]",
+          "kind": "value",
+          "expected": "a b",
+          "actual": "a\tb"
+        },
+        "execution_error": null
+      }
+    ],
+    "observations": [
+      {
+        "case_id": "0",
+        "result": {
+          "texts": [
+            "banana",
+            "apple"
+          ]
+        },
+        "duration_ms": 0.005916983354836702,
+        "mutated": false
+      },
+      {
+        "case_id": "1",
+        "result": {
+          "texts": []
+        },
+        "duration_ms": 0.0010420335456728935,
+        "mutated": false
+      },
+      {
+        "case_id": "2",
+        "result": {
+          "texts": [
+            "Hello World"
+          ]
+        },
+        "duration_ms": 0.001167005393654108,
+        "mutated": false
+      },
+      {
+        "case_id": "3",
+        "result": {
+          "texts": [
+            "a\tb",
+            "a  b",
+            "a b"
+          ]
+        },
+        "duration_ms": 0.001166015863418579,
+        "mutated": false
+      },
+      {
+        "case_id": "4",
+        "result": {
+          "texts": [
+            "banana",
+            "apple"
+          ]
+        },
+        "duration_ms": 0.0008749775588512421,
+        "mutated": false
+      },
+      {
+        "case_id": "5",
+        "result": {
+          "texts": []
+        },
+        "duration_ms": 0.001291045919060707,
+        "mutated": false
+      },
+      {
+        "case_id": "6",
+        "result": {
+          "texts": [
+            "Hello World"
+          ]
+        },
+        "duration_ms": 0.0007080379873514175,
+        "mutated": false
+      },
+      {
+        "case_id": "7",
+        "result": {
+          "texts": [
+            "a\tb",
+            "a  b",
+            "a b"
+          ]
+        },
+        "duration_ms": 0.0006249756552278996,
+        "mutated": false
+      }
+    ],
+    "independent_business_evaluation": "not_available"
+  },
+  "replayed_roles": [
+    "draft_planner",
+    "draft_spec_reviewer",
+    "draft_coder"
+  ],
+  "real_http_roles": [
+    "draft_repairer"
+  ],
+  "human_cases_supplied_to_model": false
+}

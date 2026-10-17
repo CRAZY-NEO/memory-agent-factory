@@ -1,0 +1,449 @@
+{
+  "kind": "controlled_fault_not_natural_model_failure",
+  "fault": "increment_each_frequency_count",
+  "original_run_id": "20261017T121903_86613a6c",
+  "original_code_hash": "804cb3dabb066b0f187f1cce018059e7088ea38ad853f95eddf53a630b39a0e2",
+  "injected_code_hash": "fea20e01f5b637f55722121e1d24d1a14214c2f55b3d44aae64f5f3bc4f385ee",
+  "initial_checks": {
+    "passed": false,
+    "technical_passed": true,
+    "examples_passed": false,
+    "failure_stage": "proposed_examples",
+    "business_verified": false,
+    "errors": [
+      "proposed examples: output differs from model-authored expected result"
+    ],
+    "example_authority": "model_proposed_not_independent_gold",
+    "example_matches": [
+      false,
+      false,
+      false,
+      true
+    ],
+    "case_results": [
+      {
+        "case_id": "example_1",
+        "input": {
+          "text": "Hello, world! Hello there."
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "there",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 3
+            },
+            {
+              "word": "there",
+              "count": 2
+            },
+            {
+              "word": "world",
+              "count": 2
+            }
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"frequencies\"][0][\"count\"]",
+          "kind": "value",
+          "expected": 2,
+          "actual": 3
+        },
+        "execution_error": null
+      },
+      {
+        "case_id": "example_2",
+        "input": {
+          "text": "Apple banana apple; APPLE, Banana!"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 4
+            },
+            {
+              "word": "banana",
+              "count": 3
+            }
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"frequencies\"][0][\"count\"]",
+          "kind": "value",
+          "expected": 3,
+          "actual": 4
+        },
+        "execution_error": null
+      },
+      {
+        "case_id": "example_3",
+        "input": {
+          "text": "dog cat dog bird cat"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 2
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "bird",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 3
+            },
+            {
+              "word": "dog",
+              "count": 3
+            },
+            {
+              "word": "bird",
+              "count": 2
+            }
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"frequencies\"][0][\"count\"]",
+          "kind": "value",
+          "expected": 2,
+          "actual": 3
+        },
+        "execution_error": null
+      },
+      {
+        "case_id": "example_4",
+        "input": {
+          "text": "123456 中文テスト _-"
+        },
+        "expected": {
+          "frequencies": []
+        },
+        "actual": {
+          "frequencies": []
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      }
+    ],
+    "example_failures": [
+      {
+        "case_id": "example_1",
+        "input": {
+          "text": "Hello, world! Hello there."
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "there",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 3
+            },
+            {
+              "word": "there",
+              "count": 2
+            },
+            {
+              "word": "world",
+              "count": 2
+            }
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"frequencies\"][0][\"count\"]",
+          "kind": "value",
+          "expected": 2,
+          "actual": 3
+        },
+        "execution_error": null
+      },
+      {
+        "case_id": "example_2",
+        "input": {
+          "text": "Apple banana apple; APPLE, Banana!"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 4
+            },
+            {
+              "word": "banana",
+              "count": 3
+            }
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"frequencies\"][0][\"count\"]",
+          "kind": "value",
+          "expected": 3,
+          "actual": 4
+        },
+        "execution_error": null
+      },
+      {
+        "case_id": "example_3",
+        "input": {
+          "text": "dog cat dog bird cat"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 2
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "bird",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 3
+            },
+            {
+              "word": "dog",
+              "count": 3
+            },
+            {
+              "word": "bird",
+              "count": 2
+            }
+          ]
+        },
+        "matched": false,
+        "first_difference": {
+          "path": "$[\"frequencies\"][0][\"count\"]",
+          "kind": "value",
+          "expected": 2,
+          "actual": 3
+        },
+        "execution_error": null
+      }
+    ],
+    "observations": [
+      {
+        "case_id": "0",
+        "result": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 3
+            },
+            {
+              "word": "there",
+              "count": 2
+            },
+            {
+              "word": "world",
+              "count": 2
+            }
+          ]
+        },
+        "duration_ms": 0.04025001544505358,
+        "mutated": false
+      },
+      {
+        "case_id": "1",
+        "result": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 4
+            },
+            {
+              "word": "banana",
+              "count": 3
+            }
+          ]
+        },
+        "duration_ms": 0.004208006430417299,
+        "mutated": false
+      },
+      {
+        "case_id": "2",
+        "result": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 3
+            },
+            {
+              "word": "dog",
+              "count": 3
+            },
+            {
+              "word": "bird",
+              "count": 2
+            }
+          ]
+        },
+        "duration_ms": 0.004082976374775171,
+        "mutated": false
+      },
+      {
+        "case_id": "3",
+        "result": {
+          "frequencies": []
+        },
+        "duration_ms": 0.0015830155462026596,
+        "mutated": false
+      },
+      {
+        "case_id": "4",
+        "result": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 3
+            },
+            {
+              "word": "there",
+              "count": 2
+            },
+            {
+              "word": "world",
+              "count": 2
+            }
+          ]
+        },
+        "duration_ms": 0.00204198295250535,
+        "mutated": false
+      },
+      {
+        "case_id": "5",
+        "result": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 4
+            },
+            {
+              "word": "banana",
+              "count": 3
+            }
+          ]
+        },
+        "duration_ms": 0.0019999570213258266,
+        "mutated": false
+      },
+      {
+        "case_id": "6",
+        "result": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 3
+            },
+            {
+              "word": "dog",
+              "count": 3
+            },
+            {
+              "word": "bird",
+              "count": 2
+            }
+          ]
+        },
+        "duration_ms": 0.0019170111045241356,
+        "mutated": false
+      },
+      {
+        "case_id": "7",
+        "result": {
+          "frequencies": []
+        },
+        "duration_ms": 0.0008749775588512421,
+        "mutated": false
+      }
+    ],
+    "independent_business_evaluation": "not_available"
+  },
+  "replayed_roles": [
+    "draft_planner",
+    "draft_spec_reviewer",
+    "draft_coder"
+  ],
+  "real_http_roles": [
+    "draft_repairer"
+  ],
+  "human_cases_supplied_to_model": false
+}

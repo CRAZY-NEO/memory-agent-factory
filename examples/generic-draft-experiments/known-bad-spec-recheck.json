@@ -1,0 +1,103 @@
+{
+  "source_run_id": "20261017T121109_65ab632e",
+  "model": "deepseek-v4-pro",
+  "reviewer_saw_original_expected": false,
+  "reviewer_saw_code": false,
+  "review": {
+    "consistent": true,
+    "issues": [],
+    "example_expectations": [
+      {
+        "case_id": "example_1",
+        "expected": {
+          "texts": [
+            "  Hello World  ",
+            "foo"
+          ]
+        }
+      },
+      {
+        "case_id": "example_2",
+        "expected": {
+          "texts": [
+            "apple",
+            "banana"
+          ]
+        }
+      },
+      {
+        "case_id": "example_3",
+        "expected": {
+          "texts": []
+        }
+      },
+      {
+        "case_id": "example_4",
+        "expected": {
+          "texts": []
+        }
+      },
+      {
+        "case_id": "example_5",
+        "expected": {
+          "texts": [
+            "  Hello  World  ",
+            "Hello   World"
+          ]
+        }
+      },
+      {
+        "case_id": "example_6",
+        "expected": {
+          "texts": [
+            "Straße"
+          ]
+        }
+      }
+    ]
+  },
+  "conflicts": [
+    {
+      "case_id": "example_5",
+      "difference": {
+        "path": "$[\"texts\"]",
+        "kind": "array_length",
+        "expected_length": 1,
+        "actual_length": 2
+      },
+      "original_expected": {
+        "texts": [
+          "  Hello  World  "
+        ]
+      },
+      "derived_expected": {
+        "texts": [
+          "  Hello  World  ",
+          "Hello   World"
+        ]
+      }
+    },
+    {
+      "case_id": "example_6",
+      "difference": {
+        "path": "$[\"texts\"]",
+        "kind": "array_length",
+        "expected_length": 2,
+        "actual_length": 1
+      },
+      "original_expected": {
+        "texts": [
+          "Straße",
+          "STRASSE"
+        ]
+      },
+      "derived_expected": {
+        "texts": [
+          "Straße"
+        ]
+      }
+    }
+  ],
+  "caught_both_known_conflicts": true,
+  "independent_business_gold": false
+}

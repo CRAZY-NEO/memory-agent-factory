@@ -1,0 +1,67 @@
+[
+  {
+    "revision": 0,
+    "proposal_hash": "7a0ee1bdf1c7450fb9731ba2d4c33eab16b0d42a5940d55e4efe8b46c23e7348",
+    "review": {
+      "consistent": true,
+      "issues": [],
+      "example_expectations": [
+        {
+          "case_id": "example_1",
+          "expected": {
+            "texts": [
+              "  Apple  ",
+              "banana",
+              "cherry"
+            ]
+          }
+        },
+        {
+          "case_id": "example_2",
+          "expected": {
+            "texts": [
+              "Hello",
+              "World"
+            ]
+          }
+        },
+        {
+          "case_id": "example_3",
+          "expected": {
+            "texts": []
+          }
+        },
+        {
+          "case_id": "example_4",
+          "expected": {
+            "texts": [
+              "  unique  "
+            ]
+          }
+        },
+        {
+          "case_id": "example_5",
+          "expected": {
+            "texts": [
+              "Straße",
+              "STRASSE"
+            ]
+          }
+        },
+        {
+          "case_id": "example_6",
+          "expected": {
+            "texts": [
+              "  apple  ",
+              "banana",
+              "cherry"
+            ]
+          }
+        }
+      ]
+    },
+    "accepted": true,
+    "issues": [],
+    "reviewer_saw_planner_expectations": false
+  }
+]

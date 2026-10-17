@@ -1,0 +1,916 @@
+{
+  "kind": "component_draft",
+  "run_id": "20261017T121903_86613a6c",
+  "status": "draft",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "runner": "docker",
+  "request": {
+    "description": "生成英文词频统计组件，严格使用 execute(payload) -> dict。输入为 {\"text\": 字符串}，输出仅为 {\"frequencies\": [{\"word\": 字符串, \"count\": 正整数}]}。单词严格指连续 ASCII 英文字母 [A-Za-z]+，统一小写；数字、中文、撇号、连字符、下划线和其他非 ASCII 字母字符均作为分隔符。先按次数降序排列，同频按小写单词字母顺序排列。空文本或没有英文单词时返回空 frequencies 列表，不修改输入。只使用允许的纯 Python 标准库，不需要训练、分类或检索。",
+    "task": "python_draft"
+  },
+  "proposal": {
+    "title": "英文词频统计组件（仅 ASCII 英文字母分词）",
+    "search_queries": [
+      "python word frequency counter regex findall lowercase sorted",
+      "pure python word frequency count regex alphabetical sort"
+    ],
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "frequencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "word": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "word",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "frequencies"
+      ],
+      "additionalProperties": false
+    },
+    "assumptions": [
+      "调用方传入的 payload 是 JSON 对象，且 text 字段存在并严格为字符串；不符合时组件会抛出异常。",
+      "词频统计只识别连续 ASCII 英文字母 [A-Za-z]+，统一转为小写后计数；数字、中文、撇号、连字符、下划线、空白及其他非 ASCII 字母字符都作为分隔符。",
+      "输出按词频降序排列；同频时按小写单词的字母顺序升序排列。",
+      "空文本或文本中没有 ASCII 英文字母时，返回空的 frequencies 列表。",
+      "组件返回新构造的 JSON 对象，不会修改输入的 payload 或其中的 text。"
+    ],
+    "limitations": [
+      "不把带重音或其他非 ASCII 字母的字符视为单词字符，因此法语、德语等 Unicode 字母会被拆分或忽略。",
+      "不处理撇号、连字符、下划线等构成的缩略词或复合词，例如 hello-world 会被拆成 hello 和 world。",
+      "不提供停用词过滤、词形还原、大小写归一化以外的自然语言处理能力。",
+      "基于内存一次性处理，极大文本可能导致较高内存占用；未针对流式或分布式场景优化。"
+    ],
+    "examples": [
+      {
+        "input": {
+          "text": "Hello, world! Hello there."
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "there",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "text": "Apple banana apple; APPLE, Banana!"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "text": "dog cat dog bird cat"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 2
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "bird",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "text": "123456 中文テスト _-"
+        },
+        "expected": {
+          "frequencies": []
+        }
+      }
+    ]
+  },
+  "checks": {
+    "passed": true,
+    "technical_passed": true,
+    "examples_passed": true,
+    "failure_stage": null,
+    "business_verified": false,
+    "errors": [],
+    "example_authority": "model_proposed_not_independent_gold",
+    "example_matches": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "case_results": [
+      {
+        "case_id": "example_1",
+        "input": {
+          "text": "Hello, world! Hello there."
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "there",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "there",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_2",
+        "input": {
+          "text": "Apple banana apple; APPLE, Banana!"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            }
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_3",
+        "input": {
+          "text": "dog cat dog bird cat"
+        },
+        "expected": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 2
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "bird",
+              "count": 1
+            }
+          ]
+        },
+        "actual": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 2
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "bird",
+              "count": 1
+            }
+          ]
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      },
+      {
+        "case_id": "example_4",
+        "input": {
+          "text": "123456 中文テスト _-"
+        },
+        "expected": {
+          "frequencies": []
+        },
+        "actual": {
+          "frequencies": []
+        },
+        "matched": true,
+        "first_difference": null,
+        "execution_error": null
+      }
+    ],
+    "example_failures": [],
+    "observations": [
+      {
+        "case_id": "0",
+        "result": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "there",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.03749999450519681,
+        "mutated": false
+      },
+      {
+        "case_id": "1",
+        "result": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            }
+          ]
+        },
+        "duration_ms": 0.00462500611320138,
+        "mutated": false
+      },
+      {
+        "case_id": "2",
+        "result": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 2
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "bird",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.006499991286545992,
+        "mutated": false
+      },
+      {
+        "case_id": "3",
+        "result": {
+          "frequencies": []
+        },
+        "duration_ms": 0.0015840050764381886,
+        "mutated": false
+      },
+      {
+        "case_id": "4",
+        "result": {
+          "frequencies": [
+            {
+              "word": "hello",
+              "count": 2
+            },
+            {
+              "word": "there",
+              "count": 1
+            },
+            {
+              "word": "world",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.0018749851733446121,
+        "mutated": false
+      },
+      {
+        "case_id": "5",
+        "result": {
+          "frequencies": [
+            {
+              "word": "apple",
+              "count": 3
+            },
+            {
+              "word": "banana",
+              "count": 2
+            }
+          ]
+        },
+        "duration_ms": 0.001667009200900793,
+        "mutated": false
+      },
+      {
+        "case_id": "6",
+        "result": {
+          "frequencies": [
+            {
+              "word": "cat",
+              "count": 2
+            },
+            {
+              "word": "dog",
+              "count": 2
+            },
+            {
+              "word": "bird",
+              "count": 1
+            }
+          ]
+        },
+        "duration_ms": 0.0015420373529195786,
+        "mutated": false
+      },
+      {
+        "case_id": "7",
+        "result": {
+          "frequencies": []
+        },
+        "duration_ms": 0.0008330098353326321,
+        "mutated": false
+      }
+    ],
+    "independent_business_evaluation": "not_available"
+  },
+  "attempts": [
+    {
+      "revision": 0,
+      "code_hash": "804cb3dabb066b0f187f1cce018059e7088ea38ad853f95eddf53a630b39a0e2",
+      "implementation_fingerprint": "c9d9b7566d6ddcfbbb634afa5668c45d6e55dedb788048431e930328b4962e90",
+      "repeated_failed_implementation": false,
+      "repair_strategy": "generate_from_spec",
+      "explanation": "Uses regex [A-Za-z]+ to extract contiguous ASCII letters, lowercases each word, counts with a dictionary, then sorts by descending count and ascending word. Returns the required JSON structure. Input is not mutated.",
+      "checks": {
+        "passed": true,
+        "technical_passed": true,
+        "examples_passed": true,
+        "failure_stage": null,
+        "business_verified": false,
+        "errors": [],
+        "example_authority": "model_proposed_not_independent_gold",
+        "example_matches": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "case_results": [
+          {
+            "case_id": "example_1",
+            "input": {
+              "text": "Hello, world! Hello there."
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "there",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "there",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_2",
+            "input": {
+              "text": "Apple banana apple; APPLE, Banana!"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_3",
+            "input": {
+              "text": "dog cat dog bird cat"
+            },
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "cat",
+                  "count": 2
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "bird",
+                  "count": 1
+                }
+              ]
+            },
+            "actual": {
+              "frequencies": [
+                {
+                  "word": "cat",
+                  "count": 2
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "bird",
+                  "count": 1
+                }
+              ]
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          },
+          {
+            "case_id": "example_4",
+            "input": {
+              "text": "123456 中文テスト _-"
+            },
+            "expected": {
+              "frequencies": []
+            },
+            "actual": {
+              "frequencies": []
+            },
+            "matched": true,
+            "first_difference": null,
+            "execution_error": null
+          }
+        ],
+        "example_failures": [],
+        "observations": [
+          {
+            "case_id": "0",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "there",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.03749999450519681,
+            "mutated": false
+          },
+          {
+            "case_id": "1",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                }
+              ]
+            },
+            "duration_ms": 0.00462500611320138,
+            "mutated": false
+          },
+          {
+            "case_id": "2",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "cat",
+                  "count": 2
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "bird",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.006499991286545992,
+            "mutated": false
+          },
+          {
+            "case_id": "3",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.0015840050764381886,
+            "mutated": false
+          },
+          {
+            "case_id": "4",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "there",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.0018749851733446121,
+            "mutated": false
+          },
+          {
+            "case_id": "5",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                }
+              ]
+            },
+            "duration_ms": 0.001667009200900793,
+            "mutated": false
+          },
+          {
+            "case_id": "6",
+            "result": {
+              "frequencies": [
+                {
+                  "word": "cat",
+                  "count": 2
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "bird",
+                  "count": 1
+                }
+              ]
+            },
+            "duration_ms": 0.0015420373529195786,
+            "mutated": false
+          },
+          {
+            "case_id": "7",
+            "result": {
+              "frequencies": []
+            },
+            "duration_ms": 0.0008330098353326321,
+            "mutated": false
+          }
+        ],
+        "independent_business_evaluation": "not_available"
+      }
+    }
+  ],
+  "error": null,
+  "spec_reviews": [
+    {
+      "revision": 0,
+      "proposal_hash": "d21875b3a8ef4afba244a61378cb09a0638bbb11705e90774da07184100b25ad",
+      "review": {
+        "consistent": true,
+        "issues": [],
+        "example_expectations": [
+          {
+            "case_id": "example_1",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "hello",
+                  "count": 2
+                },
+                {
+                  "word": "there",
+                  "count": 1
+                },
+                {
+                  "word": "world",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_2",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "apple",
+                  "count": 3
+                },
+                {
+                  "word": "banana",
+                  "count": 2
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_3",
+            "expected": {
+              "frequencies": [
+                {
+                  "word": "cat",
+                  "count": 2
+                },
+                {
+                  "word": "dog",
+                  "count": 2
+                },
+                {
+                  "word": "bird",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          {
+            "case_id": "example_4",
+            "expected": {
+              "frequencies": []
+            }
+          }
+        ]
+      },
+      "accepted": true,
+      "issues": [],
+      "reviewer_saw_planner_expectations": false
+    }
+  ],
+  "spec_review_authority": "model_consistency_review_not_independent_gold",
+  "failure_stage": null,
+  "business_verified": false,
+  "auto_activated": false,
+  "missing_validation": [
+    "English word-frequency component with execute(payload) -> dict interface; input payload {\"text\": string} and output only {\"frequencies\": [{\"word\": string, \"count\": positive integer}]}.",
+    "Tokenization: contiguous ASCII English letters [A-Za-z]+ only; lowercase matches; digits, Chinese characters, apostrophes, hyphens, underscores, and any other non-ASCII letters are separators.",
+    "Sort by descending count; ties sort lowercased words in lexicographic order. Empty text or no English words returns empty frequencies list. Do not mutate input.",
+    "Use only pure Python standard library; no training, classification, or retrieval."
+  ],
+  "search": {
+    "status": "searched",
+    "repositories": [
+      {
+        "full_name": "necat101/python-counter-hapax-lab",
+        "description": "Rare-token / hapax handling correctness lab for ML-adjacent text feature pipelines. Python stdlib only. collections.Counter, tokenization, case normalization, vocabulary min_freq threshold, deterministic ordering.",
+        "license": "MIT",
+        "stars": 0,
+        "url": "https://github.com/necat101/python-counter-hapax-lab"
+      }
+    ],
+    "excluded": [
+      {
+        "repository": "AudreyGermain/Game-Recommendation-System",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "KenYew/python-playground",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "conorbmurphy/galvanizereference",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "MuhammadManan/python-practice",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "bot-forgeai/forgeai-build",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "Bien-venu/python-tests",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "sowmiya637943/Simple-Log-Analyzer",
+        "reason": "private, invalid name or unsupported/unknown license"
+      },
+      {
+        "repository": "danielasrat/eaglepoint-assessment-DanielAsrat",
+        "reason": "private, invalid name or unsupported/unknown license"
+      }
+    ],
+    "search_trace": [
+      {
+        "url": "https://api.github.com/search/repositories",
+        "params": {
+          "q": "python word frequency counter regex findall lowercase sorted in:readme language:Python archived:false fork:false is:public",
+          "per_page": 10,
+          "sort": "stars"
+        }
+      },
+      {
+        "url": "https://api.github.com/search/repositories",
+        "params": {
+          "q": "pure python word frequency count regex alphabetical sort in:name language:Python archived:false fork:false is:public",
+          "per_page": 10,
+          "sort": "stars"
+        }
+      }
+    ]
+  },
+  "sources": {
+    "local_components": [],
+    "repositories": [
+      {
+        "repository": "necat101/python-counter-hapax-lab",
+        "url": "https://github.com/necat101/python-counter-hapax-lab",
+        "commit": "ef5576903a24724307cf1b42c37d929c6b38049d",
+        "license": "MIT",
+        "source_functions": [
+          {
+            "path": "methods/feature_methods.py",
+            "name": "counter_lowercase_baseline",
+            "signature": "def counter_lowercase_baseline(records: list[str]) -> dict",
+            "code_excerpt": "def counter_lowercase_baseline(records: list[str]) -> dict:\n    \"\"\"Counter with re.findall(r\"\\\\w+\"), case-normalized.\"\"\"\n    return _run_pipeline(records, tokenize_word_regex_lower)\n",
+            "file_sha256": "fcc25f3026bc432576669a57f9c6250ff20c676917e424f35566cd105823c11a"
+          },
+          {
+            "path": "methods/feature_methods.py",
+            "name": "tokenize_word_regex",
+            "signature": "def tokenize_word_regex(text: str) -> list[str]",
+            "code_excerpt": "def tokenize_word_regex(text: str) -> list[str]:\n    \"\"\"re.findall(r\"\\\\w+\", text) – word chars only, case-sensitive.\"\"\"\n    return re.findall(r\"\\w+\", text)\n",
+            "file_sha256": "fcc25f3026bc432576669a57f9c6250ff20c676917e424f35566cd105823c11a"
+          },
+          {
+            "path": "methods/feature_methods.py",
+            "name": "tokenize_word_regex_lower",
+            "signature": "def tokenize_word_regex_lower(text: str) -> list[str]",
+            "code_excerpt": "def tokenize_word_regex_lower(text: str) -> list[str]:\n    \"\"\"re.findall(r\"\\\\w+\", text.lower()) – word chars, case-normalized.\"\"\"\n    return re.findall(r\"\\w+\", text.lower())\n",
+            "file_sha256": "fcc25f3026bc432576669a57f9c6250ff20c676917e424f35566cd105823c11a"
+          }
+        ],
+        "licenses": [
+          {
+            "path": "LICENSE",
+            "text": "MIT License\n\nCopyright (c) 2026\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+          }
+        ],
+        "executed_repository_code": false
+      }
+    ],
+    "errors": [],
+    "untrusted_reference_evidence": true
+  },
+  "code_hash": "804cb3dabb066b0f187f1cce018059e7088ea38ad853f95eddf53a630b39a0e2",
+  "generation_backend": "llm"
+}

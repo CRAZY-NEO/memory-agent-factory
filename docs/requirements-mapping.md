@@ -4,7 +4,11 @@
 
 状态说明：勾选 `[x]` 表示已实现并有对应证据；未勾选 `[ ]` 配合“部分实现”或“未实现”说明缺口。这里的“已实现”指原型范围内完成，不代表生产级能力或任意输入下的正确性保证。进阶要求、加分项与基础要求分开统计。
 
-当前支持**技术记忆检索、个人文本记忆分类、字段完整性、来源引用检查**四种任务，通过统一 CapabilityContract 和可信任务适配器复用同一 Factory 状态图。新文档任务使用结构化 JSON、静态标注、独立最终测试和统一组件调用；未实现任意功能代码的通用验证。见 [统一能力改造](capability-factory.md)。
+当前支持**技术记忆检索、个人文本记忆分类、字段完整性、来源引用检查**四种任务，通过统一 CapabilityContract 和可信任务适配器复用同一 Factory 状态图。新文档任务使用结构化 JSON、静态标注、独立最终测试和统一组件调用；另支持未登记任务的来源检索、候选生成、基础执行检查和显式试用；独立业务验证缺失时不认证、不自动启用。仍未实现任意功能代码的通用业务验证。见 [统一能力改造](capability-factory.md)。
+
+- [x] **未登记任务的通用候选生成与返修实测。** 词频统计和独立文本去重复用同一流程，无新增生产模板或任务适配器；自然生成各通过 16 个人工用例，受控故障各一次真实修复通过；另有冻结前的独立示例推导/一致性审查。此前失败也保留，不能等同于任意业务已验证。证据：[实验报告](generic-generation-experiments.md)、[全部结果](../examples/generic-draft-experiments/summary.json)。
+
+新增 [组件生命周期](component-lifecycle.md)：已实现目录匹配、无生成复用、参数调整、定向更新、按规格重写、旧规则回归、版本切换与回退；字段契约 2 增加邮箱格式检查。未连接个人记忆/信息设计两个真实业务系统，未注册的新规则仍不能自动认证。
 
 归档证据包括检索→文本分类的参考辅助真实模型运行和 ZIP 独立执行。证据：[分类报告](../examples/classification-demo/report.md)、[迁移验收](../examples/transfer_validation.json)、[浏览器验收](../examples/classification_web_validation.json)。之前的自动发现/比较/复用证据继续保留。
 
@@ -71,7 +75,7 @@
 - [x] **从真实仓库抽取函数、依赖和能力描述。** `ingest-repo` 静态提取 Python 函数/方法、签名、注释、import、行号、Git 提交与哈希。import 是依赖线索，不代表已解析所有传递依赖；抽取候选仍为未验证证据。证据：[AST 抽取器](../agent_factory/repository.py)、[指南](repository-extraction.md)、[实际结果](../examples/repository-demo/extracted_repository.json)。
 - [x] **代码安全检查与沙箱执行。** AST 检查限制危险行为，真实模型代码使用禁网、只读、非 root、资源受限的 Docker 执行。隔离机制不是绝对安全证明，local 执行器也不是安全沙箱。证据：[安全检查](../agent_factory/safety.py)、[执行器](../agent_factory/runner.py)。
 - [x] **自动分析失败并形成可复用经验。** 经验有失败/通过验证、代码哈希与图关系，分类与检索均支持使用。已补历史开关、隔离的配对实验及 18 次 DeepSeek 实际结果；本样本首版通过率有差异，最终通过率相同，见 [对照结果](history-ablation.md)。是否有普遍增益不能由功能打勾推导。证据：[经验机制](../agent_factory/repair.py)、[对照工具](../agent_factory/experiments.py)、[实验指南](spec-generation-and-experiments.md)。
-- [x] **算法能力版本管理。** 能力抽取与实现不可覆盖，保存来源/代码哈希、修订关系、验证与发布版本；尚无专门的版本差异 UI。证据：[知识存储](../agent_factory/knowledge.py)、[发布清单](../agent_factory/releases.py)、[schema](schema.md)。
+- [x] **算法能力版本管理。** 能力抽取与实现不可覆盖，保存来源/代码哈希、修订关系、验证与发布版本；组件目录新增旧版关联、回归比较、原子切换与回退，网页可操作并下载比较结果；尚无逐行高亮差异视图。证据：[组件生命周期](component-lifecycle.md)、[组件目录](../agent_factory/component_store.py)、[schema](schema.md)。
 - [x] **自然语言解释方案设计依据。** 方案与报告保存依据和来源关联；模型解释用于说明选择，不作为算法正确性证据。证据：[方案](../examples/ollama-v2-demo/plan.json)、[报告](../examples/ollama-v2-demo/report.md)。
 - [x] **跨场景迁移。** 同一 Factory、路由入口与 SQLite 从技术笔记检索扩展到个人记忆单标签分类，复用规划/生成/修复/回写并切换可信验证器；不是在旧检索任务上仅增加算法。证据：[真实双任务验收](../examples/transfer_validation.json)、[双任务验收脚本](../scripts/smoke_transfer.py)、[使用指南](classification-and-export.md)、[端到端测试](../tests/test_task_workflow.py)。范围为两类文本任务，尚无表格/图像任务。
 - [x] **自动接口文档或部署配置。** FastAPI 提供 `/docs`、`/openapi.json`；已有 Dockerfile、Compose 与部署指南。已提供成功产物一键 ZIP 导出，包含独立入口、依赖、示例与 Dockerfile；分类包含冻结训练集。证据：[API](../agent_factory/api.py)、[Compose](../compose.yaml)、[部署指南](jetson-deployment.md)。

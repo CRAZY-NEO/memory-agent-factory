@@ -1,0 +1,13 @@
+{
+  "run_id": "20261017T122246_891f3e2e",
+  "status": "draft",
+  "business_verified": false,
+  "entrypoint": "execute",
+  "artifact_hashes": {
+    "candidate.py": "15d5401f36faa108e57c75c02d77cad45994d5bada6faa6602b5ef4c578fe872",
+    "draft_spec.json": "723303d55085e01f7435a5b326a90d64dbc2cb5e1628eab7acafbb32050bd898",
+    "draft_spec_reviews.json": "058394d47cee20928208d6a1f576f3077f79cfffc1fa64e64829625db70c712f",
+    "draft_checks.json": "0c087e76f1cc3394b5f8e874262872bb780d9d6a66d2f7470841ac7b5a3b9506",
+    "report.json": "fc87e3754f6ec816151c49d014566f93fc2ed288dd60a4ff1d18090288fd4a5a"
+  }
+}

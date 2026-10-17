@@ -179,12 +179,13 @@ def invoke(payload, manifest):
         validator_bytes = read_verified('runtime_contracts.py', manifest['runtime_validation_hash'])
         validator = {'__name__': 'portable_contracts'}
         exec(compile(validator_bytes, 'runtime_contracts.py', 'exec'), validator)
-        normalized = validator['parse_input'](manifest['task'], payload)
+        version = manifest.get('capability_contract', {}).get('version', '1')
+        normalized = validator['parse_input'](manifest['task'], payload, version)
         before = copy.deepcopy(normalized)
         result = getattr(module, manifest['entrypoint'])(normalized)
         if normalized != before:
             raise ValueError('Capability mutated inputs')
-        return validator['check_output'](manifest['task'], result, normalized)
+        return validator['check_output'](manifest['task'], result, normalized, version)
     if manifest["task"] == "memory_classification":
         texts = payload.get("texts")
         if not isinstance(texts, list) or any(not isinstance(text, str) for text in texts):
@@ -356,7 +357,7 @@ def export_run(workspace, run_id):
     task = plugin.get("task")
     if task not in TASK_FILES or plugin.get("interface_version") != "1":
         raise ValueError("Unsupported deployment interface")
-    adapter = task_spec(task)
+    adapter = task_spec(task, plugin.get('capability_contract', {}).get('version', '1'))
     filename, entrypoint = adapter.selected_filename, adapter.entrypoint
     if (plugin.get("run_id") != run_id or report.get("run_id") != run_id
             or plugin.get("entrypoint") != entrypoint
